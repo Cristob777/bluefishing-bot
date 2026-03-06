@@ -1,4 +1,6 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
+const path = require("path");
+const fs = require("fs");
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "bluefishing123";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
@@ -7,7 +9,24 @@ const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 
 const conversationHistory = {};
 
-const SYSTEM_PROMPT = `## ROL
+let catalogCache = null;
+function getCatalogContent() {
+  if (catalogCache) return catalogCache;
+  try {
+    const catalogPath = path.join(__dirname, "..", "catalogo", "catalogo_para_bot.txt");
+    const raw = fs.readFileSync(catalogPath, "utf8");
+    catalogCache = raw
+      .split("\n")
+      .filter((line) => line.trim() && !line.startsWith("#"))
+      .join("\n");
+    return catalogCache;
+  } catch (e) {
+    console.warn("[Webhook] No se pudo cargar catálogo:", e.message);
+    return "(Catálogo no disponible. Recomienda ver https://bluefishing.cl)";
+  }
+}
+
+const SYSTEM_PROMPT_BASE = `## ROL
 Eres Matías, el asistente experto en pesca deportiva de Bluefishing.cl — la tienda especializada en pesca deportiva con las mejores marcas de Japón, EE.UU. y Chile.
 
 Tu misión es ayudar a los clientes a elegir el equipo correcto según su tipo de pesca, nivel de experiencia y objetivo. Eres cercano y amigable, pero hablas con autoridad técnica real — como un pescador experimentado que también conoce el catálogo de la tienda.
@@ -63,33 +82,18 @@ AJING: Cañas UL 1.8-2.1m | Carretes 1000-2000 | PE 0.3-0.4 | Vinilos 1-3g
 
 ## CATÁLOGO
 
-CAÑAS RÍO: TSURINOYA Dragon S602UL $79,990 (1.8m UL) | BADFISH River Chaser 2-8g | BADFISH BAD AJING BAJS 18UL
+`;
 
-CAÑAS MAR: BADFISH Chacao Popping 30-80g $69,990 | BADFISH Graphite ELITE 10-32g $109,990 | YAMAGA BLANKS Early for Surf 105MH $399,990 | TSURINOYA Struggle S912M
+function getSystemPrompt() {
+  return SYSTEM_PROMPT_BASE + getCatalogContent();
+}
 
-CAÑAS JIGGING: TSURINOYA Seriola Jigging 250gr $99,990 | BADFISH Graphite Slow S562 30-300g | YAMAGA BLANKS Early SeaWalk Taijigging
-
-CARRETES: DAIWA Laguna LT 2000 | DAIWA Crossfire LT 4000 | DAIWA Revros LT 5000 | DAIWA Seagate 50H $443,990 | TSURINOYA NA 2000
-
-SEÑUELOS MAR: BADFISH Hirame Assassin 23g | TSURINOYA Stinger 120F 19g | TSURINOYA Stinger 125S 28g
-
-SEÑUELOS RÍO: BADFISH Crank Assassin 8.2g | BADFISH Crank Assassin 3.5g | TSURINOYA Intruder 60s 6.5g
-
-JIGS: BADFISH Little Combat 5/7/10g | BADFISH Big Combat 20/30/40/50g | SEA FALCON TG SPOON 30g
-
-VINILOS: TSURINOYA Actor A115 12g | XESTA VELVETSTAR 2.5g | TSURINOYA LURKER pack
-
-LÍNEAS: VARIVAS PE X8 300m | VARIVAS PE X4 150m | BADFISH PEline X8 300m | VARIVAS Shock Leader | TORAY Fluoro POWERGAME
-
-JIGHEADS: BKK SILENT CHASER EWG | BKK Prisma Darting | DECOY SV-51 DELTA MAGIC HEAVY
-
-ANZUELOS: BKK Triple Viper-41 $7,990 | BKK KAIJIKI HD TROLLING $12,990 | SAKANA HIRAME HOOK $4,990
-
-CAJAS: MEIHO VS-3080 | MEIHO QUATRO CASE | MEIHO RUNGUN CASE | MEIHO REVERSIBLE 165
-
-VESTIMENTA: PROX Chaqueta FLOATING GAME VEST | Bluestorm Wader | BKK Guantes`;
+const MAX_WHATSAPP_MESSAGE = 4096;
 
 async function sendWhatsAppMessage(to, message) {
+  const body = message.length > MAX_WHATSAPP_MESSAGE
+    ? message.substring(0, MAX_WHATSAPP_MESSAGE - 20) + "\n\n(Respuesta recortada)"
+    : message;
   const url = `https://graph.facebook.com/v18.0/${PHONE_NUMBER_ID}/messages`;
   const response = await fetch(url, {
     method: "POST",
@@ -99,12 +103,17 @@ async function sendWhatsAppMessage(to, message) {
     },
     body: JSON.stringify({
       messaging_product: "whatsapp",
-      to: to,
+      to: String(to),
       type: "text",
-      text: { body: message },
+      text: { body },
     }),
   });
-  return response.json();
+  const data = await response.json();
+  if (!response.ok) {
+    console.error("[Webhook] WhatsApp API error:", response.status, data);
+    throw new Error(data.error?.message || "WhatsApp API falló");
+  }
+  return data;
 }
 
 async function getGeminiResponse(userMessage, from) {
@@ -125,7 +134,7 @@ async function getGeminiResponse(userMessage, from) {
   }
 
   const chat = model.startChat({
-    systemInstruction: SYSTEM_PROMPT,
+    systemInstruction: getSystemPrompt(),
     history: conversationHistory[from].slice(0, -1),
   });
 
@@ -155,6 +164,16 @@ module.exports = async (req, res) => {
   if (req.method === "POST") {
     try {
       const body = req.body;
+      console.log("[Webhook] POST recibido, object:", body?.object);
+
+      if (!GEMINI_API_KEY || !WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
+        console.error("[Webhook] Faltan variables de entorno:", {
+          GEMINI: !!GEMINI_API_KEY,
+          WHATSAPP_TOKEN: !!WHATSAPP_TOKEN,
+          PHONE_NUMBER_ID: !!PHONE_NUMBER_ID,
+        });
+        return res.status(500).json({ error: "Faltan variables de entorno en Vercel" });
+      }
 
       if (body.object === "whatsapp_business_account") {
         const entry = body.entry?.[0];
@@ -165,18 +184,28 @@ module.exports = async (req, res) => {
         if (messages && messages[0]) {
           const message = messages[0];
           const from = message.from;
+          console.log("[Webhook] Mensaje de", from, "tipo:", message.type);
 
           if (message.type === "text") {
             const text = message.text.body;
-            const response = await getGeminiResponse(text, from);
+            console.log("[Webhook] Texto:", text.substring(0, 50));
+            let response;
+            try {
+              response = await getGeminiResponse(text, from);
+            } catch (err) {
+              console.error("[Webhook] Error Gemini:", err.message);
+              response = "Disculpa, hubo un problema al procesar. Intenta de nuevo en un momento.";
+            }
+            console.log("[Webhook] Enviando a WhatsApp...");
             await sendWhatsAppMessage(from, response);
+            console.log("[Webhook] Respuesta enviada OK");
           }
         }
       }
 
       return res.status(200).json({ status: "ok" });
     } catch (error) {
-      console.error("Error:", error);
+      console.error("[Webhook] Error:", error);
       return res.status(500).json({ error: error.message });
     }
   }

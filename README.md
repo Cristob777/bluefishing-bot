@@ -22,7 +22,8 @@ Chatbot de WhatsApp para **Bluefishing.cl**, la tienda especializada en pesca de
 
 1. Importa el repositorio en [vercel.com](https://vercel.com)
 2. Configura las variables de entorno en el dashboard
-3. El webhook estará disponible en `https://tu-proyecto.vercel.app/webhook`
+3. El webhook estará disponible en `https://tu-proyecto.vercel.app/webhook`  
+   (Producción: `https://bluefishing-253ejz32i-cristob777s-projects.vercel.app/webhook`)
 
 ## Configuración de WhatsApp
 
