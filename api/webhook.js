@@ -175,20 +175,20 @@ module.exports = async (req, res) => {
         return res.status(500).json({ error: "Faltan variables de entorno en Vercel" });
       }
 
-      if (body.object === "whatsapp_business_account") {
-        const entry = body.entry?.[0];
-        const changes = entry?.changes?.[0];
-        const value = changes?.value;
-        const messages = value?.messages;
+      // Formato real: body.entry[0].changes[0].value | Formato prueba Meta: body.value
+      let value =
+        body.entry?.[0]?.changes?.[0]?.value ||
+        (body.field === "messages" ? body.value : null);
+      const messages = value?.messages;
 
-        if (messages && messages[0]) {
+      if (messages && messages[0]) {
           const message = messages[0];
           const from = message.from;
           console.log("[Webhook] Mensaje de", from, "tipo:", message.type);
 
           if (message.type === "text") {
             const text = message.text.body;
-            console.log("[Webhook] Texto:", text.substring(0, 50));
+            console.log("[Webhook] Texto:", text.substring(0, 50), "| from:", from);
             let response;
             try {
               response = await getGeminiResponse(text, from);
@@ -196,11 +196,20 @@ module.exports = async (req, res) => {
               console.error("[Webhook] Error Gemini:", err.message);
               response = "Disculpa, hubo un problema al procesar. Intenta de nuevo en un momento.";
             }
-            console.log("[Webhook] Enviando a WhatsApp...");
-            await sendWhatsAppMessage(from, response);
-            console.log("[Webhook] Respuesta enviada OK");
+            console.log("[Webhook] Enviando a WhatsApp to:", from);
+            try {
+              await sendWhatsAppMessage(from, response);
+              console.log("[Webhook] Respuesta enviada OK");
+            } catch (err) {
+              console.error("[Webhook] FALLO ENVÍO WHATSAPP:", err.message);
+              throw err;
+            }
+          } else {
+            console.log("[Webhook] Mensaje ignorado (tipo no text):", message.type);
           }
         }
+      } else {
+        console.log("[Webhook] POST sin mensajes procesables. body.object:", body?.object, "body.field:", body?.field);
       }
 
       return res.status(200).json({ status: "ok" });
