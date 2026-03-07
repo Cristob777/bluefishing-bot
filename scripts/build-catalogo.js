@@ -46,11 +46,12 @@ function main() {
     const isAllowed = allowedCats.some(c => catShort.includes(c)) || catShort.includes("Marcas");
     
     if (isAllowed) {
-      lines.push(`${nombre} | ${precioStr} | ${catShort}`);
+      const url = slug ? `${baseUrl}${slug}/` : "";
+      lines.push(`${nombre} | ${precioStr} | ${catShort} | ${url}`);
     }
   }
 
-  const header = `# Catálogo Bluefishing.cl\n# Formato: Nombre | Precio | Categoría\n\n`;
+  const header = `# Catálogo Bluefishing.cl\n# Formato: Nombre | Precio | Categoría | URL\n\n`;
   fs.writeFileSync(OUT_PATH, header + lines.join("\n"), "utf8");
   console.log(`Listo: ${lines.length} productos → ${OUT_PATH}`);
 }
