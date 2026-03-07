@@ -240,6 +240,16 @@ module.exports = async (req, res) => {
           const message = messages[0];
           const from = message.from;
           const messageId = message.id;
+          const messageTimestamp = message.timestamp ? parseInt(message.timestamp, 10) : null;
+
+          // Ignorar mensajes viejos (más de 5 minutos) que Meta reintenta enviar
+          if (messageTimestamp) {
+            const now = Math.floor(Date.now() / 1000);
+            if (now - messageTimestamp > 300) {
+              console.log(`[Webhook] Mensaje antiguo ignorado (${now - messageTimestamp}s de retraso)`);
+              return res.status(200).json({ status: "ok" });
+            }
+          }
 
           if (messageId && processedMessages.has(messageId)) {
             console.log("[Webhook] Mensaje duplicado ignorado:", messageId);
