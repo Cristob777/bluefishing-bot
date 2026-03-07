@@ -1,11 +1,13 @@
-const { GoogleGenerativeAI } = require("@google/generative-ai");
 const path = require("path");
 const fs = require("fs");
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "bluefishing123";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
 const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
+
+const USE_CLAUDE = !!ANTHROPIC_API_KEY;
 
 const conversationHistory = {};
 
@@ -116,9 +118,50 @@ async function sendWhatsAppMessage(to, message) {
   return data;
 }
 
+async function getClaudeResponse(userMessage, from) {
+  const { Anthropic } = require("@anthropic-ai/sdk");
+  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+
+  if (!conversationHistory[from]) {
+    conversationHistory[from] = [];
+  }
+
+  conversationHistory[from].push({
+    role: "user",
+    parts: [{ text: userMessage }],
+  });
+
+  if (conversationHistory[from].length > 10) {
+    conversationHistory[from] = conversationHistory[from].slice(-10);
+  }
+
+  const messages = conversationHistory[from].slice(0, -1).map((m) => ({
+    role: m.role === "model" ? "assistant" : "user",
+    content: m.parts[0]?.text || "",
+  }));
+
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1024,
+    system: getSystemPrompt(),
+    messages: [...messages, { role: "user", content: userMessage }],
+  });
+
+  const responseText =
+    response.content?.find((b) => b.type === "text")?.text || "";
+
+  conversationHistory[from].push({
+    role: "model",
+    parts: [{ text: responseText }],
+  });
+
+  return responseText;
+}
+
 async function getGeminiResponse(userMessage, from) {
+  const { GoogleGenerativeAI } = require("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
   if (!conversationHistory[from]) {
     conversationHistory[from] = [];
@@ -149,6 +192,11 @@ async function getGeminiResponse(userMessage, from) {
   return responseText;
 }
 
+async function getAIResponse(userMessage, from) {
+  if (USE_CLAUDE) return getClaudeResponse(userMessage, from);
+  return getGeminiResponse(userMessage, from);
+}
+
 module.exports = async (req, res) => {
   if (req.method === "GET") {
     const mode = req.query["hub.mode"];
@@ -164,11 +212,13 @@ module.exports = async (req, res) => {
   if (req.method === "POST") {
     try {
       const body = req.body;
-      console.log("[Webhook] POST recibido, object:", body?.object);
+      console.log("[Webhook] POST recibido, body keys:", body ? Object.keys(body) : "null", "| object:", body?.object);
 
-      if (!GEMINI_API_KEY || !WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
+      const hasAI = GEMINI_API_KEY || ANTHROPIC_API_KEY;
+      if (!hasAI || !WHATSAPP_TOKEN || !PHONE_NUMBER_ID) {
         console.error("[Webhook] Faltan variables de entorno:", {
           GEMINI: !!GEMINI_API_KEY,
+          ANTHROPIC: !!ANTHROPIC_API_KEY,
           WHATSAPP_TOKEN: !!WHATSAPP_TOKEN,
           PHONE_NUMBER_ID: !!PHONE_NUMBER_ID,
         });
@@ -191,9 +241,9 @@ module.exports = async (req, res) => {
             console.log("[Webhook] Texto:", text.substring(0, 50), "| from:", from);
             let response;
             try {
-              response = await getGeminiResponse(text, from);
+              response = await getAIResponse(text, from);
             } catch (err) {
-              console.error("[Webhook] Error Gemini:", err.message);
+              console.error("[Webhook] Error AI:", err.message);
               response = "Disculpa, hubo un problema al procesar. Intenta de nuevo en un momento.";
             }
             console.log("[Webhook] Enviando a WhatsApp to:", from);
@@ -207,7 +257,6 @@ module.exports = async (req, res) => {
           } else {
             console.log("[Webhook] Mensaje ignorado (tipo no text):", message.type);
           }
-        }
       } else {
         console.log("[Webhook] POST sin mensajes procesables. body.object:", body?.object, "body.field:", body?.field);
       }
