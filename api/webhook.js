@@ -10,6 +10,7 @@ const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const USE_CLAUDE = !!ANTHROPIC_API_KEY;
 
 const conversationHistory = {};
+const processedMessages = new Set();
 
 let catalogCache = null;
 function getCatalogContent() {
@@ -238,6 +239,20 @@ module.exports = async (req, res) => {
       if (messages && messages[0]) {
           const message = messages[0];
           const from = message.from;
+          const messageId = message.id;
+
+          if (messageId && processedMessages.has(messageId)) {
+            console.log("[Webhook] Mensaje duplicado ignorado:", messageId);
+            return res.status(200).json({ status: "ok" });
+          }
+          if (messageId) {
+            processedMessages.add(messageId);
+            if (processedMessages.size > 500) {
+              const iterator = processedMessages.values();
+              processedMessages.delete(iterator.next().value);
+            }
+          }
+
           console.log("[Webhook] Mensaje de", from, "tipo:", message.type);
 
           if (message.type === "text") {
