@@ -120,7 +120,8 @@ async function sendWhatsAppMessage(to, message) {
 
 async function getClaudeResponse(userMessage, from) {
   const { Anthropic } = require("@anthropic-ai/sdk");
-  const client = new Anthropic({ apiKey: ANTHROPIC_API_KEY });
+  const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
+  const client = new Anthropic({ apiKey: apiKey });
 
   if (!conversationHistory[from]) {
     conversationHistory[from] = [];
