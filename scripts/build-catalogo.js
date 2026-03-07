@@ -35,17 +35,22 @@ function main() {
     const precio = (row["Precio normal"] || "").trim();
     const categorias = (row.Categorías || "").trim();
 
-    if (!nombre) continue;
+    if (!nombre || !precio) continue;
 
     const slug = slugify(nombre);
-    const url = slug ? `${baseUrl}${slug}/` : "";
-    const precioStr = precio ? `$${Number(precio).toLocaleString("es-CL")}` : "";
+    const precioStr = `$${Number(precio).toLocaleString("es-CL")}`;
     const catShort = categorias.split(",")[0].trim().replace(/^Todos los Productos\s*>\s*/i, "");
 
-    lines.push(`${nombre} | ${precioStr} | ${catShort} | ${url}`);
+    // Filtrar solo las categorías principales o marcas importantes para no saturar a la IA
+    const allowedCats = ["Cañas", "Carretes", "Líneas", "Combos", "Señuelos"];
+    const isAllowed = allowedCats.some(c => catShort.includes(c)) || catShort.includes("Marcas");
+    
+    if (isAllowed) {
+      lines.push(`${nombre} | ${precioStr} | ${catShort}`);
+    }
   }
 
-  const header = `# Catálogo Bluefishing.cl - Resumen para el bot\n# Formato: Nombre | Precio | Categoría | URL\n# Generado desde wc-product-export.csv\n\n`;
+  const header = `# Catálogo Bluefishing.cl\n# Formato: Nombre | Precio | Categoría\n\n`;
   fs.writeFileSync(OUT_PATH, header + lines.join("\n"), "utf8");
   console.log(`Listo: ${lines.length} productos → ${OUT_PATH}`);
 }
