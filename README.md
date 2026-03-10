@@ -1,4 +1,4 @@
-# BlueFishing Bot — AI Customer Service for WhatsApp
+# BlueFishing Bot — AI Customer Service, an sales for WhatsApp
 
 > Automated customer service chatbot for a fishing e-commerce brand, handling product queries and recommendations via WhatsApp using Claude AI with full catalog context.
 
