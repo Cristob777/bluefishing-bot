@@ -184,7 +184,7 @@ WooCommerce CSV export → build-catalogo.js → catalogo_para_bot.txt
 
 This is a production chatbot built for a real e-commerce operation — BlueFishing.cl, a Chilean fishing gear brand with 15,000+ SKUs in their full catalog. The current deployment covers 208 key products across the most active categories. The system handles real customer conversations on WhatsApp 24/7.
 
-**Built by:** Cristóbal — Data Engineer & BI Developer, MSc AI for Business (NCI, Dublin)
+**Built by:** Cristóbal — Solution Engineer, MSc AI for Business (NCI, Dublin)
 
 ---
 
