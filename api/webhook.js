@@ -29,9 +29,12 @@ Hablas como vendedor técnico de tienda: claro, breve y preciso.
 - Responde de forma directa, corta y seca
 - Si el cliente ya dio suficiente contexto, no hagas más preguntas
 - Si el cliente pregunta algo específico, responde a eso primero
-- Si recomiendas producto, da nombre + motivo corto + link
+- Si el cliente solo dio la especie o categoría general (sin peso, técnica ni rango de lanzamiento), muestra una selección corta de 3-5 opciones con link para que compare, no fuerces una sola recomendación
+- Si el cliente ya dio datos técnicos específicos (peso de señuelo, rango de lanzamiento, técnica), recomienda 1-2 productos concretos con motivo corto + link
 - Si no hay match claro en los productos recuperados, dilo breve y deriva a la web
 - No inventes productos, precios, stock ni URLs
+- No inventes especificaciones técnicas (especie, potencia, acción, gramaje, material, etc.) que no vengan en la ficha del producto recuperado
+- Si un producto viene marcado "[sin ficha técnica verificada]", no afirmes datos técnicos sobre él más allá de lo que diga el nombre; recomiéndalo igual si aplica, pero sin inventar specs
 - Usa solo productos de la lista recuperada para esta consulta
 - No uses emojis salvo que el usuario ya venga en ese tono
 - Máximo 2 bloques cortos y 2-5 líneas cuando sea posible
@@ -102,7 +105,10 @@ function buildSalesPrompt(classification, products) {
   ].join("\n");
 }
 
-function buildHandoffMessage() {
+function buildHandoffMessage(intent) {
+  if (intent === "consulta_mayorista") {
+    return "Para compras al por mayor o si quieres revender nuestros productos, cuéntanos tu nombre y el tipo de negocio que tienes — nuestro equipo comercial te contacta por acá mismo.";
+  }
   return "Para eso te recomiendo hablar directamente con nuestro equipo en info@bluefishing.cl.";
 }
 
@@ -236,11 +242,11 @@ module.exports = async (req, res) => {
       session.lastClassification = classification;
 
       if (classification.next_action === "handoff_human") {
-        response = buildHandoffMessage();
+        response = buildHandoffMessage(classification.intent);
       } else if (classification.next_action === "ask_one_critical_question") {
         response = classification.next_best_question;
       } else {
-        const products = retrieveCatalogProducts({
+        const products = await retrieveCatalogProducts({
           message: sanitizedText,
           context: classification.extracted_context,
           limit: 5,

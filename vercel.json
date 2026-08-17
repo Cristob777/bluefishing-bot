@@ -3,12 +3,19 @@
   "functions": {
     "api/webhook.js": {
       "maxDuration": 30
+    },
+    "api/admin.js": {
+      "maxDuration": 15
     }
   },
   "routes": [
     {
       "src": "/webhook",
       "dest": "/api/webhook.js"
+    },
+    {
+      "src": "/admin",
+      "dest": "/api/admin.js"
     }
   ]
 }

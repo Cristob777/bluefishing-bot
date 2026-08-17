@@ -32,6 +32,7 @@
     <intent id="stock_precio">El usuario pregunta por precio, stock o disponibilidad.</intent>
     <intent id="seguimiento_compra">El usuario ya está cerca de comprar y pide confirmación o link.</intent>
     <intent id="postventa">El usuario pregunta algo posterior a la compra o requiere soporte humano.</intent>
+    <intent id="consulta_mayorista">El usuario quiere revender, comprar al por mayor, distribuir, o abrir/tiene una tienda de artículos de pesca.</intent>
     <intent id="consulta_ambigua">No hay suficiente claridad para clasificar bien.</intent>
   </intent_taxonomy>
 
@@ -123,6 +124,7 @@
     <rule>Si pregunta si algo sirve para una caña, contexto o escenario, clasifica como compatibilidad.</rule>
     <rule>Si pregunta precio o stock, clasifica como stock_precio.</rule>
     <rule>Si ya está listo para comprar o pide el link, clasifica como seguimiento_compra.</rule>
+    <rule>Si menciona que quiere revender, comprar al por mayor, ser distribuidor, o que tiene/quiere abrir una tienda, clasifica como consulta_mayorista.</rule>
     <rule>Si no hay suficiente claridad, clasifica como consulta_ambigua.</rule>
   </intent_classification_rules>
 
@@ -170,6 +172,7 @@
       <rule>Si falta un campo crítico, next_action = ask_one_critical_question.</rule>
       <rule>Si solo faltan campos secundarios y la recomendación igual sería válida, next_action = recommend_now.</rule>
       <rule>Si la ambigüedad es muy alta o el usuario pide algo fuera de alcance, next_action = handoff_human.</rule>
+      <rule>Si intent = consulta_mayorista, next_action = handoff_human siempre.</rule>
     </rules>
   </next_action_policy>
 

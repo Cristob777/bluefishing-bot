@@ -108,16 +108,62 @@ The bot operates as Matías, a fishing gear expert who follows a consultative sa
 
 ## Catalog Pipeline
 
-The product catalog is built from a WooCommerce export:
+The product catalog stays in sync with WooCommerce via a scheduled GitHub Action:
 
 ```
-WooCommerce CSV export → build-catalogo.js → catalogo_para_bot.txt
+WooCommerce REST API → scripts/sync-catalogo.js → catalogo_para_bot.txt → git commit → Vercel redeploy
 ```
 
-- **Input:** `wc-product-export.csv` (WooCommerce product export)
-- **Transform:** `scripts/build-catalogo.js` extracts name, price, categories, and generates product URLs via slugification
+- **Source:** WooCommerce REST API (`/wp-json/wc/v3/products` + `/products/categories`), authenticated with a read-only Consumer Key/Secret
+- **Transform:** `scripts/sync-catalogo.js` pulls published, in-stock products, resolves each product's category path (e.g. `Marcas > BADFISH`), and formats `name | price | category | permalink`
+- **Automation:** `.github/workflows/sync-catalogo.yml` runs the sync daily (and on-demand via `workflow_dispatch`), commits `catalogo_para_bot.txt` if it changed, and pushes — Vercel picks up the push and redeploys automatically
 - **Output:** `catalogo/catalogo_para_bot.txt` — 208 products across 6 categories
 - **Categories covered:** Cañas, Carretes, Líneas, Combos, Señuelos, + brand-specific categories
+
+**Setup:**
+1. In WooCommerce → Settings → Advanced → REST API, create a key with **Read** permissions
+2. Add `WC_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET` as GitHub Actions repo secrets (Settings → Secrets and variables → Actions)
+3. In repo Settings → Actions → General → Workflow permissions, enable **"Read and write permissions"** so the workflow can push the updated catalog
+4. Trigger the workflow manually once (`Actions` tab → *Sync WooCommerce Catalog* → *Run workflow*) to verify it, or run `npm run sync-catalogo` locally with the same env vars set
+
+Legacy manual path (`wc-product-export.csv` → `npm run build-catalogo`) still works as a fallback if the API isn't reachable.
+
+---
+
+## Training the Bot: `/admin` Catalog Enrichment
+
+Product names alone don't say what a rod, reel, or lure is actually *for* — target species, water type, fishing technique, power rating, gear ratio, etc. Without that, the bot can only guess from keywords in the product name, which is how it ends up sounding incoherent (recommending a heavy jigging rod for light río fishing, or staying silent on species fit). `/admin` is where the team fills in that missing data per product, and the bot uses it directly instead of guessing.
+
+### How it fits together
+
+```
+WooCommerce ──sync-catalogo.js──▶ Supabase `products` (mirror, read-only for staff)
+                                         │
+Staff logs into /admin ─────────────────┼──▶ Supabase `product_attributes` (the "questionnaire")
+                                         │
+Customer message ──▶ webhook.js ──▶ lib/catalog.js merges products + product_attributes
+                                     ──▶ scores/ranks products using the curated fields
+                                     ──▶ passes verified specs to Claude, flags unverified products
+```
+
+- `catalogo/schema-enriquecimiento.js` defines the questionnaire fields — common fields (target species, water type, fishing position, technique, experience level, verified notes) plus category-specific specs (rod power/action/length, reel gear ratio/drag, lure type/action/weight, etc.). `/admin` renders its form directly from this file, so adding a field there adds it to the UI automatically.
+- `lib/catalog.js` prefers curated data over the old name-based regex guessing, but falls back to the regex heuristics for any product that hasn't been trained yet — nothing breaks for the untrained majority on day one.
+- Products without a `product_attributes` row are sent to Claude tagged `[sin ficha técnica verificada]`, and the system prompt (`api/webhook.js`) explicitly forbids inventing technical specs for those.
+
+### Setup (one-time)
+
+1. Create a free project at [supabase.com](https://supabase.com)
+2. In the SQL Editor, run `supabase/schema.sql` — creates `products` and `product_attributes` with RLS (nothing is publicly readable/writable, only logged-in staff)
+3. In **Authentication → Providers**, disable public sign-ups (invite-only)
+4. In **Authentication → Users**, add one account per team member who should be able to train the catalog
+5. In **Project Settings → API**, copy the URL, `anon` key, and `service_role` key
+6. Add to Vercel env vars: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (client-safe, used by `/admin`), `SUPABASE_SERVICE_ROLE_KEY` (server-only — used by `scripts/sync-catalogo.js` and the webhook, never exposed to the browser)
+7. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as GitHub Actions secrets too, so the daily WooCommerce sync keeps the `products` mirror current
+8. Redeploy, then visit `/admin` and log in
+
+### Day-to-day
+
+Each team member logs into `/admin` with their own account, picks a product from the list (badge shows *Entrenado* vs *Pendiente*), fills in the questionnaire, and saves. Changes are live for the bot within ~5 minutes (`lib/enrichment.js` caches the attributes table for that long to avoid a DB round-trip on every WhatsApp message).
 
 ---
 
@@ -129,8 +175,9 @@ WooCommerce CSV export → build-catalogo.js → catalogo_para_bot.txt
 | AI (primary) | Claude Haiku 4.5 via `@anthropic-ai/sdk` |
 | AI (fallback) | Gemini 2.0 Flash via `@google/generative-ai` |
 | Messaging | Meta WhatsApp Cloud API v18.0 |
-| Catalog source | WooCommerce CSV → text pipeline |
-| Deployment | Vercel (serverless, single function) |
+| Catalog sync | WooCommerce REST API → GitHub Action (cron) → text pipeline + Supabase mirror |
+| Catalog training | Supabase (Postgres + Auth) + `/admin` (vanilla JS, no framework) |
+| Deployment | Vercel (serverless functions) |
 | Memory | In-process (last 10 messages per phone number) |
 
 ---
@@ -144,6 +191,9 @@ WooCommerce CSV export → build-catalogo.js → catalogo_para_bot.txt
 | `WHATSAPP_TOKEN` | Meta WhatsApp Cloud API token |
 | `PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
 | `VERIFY_TOKEN` | Webhook verification token |
+| `WC_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET` | WooCommerce REST API sync |
+| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Catalog DB — safe to expose client-side in `/admin`, protected by RLS + login |
+| `SUPABASE_SERVICE_ROLE_KEY` | Catalog DB — server-only, used by `sync-catalogo.js` and the webhook's retrieval |
 
 ---
 
@@ -165,16 +215,16 @@ WooCommerce CSV export → build-catalogo.js → catalogo_para_bot.txt
 
 ### Operational today
 - WhatsApp connected and responding via Claude Haiku 4.5
-- 208 products with prices and URLs across 6 categories
-- Consultative sales persona with prompt injection defenses
+- 208 products with prices and URLs across 6 categories, synced daily from WooCommerce
+- `/admin` catalog training interface (Supabase-backed, per-user login) so the team can attach real specs — species, water type, technique, power, gear ratio — per product instead of the bot guessing from the name
+- Consultative sales persona with prompt injection defenses + explicit "don't invent specs" guardrail
 - Gemini fallback if Anthropic key is unavailable
-- Deployed on Vercel as a single serverless function
+- Deployed on Vercel as serverless functions
 
 ### Next milestones
 - **Instagram DM support** — Meta Graph API integration (same webhook pattern)
 - **Persistent memory** — Supabase for conversation history (currently in-process, lost on cold starts)
 - **RAG with vector search** — Supabase pgvector + OpenAI embeddings when catalog exceeds context window
-- **Catalog enrichment** — Claude Batch API to add structured fields (target species, fishing type, experience level) per product
 - **HMAC signature validation** — verify Meta webhook authenticity on POST requests
 - **Analytics dashboard** — conversation tracking, response quality, conversion metrics
 
