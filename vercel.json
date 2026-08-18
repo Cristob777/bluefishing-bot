@@ -6,6 +6,15 @@
     },
     "api/admin.js": {
       "maxDuration": 15
+    },
+    "api/chat.js": {
+      "maxDuration": 30
+    },
+    "api/widget.js": {
+      "maxDuration": 10
+    },
+    "api/admin-chat.js": {
+      "maxDuration": 30
     }
   },
   "routes": [
@@ -16,6 +25,18 @@
     {
       "src": "/admin",
       "dest": "/api/admin.js"
+    },
+    {
+      "src": "/chat",
+      "dest": "/api/chat.js"
+    },
+    {
+      "src": "/widget.js",
+      "dest": "/api/widget.js"
+    },
+    {
+      "src": "/admin-chat",
+      "dest": "/api/admin-chat.js"
     }
   ]
 }

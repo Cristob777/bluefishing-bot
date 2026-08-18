@@ -74,6 +74,43 @@ function renderAdminPage() {
   #save-btn { background: #0b6ab3; color: white; border: none; padding: 10px 22px; border-radius: 6px; font-size: 14px; cursor: pointer; }
   #save-btn:disabled { opacity: 0.6; cursor: default; }
   #save-status { font-size: 13px; color: #1e7b34; }
+
+  .tab-bar { display: flex; gap: 4px; background: white; border-bottom: 1px solid #e3e5e8; padding: 0 20px; }
+  .tab-btn { background: transparent; border: none; padding: 12px 14px; font-size: 13.5px; cursor: pointer; color: #555; border-bottom: 2px solid transparent; }
+  .tab-btn.active { color: #0b3d63; border-bottom-color: #0b3d63; font-weight: 600; }
+  .tab-panel[hidden] { display: none; }
+
+  #chat-tab { display: flex; flex-direction: column; height: calc(100vh - 49px - 45px); max-width: 720px; margin: 0 auto; }
+  #chat-messages { flex: 1; overflow-y: auto; padding: 20px; }
+  .chat-msg { max-width: 75%; padding: 9px 13px; border-radius: 12px; margin-bottom: 4px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
+  .chat-msg.user { background: #0b3d63; color: white; margin-left: auto; border-bottom-right-radius: 3px; }
+  .chat-msg.assistant { background: white; border: 1px solid #e3e5e8; margin-right: auto; border-bottom-left-radius: 3px; }
+  .chat-turn { margin-bottom: 14px; }
+  .chat-turn-tools { margin-right: auto; max-width: 75%; margin-top: 3px; }
+  .flag-btn { background: none; border: 1px solid #e3c2c0; color: #b3261e; font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; }
+  .flag-btn.flagged { border-color: #c8dcc9; color: #1e7b34; cursor: default; }
+  .correction-form { margin-top: 6px; background: #fff8f7; border: 1px solid #f0d4d2; border-radius: 8px; padding: 10px; max-width: 75%; }
+  .correction-form textarea { width: 100%; font-size: 12.5px; padding: 6px 8px; border: 1px solid #d3d7dc; border-radius: 6px; min-height: 50px; font-family: inherit; }
+  .correction-form .actions { display: flex; gap: 8px; margin-top: 6px; }
+  .correction-form button { font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+  .correction-form .save-correction { background: #b3261e; color: white; border: none; }
+  .correction-form .cancel-correction { background: transparent; border: 1px solid #ccc; }
+  #chat-inputbar { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid #e3e5e8; background: white; }
+  #chat-input { flex: 1; padding: 10px 14px; border: 1px solid #d3d7dc; border-radius: 20px; font-size: 13.5px; }
+  #chat-send-btn { background: #0b3d63; color: white; border: none; border-radius: 20px; padding: 0 18px; cursor: pointer; }
+  #chat-hint { font-size: 12px; color: #888; padding: 8px 20px 0; }
+
+  #feedback-tab { max-width: 820px; margin: 0 auto; padding: 20px; }
+  .feedback-item { background: white; border: 1px solid #e3e5e8; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
+  .feedback-item .fb-meta { font-size: 11.5px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between; }
+  .feedback-item .fb-row { font-size: 13px; margin-bottom: 6px; }
+  .feedback-item .fb-label { font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
+  .feedback-item .fb-bad { color: #b3261e; }
+  .feedback-item .fb-good { color: #1e7b34; }
+  .resolve-btn { margin-top: 6px; background: #0b6ab3; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
+  .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .status-pill.flagged { background: #fdecea; color: #b3261e; }
+  .status-pill.resolved { background: #e3f4e6; color: #1e7b34; }
 </style>
 </head>
 <body>
@@ -95,17 +132,38 @@ function renderAdminPage() {
       <button id="logout-btn">Salir</button>
     </div>
   </header>
-  <div id="main-screen">
-    <aside id="product-list">
-      <div class="toolbar">
-        <input type="search" id="search-input" placeholder="Buscar producto...">
-        <label class="filter"><input type="checkbox" id="filter-pending"> Solo sin entrenar</label>
-      </div>
-      <div id="product-items"></div>
-    </aside>
-    <main id="editor">
-      <div class="placeholder">Elegí un producto de la lista para cargar su ficha técnica.</div>
-    </main>
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="catalogo">Catálogo</button>
+    <button class="tab-btn" data-tab="chat">Chat de prueba</button>
+    <button class="tab-btn" data-tab="feedback">Correcciones</button>
+  </div>
+
+  <div id="catalogo-tab" class="tab-panel">
+    <div id="main-screen">
+      <aside id="product-list">
+        <div class="toolbar">
+          <input type="search" id="search-input" placeholder="Buscar producto...">
+          <label class="filter"><input type="checkbox" id="filter-pending"> Solo sin entrenar</label>
+        </div>
+        <div id="product-items"></div>
+      </aside>
+      <main id="editor">
+        <div class="placeholder">Elegí un producto de la lista para cargar su ficha técnica.</div>
+      </main>
+    </div>
+  </div>
+
+  <div id="chat-tab" class="tab-panel" hidden>
+    <div id="chat-hint">Chateá con Matías como si fueras cliente. Si responde algo incorrecto, marcalo para dejar la corrección en cola de revisión.</div>
+    <div id="chat-messages"></div>
+    <div id="chat-inputbar">
+      <input type="text" id="chat-input" placeholder="Escribí un mensaje de prueba..." maxlength="800">
+      <button id="chat-send-btn">Enviar</button>
+    </div>
+  </div>
+
+  <div id="feedback-tab" class="tab-panel" hidden>
+    <div id="feedback-items"></div>
   </div>
 </div>
 
@@ -321,6 +379,197 @@ async function saveProduct(product, categoryFields) {
   saveStatus.textContent = "Guardado ✓";
   renderStats();
   renderList();
+}
+
+// ---------- Pestañas ----------
+
+function switchTab(tab) {
+  for (const btn of document.querySelectorAll(".tab-btn")) {
+    btn.classList.toggle("active", btn.dataset.tab === tab);
+  }
+  document.getElementById("catalogo-tab").hidden = tab !== "catalogo";
+  document.getElementById("chat-tab").hidden = tab !== "chat";
+  document.getElementById("feedback-tab").hidden = tab !== "feedback";
+  if (tab === "feedback") loadFeedback();
+}
+
+for (const btn of document.querySelectorAll(".tab-btn")) {
+  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+}
+
+// ---------- Chat de prueba ----------
+
+function getTrainingSessionId() {
+  let id = localStorage.getItem("bf_admin_chat_session");
+  if (!id) {
+    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2));
+    localStorage.setItem("bf_admin_chat_session", id);
+  }
+  return id;
+}
+
+const trainingSessionId = getTrainingSessionId();
+const chatMessagesEl = document.getElementById("chat-messages");
+const chatInput = document.getElementById("chat-input");
+const chatSendBtn = document.getElementById("chat-send-btn");
+let chatTurnCounter = 0;
+
+function renderCorrectionForm(container, turn) {
+  const form = document.createElement("div");
+  form.className = "correction-form";
+  form.innerHTML =
+    '<div class="fb-label">¿Cuál era la respuesta correcta?</div>' +
+    '<textarea placeholder="Escribí lo que Matías debería haber respondido..."></textarea>' +
+    '<div class="actions"><button class="save-correction">Guardar corrección</button><button class="cancel-correction">Cancelar</button></div>';
+
+  const textarea = form.querySelector("textarea");
+  form.querySelector(".cancel-correction").addEventListener("click", () => form.remove());
+  form.querySelector(".save-correction").addEventListener("click", async () => {
+    const correction = textarea.value.trim();
+    const { error } = await supabase.from("chat_feedback").insert({
+      session_id: trainingSessionId,
+      user_message: turn.userMessage,
+      bot_response: turn.botResponse,
+      correction: correction || null,
+      debug_snapshot: turn.debug || {},
+      status: "flagged",
+      flagged_by: currentUser?.email || null,
+    });
+
+    if (error) {
+      form.querySelector(".fb-label").textContent = "Error: " + error.message;
+      return;
+    }
+
+    form.remove();
+    turn.flagBtn.textContent = "✓ Marcada";
+    turn.flagBtn.className = "flag-btn flagged";
+    turn.flagBtn.disabled = true;
+  });
+
+  container.appendChild(form);
+}
+
+function renderChatTurn(userMessage, botResponse, debug) {
+  chatTurnCounter += 1;
+  const turn = { userMessage, botResponse, debug };
+
+  const userEl = document.createElement("div");
+  userEl.className = "chat-turn";
+  userEl.innerHTML = '<div class="chat-msg user"></div>';
+  userEl.querySelector(".chat-msg").textContent = userMessage;
+  chatMessagesEl.appendChild(userEl);
+
+  const assistantWrap = document.createElement("div");
+  assistantWrap.className = "chat-turn";
+  const bubble = document.createElement("div");
+  bubble.className = "chat-msg assistant";
+  bubble.textContent = botResponse;
+  assistantWrap.appendChild(bubble);
+
+  const tools = document.createElement("div");
+  tools.className = "chat-turn-tools";
+  const flagBtn = document.createElement("button");
+  flagBtn.className = "flag-btn";
+  flagBtn.textContent = "👎 Marcar incorrecta";
+  turn.flagBtn = flagBtn;
+  flagBtn.addEventListener("click", () => renderCorrectionForm(assistantWrap, turn));
+  tools.appendChild(flagBtn);
+  assistantWrap.appendChild(tools);
+
+  chatMessagesEl.appendChild(assistantWrap);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+}
+
+async function sendTrainingMessage() {
+  const text = chatInput.value.trim();
+  if (!text) return;
+  chatInput.value = "";
+  chatInput.disabled = true;
+  chatSendBtn.disabled = true;
+
+  const typingEl = document.createElement("div");
+  typingEl.className = "chat-msg assistant";
+  typingEl.style.color = "#888";
+  typingEl.style.fontStyle = "italic";
+  typingEl.textContent = "escribiendo...";
+  chatMessagesEl.appendChild(typingEl);
+  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
+
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    const res = await fetch("/admin-chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
+      body: JSON.stringify({ sessionId: trainingSessionId, message: text }),
+    });
+    const data = await res.json();
+    typingEl.remove();
+
+    if (!res.ok) {
+      renderChatTurn(text, "[Error] " + (data.error || "no se pudo responder"), {});
+    } else {
+      renderChatTurn(data.userMessage || text, data.reply, data.debug);
+    }
+  } catch (err) {
+    typingEl.remove();
+    renderChatTurn(text, "[Error de conexión] " + err.message, {});
+  }
+
+  chatInput.disabled = false;
+  chatSendBtn.disabled = false;
+  chatInput.focus();
+}
+
+chatSendBtn.addEventListener("click", sendTrainingMessage);
+chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendTrainingMessage(); });
+
+// ---------- Correcciones ----------
+
+async function loadFeedback() {
+  const feedbackEl = document.getElementById("feedback-items");
+  feedbackEl.innerHTML = '<div class="placeholder">Cargando...</div>';
+
+  const { data, error } = await supabase.from("chat_feedback").select("*").order("created_at", { ascending: false });
+  if (error) {
+    feedbackEl.innerHTML = '<div class="placeholder">Error: ' + escapeHtml(error.message) + "</div>";
+    return;
+  }
+
+  if (!data.length) {
+    feedbackEl.innerHTML = '<div class="placeholder">Sin correcciones cargadas todavía.</div>';
+    return;
+  }
+
+  feedbackEl.innerHTML = "";
+  for (const row of data) {
+    const item = document.createElement("div");
+    item.className = "feedback-item";
+    item.innerHTML =
+      '<div class="fb-meta"><span>' + escapeHtml(row.flagged_by || "—") + " · " + new Date(row.created_at).toLocaleString("es-CL") + '</span>' +
+      '<span class="status-pill ' + row.status + '">' + (row.status === "resolved" ? "Resuelta" : "Pendiente") + "</span></div>" +
+      '<div class="fb-row"><span class="fb-label">Cliente preguntó: </span>' + escapeHtml(row.user_message) + "</div>" +
+      '<div class="fb-row fb-bad"><span class="fb-label">Bot respondió (incorrecto): </span>' + escapeHtml(row.bot_response) + "</div>" +
+      (row.correction ? '<div class="fb-row fb-good"><span class="fb-label">Debería responder: </span>' + escapeHtml(row.correction) + "</div>" : "");
+
+    if (row.status === "flagged") {
+      const resolveBtn = document.createElement("button");
+      resolveBtn.className = "resolve-btn";
+      resolveBtn.textContent = "Marcar resuelta";
+      resolveBtn.addEventListener("click", async () => {
+        resolveBtn.disabled = true;
+        await supabase.from("chat_feedback").update({
+          status: "resolved",
+          resolved_by: currentUser?.email || null,
+          resolved_at: new Date().toISOString(),
+        }).eq("id", row.id);
+        loadFeedback();
+      });
+      item.appendChild(resolveBtn);
+    }
+
+    feedbackEl.appendChild(item);
+  }
 }
 
 async function handleLogin() {

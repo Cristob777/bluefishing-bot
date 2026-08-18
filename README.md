@@ -56,30 +56,21 @@ A WhatsApp-connected AI assistant ("Matías") that acts as a fishing gear expert
 ## Architecture
 
 ```
-┌─────────────┐     ┌──────────────────┐     ┌─────────────────┐
-│  Customer    │     │  Meta WhatsApp   │     │  Vercel         │
-│  WhatsApp    │────▶│  Cloud API       │────▶│  Serverless     │
-│              │     │  (webhook)       │     │  api/webhook.js │
-└─────────────┘     └──────────────────┘     └────────┬────────┘
-                                                       │
-                                              ┌────────▼────────┐
-                                              │  Load catalog   │
-                                              │  (208 products) │
-                                              └────────┬────────┘
-                                                       │
-                                              ┌────────▼────────┐
-                                              │  Claude Haiku   │
-                                              │  4.5            │
-                                              │  (system prompt │
-                                              │  + catalog +    │
-                                              │  last 10 msgs)  │
-                                              └────────┬────────┘
-                                                       │
-                                              ┌────────▼────────┐
-                                              │  Send response  │
-                                              │  via WhatsApp   │
-                                              │  Cloud API      │
-                                              └─────────────────┘
+┌─────────────┐   ┌──────────────────┐   ┌──────────────────┐
+│  Customer    │   │  Meta WhatsApp   │   │  api/webhook.js  │
+│  WhatsApp    │──▶│  Cloud API       │──▶│  (WhatsApp I/O)  │──┐
+└─────────────┘   └──────────────────┘   └──────────────────┘  │
+                                                                 │
+┌─────────────┐   ┌──────────────────┐   ┌──────────────────┐  │   ┌────────────────────┐
+│  Customer    │   │  /widget.js on   │   │  api/chat.js     │  ├──▶│  lib/salesEngine.js │
+│  bluefishing │──▶│  bluefishing.cl  │──▶│  (web I/O, CORS) │──┘   │  classify → retrieve │
+│  .cl         │   └──────────────────┘   └──────────────────┘      │  catalog → Claude    │
+└─────────────┘                                                     └──────────┬───────────┘
+                                                                                │
+                                                                     ┌──────────▼───────────┐
+                                                                     │  Send reply back on   │
+                                                                     │  the same channel     │
+                                                                     └───────────────────────┘
 ```
 
 **Design decision:** The catalog (208 products) fits within Claude's context window, so the current approach uses prompt stuffing rather than RAG. This eliminates the complexity of embeddings, vector databases, and semantic search — while delivering accurate responses with exact prices and URLs. When the catalog grows beyond context window limits, the architecture is designed to evolve to RAG with Supabase pgvector.
@@ -165,6 +156,50 @@ Customer message ──▶ webhook.js ──▶ lib/catalog.js merges products +
 
 Each team member logs into `/admin` with their own account, picks a product from the list (badge shows *Entrenado* vs *Pendiente*), fills in the questionnaire, and saves. Changes are live for the bot within ~5 minutes (`lib/enrichment.js` caches the attributes table for that long to avoid a DB round-trip on every WhatsApp message).
 
+### Chat de prueba + Correcciones
+
+`/admin` has two more tabs beyond the product catalog:
+
+- **Chat de prueba** — a private chat window (`api/admin-chat.js`, auth-gated) where the team can talk to Matías directly, same brain as WhatsApp/web, to poke at it and see how it actually answers. Every bot reply has a "👎 Marcar incorrecta" button; clicking it opens a small form to write down what the correct answer should have been, and saves it — along with the classified intent/context and which products were retrieved — to the `chat_feedback` table.
+- **Correcciones** — the review queue for everything flagged that way: what the customer asked, what the bot wrongly said, what it should have said, and who flagged it. Each item has a "Marcar resuelta" button for once the underlying issue is actually fixed (usually by training the relevant product in the Catálogo tab, sometimes by adjusting the prompt).
+
+### Auto-training from resolved corrections
+
+There's no fine-tuning of Claude here — that's not how this architecture improves, and continuous fine-tuning wouldn't make sense for a catalog this size anyway. What *is* automatic: the moment someone clicks **"Marcar resuelta"** on a correction, `lib/learnedExamples.js` picks it up (cached 5 min, same pattern as catalog enrichment) and every future sales reply — WhatsApp, web widget, or `/admin` test chat — gets it injected into the system prompt as a validated example ("a customer asked something like X, the team-verified correct answer was Y"). No code changes, no redeploy, no re-teaching the same lesson twice.
+
+This deliberately keeps a human checkpoint: only `status = 'resolved'` corrections ever reach the prompt. A flagged-but-unreviewed correction (which could be mistyped, or the reviewer misjudged the situation) never touches a live customer conversation until someone confirms it via "Marcar resuelta". The queue caps at the 20 most recent resolved corrections to keep prompt size bounded.
+
+---
+
+## Web Chat Widget
+
+Same bot, same catalog, same training data — now also embeddable directly on bluefishing.cl as a chat bubble, not just WhatsApp. `api/webhook.js` (WhatsApp) and `api/chat.js` (web) are both thin transport layers that call the same `lib/salesEngine.js`, so there's one sales brain and one system prompt behind both channels — no drift between what WhatsApp says and what the website says.
+
+### Embed it
+
+Add this snippet before `</body>` on the site (e.g. via the theme's footer, or a plugin like "Insert Headers and Footers" — no code changes needed elsewhere):
+
+```html
+<script src="https://<your-vercel-domain>/widget.js"
+        data-color="#0b3d63"
+        data-greeting="¡Hola! Soy Matías, el asistente de Bluefishing. ¿En qué te puedo ayudar?">
+</script>
+```
+
+- `data-color` / `data-greeting` / `data-position` (`right` default, or `left`) are optional
+- The widget auto-detects the API to call from its own `<script src>` — no need to hardcode a domain inside the snippet beyond the `src` itself
+- Conversation history and a per-visitor session id are kept in `localStorage`, so reopening the widget across page views keeps context
+
+### Setup (one-time)
+
+1. Add `ALLOWED_ORIGIN` as a Vercel env var with the site's domain(s), comma-separated (e.g. `https://bluefishing.cl,https://www.bluefishing.cl`) — this is what the browser checks before allowing the widget to call `/chat`, and requests from any other origin are rejected
+2. Redeploy, then paste the embed snippet on the site
+
+### Notes
+
+- Same guardrails as WhatsApp: no invented specs, no invented prices/stock, wholesale inquiries get routed to a human instead of a product pitch
+- Conversation memory is in-process per serverless instance (same limitation as WhatsApp today — see Roadmap) — a visitor's context can reset on a cold start
+
 ---
 
 ## Tech Stack
@@ -174,7 +209,7 @@ Each team member logs into `/admin` with their own account, picks a product from
 | Runtime | Node.js 18+ (Vercel Serverless Functions) |
 | AI (primary) | Claude Haiku 4.5 via `@anthropic-ai/sdk` |
 | AI (fallback) | Gemini 2.0 Flash via `@google/generative-ai` |
-| Messaging | Meta WhatsApp Cloud API v18.0 |
+| Messaging | Meta WhatsApp Cloud API v18.0 + embeddable web widget (vanilla JS, no framework) |
 | Catalog sync | WooCommerce REST API → GitHub Action (cron) → text pipeline + Supabase mirror |
 | Catalog training | Supabase (Postgres + Auth) + `/admin` (vanilla JS, no framework) |
 | Deployment | Vercel (serverless functions) |
@@ -194,6 +229,7 @@ Each team member logs into `/admin` with their own account, picks a product from
 | `WC_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET` | WooCommerce REST API sync |
 | `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Catalog DB — safe to expose client-side in `/admin`, protected by RLS + login |
 | `SUPABASE_SERVICE_ROLE_KEY` | Catalog DB — server-only, used by `sync-catalogo.js` and the webhook's retrieval |
+| `ALLOWED_ORIGIN` | Comma-separated domains allowed to call `/chat` from the web widget (CORS) |
 
 ---
 
@@ -215,14 +251,17 @@ Each team member logs into `/admin` with their own account, picks a product from
 
 ### Operational today
 - WhatsApp connected and responding via Claude Haiku 4.5
+- Web chat widget (`/widget.js` + `/chat`) embeddable on bluefishing.cl, sharing the same sales brain (`lib/salesEngine.js`) and catalog as WhatsApp
 - 208 products with prices and URLs across 6 categories, synced daily from WooCommerce
 - `/admin` catalog training interface (Supabase-backed, per-user login) so the team can attach real specs — species, water type, technique, power, gear ratio — per product instead of the bot guessing from the name
+- `/admin` test chat + corrections queue, with resolved corrections auto-injected into future replies as validated examples (human-checkpointed, no unsupervised self-editing)
 - Consultative sales persona with prompt injection defenses + explicit "don't invent specs" guardrail
+- Wholesale/reseller inquiries routed to a human instead of a product pitch
 - Gemini fallback if Anthropic key is unavailable
 - Deployed on Vercel as serverless functions
 
 ### Next milestones
-- **Instagram DM support** — Meta Graph API integration (same webhook pattern)
+- **Instagram DM support** — Meta Graph API integration (same `lib/salesEngine.js` pattern as WhatsApp/web)
 - **Persistent memory** — Supabase for conversation history (currently in-process, lost on cold starts)
 - **RAG with vector search** — Supabase pgvector + OpenAI embeddings when catalog exceeds context window
 - **HMAC signature validation** — verify Meta webhook authenticity on POST requests
