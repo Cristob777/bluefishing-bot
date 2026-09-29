@@ -9,6 +9,7 @@ on:
   pull_request:
     branches:
       - main
+      - prod/whatsapp-openai
 
 permissions:
   contents: read
