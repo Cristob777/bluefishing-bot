@@ -15,9 +15,16 @@
     },
     "api/admin-chat.js": {
       "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 10
     }
   },
   "routes": [
+    {
+      "src": "/health",
+      "dest": "/api/health.js"
+    },
     {
       "src": "/webhook",
       "dest": "/api/webhook.js"
