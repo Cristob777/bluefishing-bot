@@ -44,4 +44,5 @@ jobs:
           node --check scripts/security-retention.js
           node --check lib/rateLimiter.js
           node --check lib/logSanitizer.js
+          node --check lib/tokenGovernor.js
           node -e "require('./lib/agentContract')"
