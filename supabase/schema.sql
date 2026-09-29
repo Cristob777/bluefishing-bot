@@ -92,3 +92,31 @@ create policy "authenticated insert feedback" on public.chat_feedback
 drop policy if exists "authenticated update feedback" on public.chat_feedback;
 create policy "authenticated update feedback" on public.chat_feedback
   for update to authenticated using (true) with check (true);
+
+
+-- Estado persistente del bot de WhatsApp.
+create table if not exists public.bot_sessions (
+  session_id text primary key,
+  history jsonb not null default '[]'::jsonb,
+  known_context jsonb not null default '{}'::jsonb,
+  last_classification jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.processed_whatsapp_messages (
+  message_id text primary key,
+  from_phone text,
+  created_at timestamptz not null default now()
+);
+
+alter table public.bot_sessions enable row level security;
+alter table public.processed_whatsapp_messages enable row level security;
+
+-- Estas tablas son exclusivamente server-side. La service role bypassa RLS.
+-- No se crean policies públicas ni authenticated a propósito.
+
+create index if not exists bot_sessions_updated_at_idx
+  on public.bot_sessions (updated_at desc);
+
+create index if not exists processed_whatsapp_messages_created_at_idx
+  on public.processed_whatsapp_messages (created_at desc);
