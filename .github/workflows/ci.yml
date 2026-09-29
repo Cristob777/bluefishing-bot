@@ -30,6 +30,7 @@ jobs:
           node --check api/webhook.js
           node --check api/health.js
           node --check lib/salesEngine.js
+          node --check lib/classifier.js
           node --check lib/catalog.js
           node --check lib/productPage.js
           node --check lib/knowledgeExtractor.js
