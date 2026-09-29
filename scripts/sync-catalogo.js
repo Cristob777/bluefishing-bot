@@ -222,7 +222,14 @@ async function main() {
   const unique = [...new Map(rows.map((row) => [row.url, row])).values()]
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 
-  if (!unique.length) throw new Error("el sync produjo 0 productos; se conserva el catálogo anterior");
+  if (!unique.length) {
+    if (fs.existsSync(OUT_PATH) && fs.readFileSync(OUT_PATH, "utf8").trim()) {
+      console.warn("[Catalog] El refresh remoto produjo 0 productos. Se conserva el último catálogo válido.");
+      console.log(JSON.stringify({ source: "preserved_last_known_good", products: 0, output: OUT_PATH }));
+      return;
+    }
+    throw new Error("el sync produjo 0 productos y no existe un catálogo previo válido");
+  }
 
   const header = [
     "# Catálogo Bluefishing.cl",
