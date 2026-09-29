@@ -11,10 +11,12 @@ test("extractProductLinks deduplicates BlueFishing product links", () => {
     <a href="https://bluefishing.cl/producto/a/">A</a>
     <a href="https://bluefishing.cl/producto/a/?x=1">A2</a>
     <a href="https://bluefishing.cl/producto/b">B</a>
+    <a href="/producto/c/">C</a>
   `;
   const links = extractProductLinks(html).sort();
   assert.deepEqual(links, [
     "https://bluefishing.cl/producto/a/",
-    "https://bluefishing.cl/producto/b/"
+    "https://bluefishing.cl/producto/b/",
+    "https://bluefishing.cl/producto/c/"
   ]);
 });
