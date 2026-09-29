@@ -37,3 +37,7 @@ jobs:
           node --check scripts/enrich-catalogo.js
           node --check server.js
           node --check lib/postgres.js
+          node --check lib/agentContract.js
+          node --check lib/securityGuard.js
+          node --check lib/responseValidator.js
+          node -e "require('./lib/agentContract')"
