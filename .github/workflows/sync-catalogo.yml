@@ -11,7 +11,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: bluefishing-catalog-refresh
+  group: bluefishing-catalog-refresh-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -40,7 +40,15 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: Enrich technical product knowledge
+      - name: Validate enrichment sample on PR
+        if: github.event_name == 'pull_request'
+        run: npm run enrich-catalogo
+        env:
+          ENRICH_LIMIT: 5
+          ENRICH_DELAY_MS: 50
+
+      - name: Enrich full technical product knowledge
+        if: github.event_name != 'pull_request'
         run: npm run enrich-catalogo
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -50,6 +58,7 @@ jobs:
           ENRICH_DELAY_MS: 100
 
       - name: Commit updated catalog and knowledge
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
