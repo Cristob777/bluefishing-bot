@@ -16,7 +16,7 @@
     "sync-catalogo": "node scripts/sync-catalogo.js",
     "enrich-catalogo": "node scripts/enrich-catalogo.js",
     "catalog:refresh": "npm run sync-catalogo && npm run enrich-catalogo",
-    "test": "node --test test/*.test.js"
+    "test": "node --test tests/*.test.js"
   },
   "engines": {
     "node": ">=22"
