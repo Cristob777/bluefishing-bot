@@ -16,6 +16,6 @@
     "sync-catalogo": "node scripts/sync-catalogo.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=22"
   }
 }
