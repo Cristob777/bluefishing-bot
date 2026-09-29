@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - prod/whatsapp-openai
+      - prod/hostinger-kvm4
   pull_request:
     branches:
       - main
@@ -33,3 +34,5 @@ jobs:
           node --check lib/knowledgeExtractor.js
           node --check scripts/sync-catalogo.js
           node --check scripts/enrich-catalogo.js
+          node --check server.js
+          node --check lib/postgres.js
