@@ -327,6 +327,65 @@ Security invariant:
 
 > A manipulated model must not have direct access to secrets, privileged tools, shell execution, database administration or unvalidated outbound responses.
 
+## Token & Cost Governor
+
+Production requests are routed through a cost governor before OpenAI is used.
+
+```text
+Customer message
+      |
+      v
+Security guard
+      |
+      v
+Deterministic parser
+      |
+      +--> simple greeting / direct commerce lookup -> 0 LLM calls
+      |
+      +--> clear fishing context -> retrieval -> sales generation -> 1 LLM call
+      |
+      +--> ambiguous context -> LLM classifier -> retrieval -> sales generation -> 2 LLM calls
+```
+
+The governor reduces cost without weakening product grounding:
+
+- greetings and acknowledgements are deterministic;
+- clear brand/model price or link lookups can be answered directly from catalog retrieval;
+- common fishing slots (product type, species, water, position, technique, gram range, brand and budget) are parsed deterministically first;
+- the LLM classifier is invoked only when deterministic confidence is insufficient;
+- only 2–4 retrieved products are passed to the sales model depending on query breadth;
+- only the last 2 compact history messages are sent by default;
+- only 2 human-verified examples are included by default;
+- sales output is capped at 240 tokens by default;
+- classifier output is capped at 460 tokens by default;
+- RAG product context contains only fields relevant to the current query.
+
+Every turn records actual API usage returned by OpenAI in PostgreSQL:
+
+```text
+route
+llm_calls
+input_tokens
+cached_input_tokens
+output_tokens
+total_tokens
+latency_ms
+```
+
+This allows production cost to be measured per conversation instead of estimated.
+
+Limits are configurable through:
+
+```env
+TOKEN_GOVERNOR_MAX_HISTORY_MESSAGES=2
+TOKEN_GOVERNOR_HISTORY_CHARS=280
+TOKEN_GOVERNOR_MAX_EXAMPLES=2
+TOKEN_GOVERNOR_SALES_MAX_OUTPUT_TOKENS=240
+TOKEN_GOVERNOR_CLASSIFIER_MAX_OUTPUT_TOKENS=460
+```
+
+The Product Knowledge enrichment pipeline remains offline/batch: product pages are enriched once and the resulting structured knowledge is reused across customer conversations instead of paying to re-read product pages on every turn.
+
 ## Hostinger KVM4 deployment
 
 Production stack:
@@ -589,17 +648,9 @@ Current PR:
 #2 - Deploy BlueFishing WhatsApp bot on Hostinger KVM4
 ```
 
-Validated head at the time of this README update:
+Validated production head and CI are checked before deployment. The source of truth is the current `prod/hostinger-kvm4` branch and PR #2; do not rely on the historical SHA printed in older documentation.
 
-```text
-cb9286e3a730acaf418bf8daec893e80e491e6e6
-```
-
-GitHub Actions:
-
-```text
-CI #140 - SUCCESS
-```
+GitHub Actions must be green before VPS deployment.
 
 The code is ready for Hostinger deployment. Remaining production work is operational:
 
