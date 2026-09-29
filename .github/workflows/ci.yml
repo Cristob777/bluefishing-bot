@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - prod/whatsapp-openai
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Syntax check production entrypoints
+        run: |
+          node --check api/webhook.js
+          node --check api/health.js
+          node --check lib/salesEngine.js
+          node --check lib/catalog.js
+          node --check lib/productPage.js
+          node --check lib/knowledgeExtractor.js
+          node --check scripts/sync-catalogo.js
+          node --check scripts/enrich-catalogo.js
