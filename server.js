@@ -2,6 +2,7 @@ const http = require("node:http");
 const { URL } = require("node:url");
 const webhookHandler = require("./api/webhook");
 const healthHandler = require("./api/health");
+const { safeError } = require("./lib/logSanitizer");
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 1024 * 1024);
@@ -77,7 +78,7 @@ const server = http.createServer(async (req, res) => {
       response.status(404).json({ error: "not_found" });
     }
   } catch (error) {
-    console.error("[Server] Request error:", error);
+    console.error("[Server] Request error:", safeError(error));
     if (!res.writableEnded) {
       res.statusCode = error.statusCode || 500;
       res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -86,7 +87,7 @@ const server = http.createServer(async (req, res) => {
   } finally {
     console.log(JSON.stringify({
       method: req.method,
-      path: req.url,
+      path: req.path || "/",
       status: res.statusCode,
       latency_ms: Date.now() - started,
     }));
