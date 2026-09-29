@@ -65,6 +65,8 @@ create table if not exists bot_events (
   products jsonb not null default '[]'::jsonb,
   latency_ms integer,
   handoff boolean not null default false,
+  route text,
+  llm_usage jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now()
 );
 
