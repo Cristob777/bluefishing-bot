@@ -24,6 +24,12 @@ test("deterministic parser extracts fishing context", () => {
   assert.equal(result.canSkipClassifier, true);
 });
 
+test("recommendation wording is recognized deterministically", () => {
+  const result = extractDeterministicSignals("Recomiéndame una caña para corvina");
+  assert.equal(result.intent, "pedir_recomendacion");
+  assert.equal(result.canSkipClassifier, true);
+});
+
 test("price lookup can use deterministic commerce response", () => {
   const products = [{
     name: "DAIWA CARRETE FUEGO LT 5000D-C",
@@ -71,13 +77,14 @@ test("history is compacted before model calls", () => {
 
 test("real API usage is summarized per turn", () => {
   const result = summarizeUsage([
-    { input_tokens: 100, cached_input_tokens: 50, output_tokens: 20, total_tokens: 120 },
-    { input_tokens: 200, cached_input_tokens: 0, output_tokens: 30, total_tokens: 230 },
+    { input_tokens: 100, cached_input_tokens: 50, cache_write_tokens: 25, output_tokens: 20, total_tokens: 120 },
+    { input_tokens: 200, cached_input_tokens: 0, cache_write_tokens: 0, output_tokens: 30, total_tokens: 230 },
   ]);
   assert.deepEqual(result, {
     llm_calls: 2,
     input_tokens: 300,
     cached_input_tokens: 50,
+    cache_write_tokens: 25,
     output_tokens: 50,
     total_tokens: 350,
   });
