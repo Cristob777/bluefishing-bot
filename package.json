@@ -13,7 +13,10 @@
   },
   "scripts": {
     "build-catalogo": "node scripts/build-catalogo.js",
-    "sync-catalogo": "node scripts/sync-catalogo.js"
+    "sync-catalogo": "node scripts/sync-catalogo.js",
+    "enrich-catalogo": "node scripts/enrich-catalogo.js",
+    "catalog:refresh": "npm run sync-catalogo && npm run enrich-catalogo",
+    "test": "node --test test/*.test.js"
   },
   "engines": {
     "node": ">=22"
