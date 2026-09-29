@@ -1,3 +1,4 @@
+const crypto = require("node:crypto");
 const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
 const { claimInboundMessage, releaseInboundMessage, hasPersistentStore } = require("../lib/sessionStore");
 
@@ -7,6 +8,7 @@ const PHONE_NUMBER_ID = process.env.PHONE_NUMBER_ID;
 const GRAPH_API_VERSION = process.env.GRAPH_API_VERSION || "v24.0";
 const HAS_AI = Boolean(process.env.OPENAI_API_KEY);
 const WEBHOOK_INGRESS_SECRET = process.env.WEBHOOK_INGRESS_SECRET;
+const META_APP_SECRET = process.env.META_APP_SECRET;
 
 const MAX_WHATSAPP_MESSAGE = 4096;
 const MAX_MESSAGE_AGE_SECONDS = Number(process.env.MAX_MESSAGE_AGE_SECONDS || 300);
@@ -17,7 +19,7 @@ function assertProductionConfig() {
   if (!WHATSAPP_TOKEN) missing.push("WHATSAPP_TOKEN");
   if (!PHONE_NUMBER_ID) missing.push("PHONE_NUMBER_ID");
   if (!process.env.OPENAI_API_KEY) missing.push("OPENAI_API_KEY");
-  if (!WEBHOOK_INGRESS_SECRET) missing.push("WEBHOOK_INGRESS_SECRET");
+  if (!META_APP_SECRET) missing.push("META_APP_SECRET");
   return missing;
 }
 
@@ -50,9 +52,22 @@ async function sendWhatsAppMessage(to, message) {
   return data;
 }
 
+function verifyMetaSignature(req) {
+  if (!META_APP_SECRET || !req.rawBody) return false;
+  const signature = String(req.headers?.["x-hub-signature-256"] || "");
+  if (!signature.startsWith("sha256=")) return false;
+  const expected = "sha256=" + crypto
+    .createHmac("sha256", META_APP_SECRET)
+    .update(req.rawBody)
+    .digest("hex");
+  const a = Buffer.from(signature);
+  const b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
 module.exports = async (req, res) => {
   const ingress = req.query?.ingress;
-  if (WEBHOOK_INGRESS_SECRET && ingress !== WEBHOOK_INGRESS_SECRET) {
+  if (WEBHOOK_INGRESS_SECRET && ingress && ingress !== WEBHOOK_INGRESS_SECRET) {
     return res.status(403).send("Forbidden");
   }
 
@@ -69,6 +84,11 @@ module.exports = async (req, res) => {
 
   if (req.method !== "POST") {
     return res.status(405).send("Method not allowed");
+  }
+
+  if (!verifyMetaSignature(req)) {
+    console.warn("[Webhook] Firma Meta inválida");
+    return res.status(403).send("Forbidden");
   }
 
   const missing = assertProductionConfig();
