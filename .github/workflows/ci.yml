@@ -41,4 +41,7 @@ jobs:
           node --check lib/agentContract.js
           node --check lib/securityGuard.js
           node --check lib/responseValidator.js
+          node --check scripts/security-retention.js
+          node --check lib/rateLimiter.js
+          node --check lib/logSanitizer.js
           node -e "require('./lib/agentContract')"
