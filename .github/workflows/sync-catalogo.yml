@@ -1,6 +1,8 @@
 name: Refresh BlueFishing Catalog
 
 on:
+  pull_request:
+    branches: [main]
   schedule:
     - cron: "17 7 * * *"
   workflow_dispatch: {}
