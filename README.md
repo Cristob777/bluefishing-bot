@@ -1,282 +1,211 @@
-# BlueFishing Bot — AI Customer Service, an sales for WhatsApp
+# BlueFishing WhatsApp Sales Bot
 
-> Automated customer service chatbot for a fishing e-commerce brand, handling product queries and recommendations via WhatsApp using Claude AI with full catalog context.
+Production-focused WhatsApp sales assistant for [BlueFishing.cl](https://bluefishing.cl).
 
-[![Vercel](https://img.shields.io/badge/Deployed_on-Vercel-000?logo=vercel)](https://vercel.com/)
-[![Claude](https://img.shields.io/badge/Claude-Haiku_4.5-blueviolet?logo=anthropic)](https://anthropic.com/)
-[![WhatsApp](https://img.shields.io/badge/WhatsApp-Cloud_API-25D366?logo=whatsapp)](https://developers.facebook.com/docs/whatsapp/cloud-api)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?logo=nodedotjs)](https://nodejs.org/)
+The bot does not treat the language model as the catalog database. It classifies the customer's intent, retrieves compatible products from BlueFishing's catalog and technical knowledge layer, then uses OpenAI to write a short grounded sales response.
 
----
+## Production scope
 
-## The Problem
+- Channel: WhatsApp Cloud API only
+- Runtime: Vercel Functions, Node.js 22
+- AI: OpenAI Responses API
+- Default model: `gpt-6-luna`
+- Catalog: versioned BlueFishing catalog
+- Product knowledge: scraped product pages + structured extraction
+- Persistence: Supabase when configured, with safe runtime fallbacks
+- CI: GitHub Actions tests + catalog/enrichment validation
 
-BlueFishing.cl is a Chilean e-commerce brand selling fishing gear across 15,000+ SKUs. Before this chatbot:
+The previous web widget and admin routes are not exposed by the production Vercel routing configuration.
 
-- **Customer queries piled up on WhatsApp** — the team answered the same product questions manually, over and over: "¿Qué caña me recomiendas para pescar róbalo?", "¿Tienen líneas trenzadas?", "¿Hacen envíos a regiones?"
-- **Response time was hours or days** — queries that arrived outside business hours went unanswered until the next day, losing potential sales
-- **No product expertise at scale** — only 1-2 people on the team knew the full catalog well enough to make good recommendations. When they weren't available, customers got generic answers
-- **Instagram DMs ignored** — no capacity to cover a second channel
+## Request flow
 
----
-
-## What the Bot Does
-
-A WhatsApp-connected AI assistant ("Matías") that acts as a fishing gear expert for BlueFishing customers. It:
-
-- **Answers product questions** using the real BlueFishing catalog — prices, categories, and direct product URLs
-- **Makes personalized recommendations** by qualifying the customer first (type of fishing, target species, experience level) before suggesting 1-2 products
-- **Handles FAQs** about shipping, policies, and store information
-- **Escalates to human agents** when the query is outside scope or the customer requests it
-- **Defends against prompt injection** — scoped strictly to fishing, products, and store policies
-
----
-
-## Business Impact
-
-| Metric | Impact |
-|--------|--------|
-| **Response time** | From hours/days → seconds, 24/7 availability |
-| **Query capacity** | From 1-2 staff handling DMs manually → unlimited concurrent conversations |
-| **Product coverage** | 208 products across 6 categories instantly queryable with prices and URLs |
-| **Sales conversion** | Every recommendation includes direct product link + CTA — reducing friction from "interested" to "purchase" |
-| **Staff time freed** | Repetitive "¿Qué caña me recomiendas?" queries handled automatically — team focuses on complex sales and fulfillment |
-| **Consistency** | Every customer gets expert-level recommendations regardless of time of day or staff availability |
-
-### What This Means for the Business
-
-**Revenue protection:** Unanswered WhatsApp messages are lost sales. In Chilean e-commerce, WhatsApp is the primary pre-purchase channel — customers expect fast responses before buying. The bot ensures no query goes unanswered, especially outside business hours when competitors' DMs also go silent.
-
-**Cost efficiency:** A single serverless function on Vercel's free tier + Claude Haiku (the most cost-efficient model in the Claude family) handles what would require a dedicated customer service hire. Estimated monthly cost: <$30 in API calls vs. ~$800+ for a part-time hire.
-
-**Scalable expertise:** The bot has the entire catalog memorized with prices and URLs. A new hire would take weeks to learn 208 products across 6 categories. The bot does it from day one and never forgets.
-
----
-
-## Architecture
-
-```
-┌─────────────┐   ┌──────────────────┐   ┌──────────────────┐
-│  Customer    │   │  Meta WhatsApp   │   │  api/webhook.js  │
-│  WhatsApp    │──▶│  Cloud API       │──▶│  (WhatsApp I/O)  │──┐
-└─────────────┘   └──────────────────┘   └──────────────────┘  │
-                                                                 │
-┌─────────────┐   ┌──────────────────┐   ┌──────────────────┐  │   ┌────────────────────┐
-│  Customer    │   │  /widget.js on   │   │  api/chat.js     │  ├──▶│  lib/salesEngine.js │
-│  bluefishing │──▶│  bluefishing.cl  │──▶│  (web I/O, CORS) │──┘   │  classify → retrieve │
-│  .cl         │   └──────────────────┘   └──────────────────┘      │  catalog → Claude    │
-└─────────────┘                                                     └──────────┬───────────┘
-                                                                                │
-                                                                     ┌──────────▼───────────┐
-                                                                     │  Send reply back on   │
-                                                                     │  the same channel     │
-                                                                     └───────────────────────┘
+```text
+Customer WhatsApp
+       |
+       v
+Meta WhatsApp Cloud API
+       |
+       v
+/api/webhook.js
+  - verifies ingress
+  - rejects stale/duplicate messages
+  - sanitizes text
+       |
+       v
+lib/salesEngine.js
+       |
+       +--> lib/classifier.js
+       |       intent + customer context
+       |
+       +--> lib/catalog.js
+       |       evidence-based compatible-product retrieval
+       |
+       +--> lib/ai.js
+               OpenAI Responses API
+       |
+       v
+Meta WhatsApp Cloud API
+       |
+       v
+Customer
 ```
 
-**Design decision:** The catalog (208 products) fits within Claude's context window, so the current approach uses prompt stuffing rather than RAG. This eliminates the complexity of embeddings, vector databases, and semantic search — while delivering accurate responses with exact prices and URLs. When the catalog grows beyond context window limits, the architecture is designed to evolve to RAG with Supabase pgvector.
+## Product knowledge
 
----
+`catalogo/catalogo_para_bot.txt` contains the sellable catalog snapshot.
 
-## How It Works
+`catalogo/product_knowledge.json` contains structured technical knowledge keyed by product URL. The enrichment pipeline extracts fields such as:
 
-1. **Customer sends a WhatsApp message** → Meta Cloud API forwards it to the Vercel webhook
-2. **Webhook validates** — deduplicates messages, rejects stale messages (>300s old), sanitizes input (max 800 chars)
-3. **Loads conversation history** — last 10 messages per phone number, kept in-memory
-4. **Builds the prompt** — system prompt (identity, rules, commercial flow) + full catalog + conversation history
-5. **Claude Haiku generates a response** — qualifies the customer, recommends 1-2 products with exact URLs, closes with CTA
-6. **Response sent back** via WhatsApp Cloud API — formatted for mobile (max 3 short paragraphs, no markdown, max 4096 chars)
+- target species
+- water type
+- fishing position
+- fishing technique
+- use case
+- rod/reel/lure-specific specifications
+- evidence
+- extraction confidence
 
-### The AI Persona: "Matías"
+The bot may recommend only products returned by retrieval. Missing technical information is treated as unknown; the model is explicitly instructed not to invent specifications.
 
-The bot operates as Matías, a fishing gear expert who follows a consultative sales flow:
-- Qualifies first (what type of fishing? target species? experience level?)
-- Asks maximum 2 questions before recommending
-- Recommends 1-2 specific products with prices and direct URLs
-- Closes with a CTA or follow-up question
-- Escalates to human when needed
+### Refresh pipeline
 
----
-
-## Catalog Pipeline
-
-The product catalog stays in sync with WooCommerce via a scheduled GitHub Action:
-
-```
-WooCommerce REST API → scripts/sync-catalogo.js → catalogo_para_bot.txt → git commit → Vercel redeploy
-```
-
-- **Source:** WooCommerce REST API (`/wp-json/wc/v3/products` + `/products/categories`), authenticated with a read-only Consumer Key/Secret
-- **Transform:** `scripts/sync-catalogo.js` pulls published, in-stock products, resolves each product's category path (e.g. `Marcas > BADFISH`), and formats `name | price | category | permalink`
-- **Automation:** `.github/workflows/sync-catalogo.yml` runs the sync daily (and on-demand via `workflow_dispatch`), commits `catalogo_para_bot.txt` if it changed, and pushes — Vercel picks up the push and redeploys automatically
-- **Output:** `catalogo/catalogo_para_bot.txt` — 208 products across 6 categories
-- **Categories covered:** Cañas, Carretes, Líneas, Combos, Señuelos, + brand-specific categories
-
-**Setup:**
-1. In WooCommerce → Settings → Advanced → REST API, create a key with **Read** permissions
-2. Add `WC_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET` as GitHub Actions repo secrets (Settings → Secrets and variables → Actions)
-3. In repo Settings → Actions → General → Workflow permissions, enable **"Read and write permissions"** so the workflow can push the updated catalog
-4. Trigger the workflow manually once (`Actions` tab → *Sync WooCommerce Catalog* → *Run workflow*) to verify it, or run `npm run sync-catalogo` locally with the same env vars set
-
-Legacy manual path (`wc-product-export.csv` → `npm run build-catalogo`) still works as a fallback if the API isn't reachable.
-
----
-
-## Training the Bot: `/admin` Catalog Enrichment
-
-Product names alone don't say what a rod, reel, or lure is actually *for* — target species, water type, fishing technique, power rating, gear ratio, etc. Without that, the bot can only guess from keywords in the product name, which is how it ends up sounding incoherent (recommending a heavy jigging rod for light río fishing, or staying silent on species fit). `/admin` is where the team fills in that missing data per product, and the bot uses it directly instead of guessing.
-
-### How it fits together
-
-```
-WooCommerce ──sync-catalogo.js──▶ Supabase `products` (mirror, read-only for staff)
-                                         │
-Staff logs into /admin ─────────────────┼──▶ Supabase `product_attributes` (the "questionnaire")
-                                         │
-Customer message ──▶ webhook.js ──▶ lib/catalog.js merges products + product_attributes
-                                     ──▶ scores/ranks products using the curated fields
-                                     ──▶ passes verified specs to Claude, flags unverified products
+```text
+WooCommerce REST API (preferred)
+        |
+        +-- unavailable --> preserve last known valid catalog
+        |
+        v
+catalogo_para_bot.txt
+        |
+        v
+BlueFishing product pages / JSON-LD
+        |
+        v
+OpenAI structured extraction
+        |
+        +-- OpenAI unavailable --> conservative heuristic extraction
+        |
+        v
+product_knowledge.json
+        |
+        +--> optional Supabase mirror
 ```
 
-- `catalogo/schema-enriquecimiento.js` defines the questionnaire fields — common fields (target species, water type, fishing position, technique, experience level, verified notes) plus category-specific specs (rod power/action/length, reel gear ratio/drag, lure type/action/weight, etc.). `/admin` renders its form directly from this file, so adding a field there adds it to the UI automatically.
-- `lib/catalog.js` prefers curated data over the old name-based regex guessing, but falls back to the regex heuristics for any product that hasn't been trained yet — nothing breaks for the untrained majority on day one.
-- Products without a `product_attributes` row are sent to Claude tagged `[sin ficha técnica verificada]`, and the system prompt (`api/webhook.js`) explicitly forbids inventing technical specs for those.
+Commands:
 
-### Setup (one-time)
-
-1. Create a free project at [supabase.com](https://supabase.com)
-2. In the SQL Editor, run `supabase/schema.sql` — creates `products` and `product_attributes` with RLS (nothing is publicly readable/writable, only logged-in staff)
-3. In **Authentication → Providers**, disable public sign-ups (invite-only)
-4. In **Authentication → Users**, add one account per team member who should be able to train the catalog
-5. In **Project Settings → API**, copy the URL, `anon` key, and `service_role` key
-6. Add to Vercel env vars: `SUPABASE_URL`, `SUPABASE_ANON_KEY` (client-safe, used by `/admin`), `SUPABASE_SERVICE_ROLE_KEY` (server-only — used by `scripts/sync-catalogo.js` and the webhook, never exposed to the browser)
-7. Add `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` as GitHub Actions secrets too, so the daily WooCommerce sync keeps the `products` mirror current
-8. Redeploy, then visit `/admin` and log in
-
-### Day-to-day
-
-Each team member logs into `/admin` with their own account, picks a product from the list (badge shows *Entrenado* vs *Pendiente*), fills in the questionnaire, and saves. Changes are live for the bot within ~5 minutes (`lib/enrichment.js` caches the attributes table for that long to avoid a DB round-trip on every WhatsApp message).
-
-### Chat de prueba + Correcciones
-
-`/admin` has two more tabs beyond the product catalog:
-
-- **Chat de prueba** — a private chat window (`api/admin-chat.js`, auth-gated) where the team can talk to Matías directly, same brain as WhatsApp/web, to poke at it and see how it actually answers. Every bot reply has a "👎 Marcar incorrecta" button; clicking it opens a small form to write down what the correct answer should have been, and saves it — along with the classified intent/context and which products were retrieved — to the `chat_feedback` table.
-- **Correcciones** — the review queue for everything flagged that way: what the customer asked, what the bot wrongly said, what it should have said, and who flagged it. Each item has a "Marcar resuelta" button for once the underlying issue is actually fixed (usually by training the relevant product in the Catálogo tab, sometimes by adjusting the prompt).
-
-### Auto-training from resolved corrections
-
-There's no fine-tuning of Claude here — that's not how this architecture improves, and continuous fine-tuning wouldn't make sense for a catalog this size anyway. What *is* automatic: the moment someone clicks **"Marcar resuelta"** on a correction, `lib/learnedExamples.js` picks it up (cached 5 min, same pattern as catalog enrichment) and every future sales reply — WhatsApp, web widget, or `/admin` test chat — gets it injected into the system prompt as a validated example ("a customer asked something like X, the team-verified correct answer was Y"). No code changes, no redeploy, no re-teaching the same lesson twice.
-
-This deliberately keeps a human checkpoint: only `status = 'resolved'` corrections ever reach the prompt. A flagged-but-unreviewed correction (which could be mistyped, or the reviewer misjudged the situation) never touches a live customer conversation until someone confirms it via "Marcar resuelta". The queue caps at the 20 most recent resolved corrections to keep prompt size bounded.
-
----
-
-## Web Chat Widget
-
-Same bot, same catalog, same training data — now also embeddable directly on bluefishing.cl as a chat bubble, not just WhatsApp. `api/webhook.js` (WhatsApp) and `api/chat.js` (web) are both thin transport layers that call the same `lib/salesEngine.js`, so there's one sales brain and one system prompt behind both channels — no drift between what WhatsApp says and what the website says.
-
-### Embed it
-
-Add this snippet before `</body>` on the site (e.g. via the theme's footer, or a plugin like "Insert Headers and Footers" — no code changes needed elsewhere):
-
-```html
-<script src="https://<your-vercel-domain>/widget.js"
-        data-color="#0b3d63"
-        data-greeting="¡Hola! Soy Matías, el asistente de Bluefishing. ¿En qué te puedo ayudar?">
-</script>
+```bash
+npm run sync-catalogo
+npm run enrich-catalogo
+npm run catalog:refresh
+npm test
 ```
 
-- `data-color` / `data-greeting` / `data-position` (`right` default, or `left`) are optional
-- The widget auto-detects the API to call from its own `<script src>` — no need to hardcode a domain inside the snippet beyond the `src` itself
-- Conversation history and a per-visitor session id are kept in `localStorage`, so reopening the widget across page views keeps context
+GitHub Actions runs tests and a small enrichment sample on pull requests. Scheduled/manual runs perform the full refresh and may commit updated catalog knowledge.
 
-### Setup (one-time)
+## Retrieval rules
 
-1. Add `ALLOWED_ORIGIN` as a Vercel env var with the site's domain(s), comma-separated (e.g. `https://bluefishing.cl,https://www.bluefishing.cl`) — this is what the browser checks before allowing the widget to call `/chat`, and requests from any other origin are rejected
-2. Redeploy, then paste the embed snippet on the site
+Recommendations are ranked using evidence including:
 
-### Notes
+- product type
+- exact/partial product name
+- brand
+- target species
+- water type
+- fishing position
+- technique
+- lure/rod weight compatibility
+- customer budget
+- requested attribute
 
-- Same guardrails as WhatsApp: no invented specs, no invented prices/stock, wholesale inquiries get routed to a human instead of a product pitch
-- Conversation memory is in-process per serverless instance (same limitation as WhatsApp today — see Roadmap) — a visitor's context can reset on a cold start
+There is no "first five products" fallback. If nothing compatible scores, the assistant says it cannot make a safe recommendation from the retrieved catalog.
 
----
+## Persistence and operations
 
-## Tech Stack
+When Supabase is configured:
 
-| Component | Technology |
-|-----------|-----------|
-| Runtime | Node.js 18+ (Vercel Serverless Functions) |
-| AI (primary) | Claude Haiku 4.5 via `@anthropic-ai/sdk` |
-| AI (fallback) | Gemini 2.0 Flash via `@google/generative-ai` |
-| Messaging | Meta WhatsApp Cloud API v18.0 + embeddable web widget (vanilla JS, no framework) |
-| Catalog sync | WooCommerce REST API → GitHub Action (cron) → text pipeline + Supabase mirror |
-| Catalog training | Supabase (Postgres + Auth) + `/admin` (vanilla JS, no framework) |
-| Deployment | Vercel (serverless functions) |
-| Memory | In-process (last 10 messages per phone number) |
+- `bot_sessions` stores conversation context
+- `processed_whatsapp_messages` makes webhook processing idempotent
+- `product_attributes` stores automatic and human-reviewed product knowledge
+- `bot_events` stores operational telemetry
+- `handoff_requests` stores human handoff requests
+- `chat_feedback` stores reviewed corrections
 
----
+When Supabase is unavailable, product knowledge still loads from the versioned JSON file. The assistant does not claim a human handoff was registered unless persistence actually succeeded.
 
-## Configuration
+## Required production environment
 
-| Variable | Purpose |
-|----------|---------|
-| `ANTHROPIC_API_KEY` | Claude API access (primary LLM) |
-| `GEMINI_API_KEY` | Gemini API access (fallback LLM) |
-| `WHATSAPP_TOKEN` | Meta WhatsApp Cloud API token |
-| `PHONE_NUMBER_ID` | WhatsApp Business phone number ID |
-| `VERIFY_TOKEN` | Webhook verification token |
-| `WC_URL`, `WC_CONSUMER_KEY`, `WC_CONSUMER_SECRET` | WooCommerce REST API sync |
-| `SUPABASE_URL`, `SUPABASE_ANON_KEY` | Catalog DB — safe to expose client-side in `/admin`, protected by RLS + login |
-| `SUPABASE_SERVICE_ROLE_KEY` | Catalog DB — server-only, used by `sync-catalogo.js` and the webhook's retrieval |
-| `ALLOWED_ORIGIN` | Comma-separated domains allowed to call `/chat` from the web widget (CORS) |
+```env
+OPENAI_API_KEY=
+OPENAI_MODEL=gpt-6-luna
 
----
+VERIFY_TOKEN=
+WEBHOOK_INGRESS_SECRET=
+WHATSAPP_TOKEN=
+PHONE_NUMBER_ID=
+GRAPH_API_VERSION=v24.0
 
-## Operational Limits
+# Recommended for durable sessions / handoff / telemetry
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
 
-| Parameter | Value |
-|-----------|-------|
-| Max input length | 800 characters |
-| Max response length | 4,096 characters |
-| Conversation memory | 10 messages per user (in-process) |
-| Message deduplication | 500 message IDs retained |
-| Stale message threshold | 300 seconds |
-| Claude max_tokens | 1,024 |
-| Function timeout | 30 seconds |
+# Optional preferred catalog source
+WC_URL=https://bluefishing.cl
+WC_CONSUMER_KEY=
+WC_CONSUMER_SECRET=
+```
 
----
+Never commit secrets to the repository.
 
-## Current Status & Roadmap
+The Meta callback URL is expected to use the ingress secret:
 
-### Operational today
-- WhatsApp connected and responding via Claude Haiku 4.5
-- Web chat widget (`/widget.js` + `/chat`) embeddable on bluefishing.cl, sharing the same sales brain (`lib/salesEngine.js`) and catalog as WhatsApp
-- 208 products with prices and URLs across 6 categories, synced daily from WooCommerce
-- `/admin` catalog training interface (Supabase-backed, per-user login) so the team can attach real specs — species, water type, technique, power, gear ratio — per product instead of the bot guessing from the name
-- `/admin` test chat + corrections queue, with resolved corrections auto-injected into future replies as validated examples (human-checkpointed, no unsupervised self-editing)
-- Consultative sales persona with prompt injection defenses + explicit "don't invent specs" guardrail
-- Wholesale/reseller inquiries routed to a human instead of a product pitch
-- Gemini fallback if Anthropic key is unavailable
-- Deployed on Vercel as serverless functions
+```text
+https://<production-domain>/webhook?ingress=<WEBHOOK_INGRESS_SECRET>
+```
 
-### Next milestones
-- **Instagram DM support** — Meta Graph API integration (same `lib/salesEngine.js` pattern as WhatsApp/web)
-- **Persistent memory** — Supabase for conversation history (currently in-process, lost on cold starts)
-- **RAG with vector search** — Supabase pgvector + OpenAI embeddings when catalog exceeds context window
-- **HMAC signature validation** — verify Meta webhook authenticity on POST requests
-- **Analytics dashboard** — conversation tracking, response quality, conversion metrics
+The Meta webhook verification token must match `VERIFY_TOKEN`.
 
----
+## Health check
 
-## Project Context
+`GET /health` returns the production readiness state without exposing secret values.
 
-This is a production chatbot built for a real e-commerce operation — BlueFishing.cl, a Chilean fishing gear brand with 15,000+ SKUs in their full catalog. The current deployment covers 208 key products across the most active categories. The system handles real customer conversations on WhatsApp 24/7.
+Expected states:
 
-**Built by:** Cristóbal — Solution Engineer, MSc AI for Business (NCI, Dublin)
+- `ok`: required configuration present and persistent store available
+- `degraded`: WhatsApp/OpenAI/catalog ready but persistent store unavailable
+- `not_ready`: one or more required production inputs missing
 
----
+Do not promote a new production release until the health endpoint is at least `degraded`; for the intended production architecture it should be `ok`.
 
-## License
+## Tests
 
-This project is shared for portfolio and demonstration purposes. The system prompt and catalog data are proprietary to BlueFishing.cl.
+The repository includes Node tests for:
+
+- product-page/JSON-LD extraction
+- technical knowledge heuristics
+- catalog URL discovery
+- CLP price formatting
+- gram-range compatibility
+- budget matching
+- truthful handoff behavior
+
+CI also syntax-checks production entrypoints.
+
+## Deployment
+
+The repository is connected to Vercel through GitHub. Pull requests produce preview deployments. Merging to `main` should be treated as a production release and should happen only after:
+
+1. CI is green.
+2. Catalog/enrichment validation is green.
+3. Required Vercel environment variables are present.
+4. `/health` is healthy.
+5. Meta's production WhatsApp callback points to the production deployment.
+6. A real inbound/outbound WhatsApp smoke test succeeds.
+
+## Security notes
+
+- No default verification token is committed.
+- Webhook ingress requires a secret query parameter in addition to Meta verification.
+- Duplicate WhatsApp message IDs are persisted when Supabase is available.
+- The bot does not expose web-chat endpoints in the production routing configuration.
+- Product recommendations are grounded in retrieved catalog records and verified/enriched technical data.
+- The OpenAI API key, WhatsApp token, WooCommerce credentials and Supabase service role must remain server-side.

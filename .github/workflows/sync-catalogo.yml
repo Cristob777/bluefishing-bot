@@ -1,37 +1,70 @@
-name: Sync WooCommerce Catalog
+name: Refresh BlueFishing Catalog
 
 on:
+  pull_request:
+    branches: [main]
   schedule:
-    - cron: "0 9 * * *" # 06:00 America/Santiago (UTC-3)
+    - cron: "17 7 * * *"
   workflow_dispatch: {}
 
 permissions:
   contents: write
 
+concurrency:
+  group: bluefishing-catalog-refresh-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
-  sync:
+  refresh:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 22
+          cache: npm
 
       - run: npm ci
 
-      - run: npm run sync-catalogo
+      - name: Audit production dependencies
+        run: npm audit --omit=dev || true
+
+      - name: Run tests
+        run: npm test
+
+      - name: Refresh catalog
+        run: npm run sync-catalogo
         env:
-          WC_URL: ${{ secrets.WC_URL }}
+          WC_URL: https://bluefishing.cl
           WC_CONSUMER_KEY: ${{ secrets.WC_CONSUMER_KEY }}
           WC_CONSUMER_SECRET: ${{ secrets.WC_CONSUMER_SECRET }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
-      - name: Commit catálogo actualizado
+      - name: Validate enrichment sample on PR
+        if: github.event_name == 'pull_request'
+        run: npm run enrich-catalogo
+        env:
+          ENRICH_LIMIT: 5
+          ENRICH_DELAY_MS: 50
+
+      - name: Enrich full technical product knowledge
+        if: github.event_name != 'pull_request'
+        run: npm run enrich-catalogo
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_ENRICH_MODEL: gpt-6-luna
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ENRICH_DELAY_MS: 100
+
+      - name: Commit updated catalog and knowledge
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add catalogo/catalogo_para_bot.txt
-          git diff --staged --quiet || git commit -m "chore: sync catálogo desde WooCommerce"
+          git add catalogo/catalogo_para_bot.txt catalogo/product_knowledge.json
+          git diff --staged --quiet || git commit -m "chore: refresh BlueFishing catalog knowledge"
           git push
