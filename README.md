@@ -209,3 +209,59 @@ The repository is connected to Vercel through GitHub. Pull requests produce prev
 - The bot does not expose web-chat endpoints in the production routing configuration.
 - Product recommendations are grounded in retrieved catalog records and verified/enriched technical data.
 - The OpenAI API key, WhatsApp token, WooCommerce credentials and Supabase service role must remain server-side.
+
+
+## Hostinger KVM4 production deployment
+
+The preferred production target is now BlueFishing's own Hostinger KVM4 VPS.
+
+Stack:
+
+```text
+Internet / Meta WhatsApp
+        |
+        v
+Caddy :443
+ automatic TLS
+        |
+        v
+Node.js 22 app :3000
+        |
+        v
+PostgreSQL 17
+```
+
+The VPS deployment is defined by:
+
+- `Dockerfile`
+- `docker-compose.yml`
+- `Caddyfile`
+- `.env.production.example`
+- `db/schema.sql`
+- `deploy/hostinger/deploy.sh`
+
+### Initial VPS setup
+
+Install Docker Engine + Docker Compose plugin, clone the repository, then:
+
+```bash
+git checkout prod/hostinger-kvm4
+cp .env.production.example .env.production
+nano .env.production
+chmod +x deploy/hostinger/deploy.sh
+./deploy/hostinger/deploy.sh
+```
+
+DNS must point `BOT_DOMAIN` (recommended: `bot.bluefishing.cl`) to the KVM4 public IP before Caddy can obtain HTTPS certificates.
+
+The production Meta callback becomes:
+
+```text
+https://bot.bluefishing.cl/webhook
+```
+
+POST callbacks are authenticated using Meta's `X-Hub-Signature-256` and `META_APP_SECRET`.
+
+PostgreSQL on the VPS replaces Supabase as the preferred persistence backend for sessions, duplicate-message protection, telemetry and human handoff. Supabase remains supported as a compatibility fallback.
+
+The `catalogo` directory is bind-mounted so generated product knowledge survives container rebuilds.
