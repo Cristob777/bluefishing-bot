@@ -1,6 +1,8 @@
 const crypto = require("node:crypto");
 const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
 const { claimInboundMessage, releaseInboundMessage, hasPersistentStore } = require("../lib/sessionStore");
+const { pseudonymize, safeError } = require("../lib/logSanitizer");
+const { allowMessage } = require("../lib/rateLimiter");
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -87,7 +89,7 @@ module.exports = async (req, res) => {
   }
 
   if (!verifyMetaSignature(req)) {
-    console.warn("[Webhook] Firma Meta inválida");
+    console.warn("[SEC] Invalid Meta signature");
     return res.status(403).send("Forbidden");
   }
 
@@ -127,7 +129,7 @@ module.exports = async (req, res) => {
 
     claimed = await claimInboundMessage(messageId, from);
     if (!claimed) {
-      console.log("[Webhook] Mensaje duplicado ignorado:", messageId);
+      console.log("[Webhook] Duplicate ignored:", pseudonymize(messageId));
       return res.status(200).json({ status: "ok" });
     }
 
@@ -136,14 +138,19 @@ module.exports = async (req, res) => {
       return res.status(200).json({ status: "ok" });
     }
 
+    if (!allowMessage(String(from || ""))) {
+      console.warn("[SEC] Rate limit exceeded", { sender: pseudonymize(from) });
+      return res.status(200).json({ status: "ok" });
+    }
+
     const sanitizedText = sanitizeInput(message.text?.body || "");
     if (!sanitizedText) {
       return res.status(200).json({ status: "ok" });
     }
 
-    console.log("[Webhook] Mensaje recibido", {
-      messageId,
-      from,
+    console.log("[Webhook] Message received", {
+      message: pseudonymize(messageId),
+      sender: pseudonymize(from),
       chars: sanitizedText.length,
       persistentStore: hasPersistentStore,
     });
@@ -157,7 +164,7 @@ module.exports = async (req, res) => {
     await sendWhatsAppMessage(from, reply);
     return res.status(200).json({ status: "ok" });
   } catch (error) {
-    console.error("[Webhook] Error:", error);
+    console.error("[Webhook] Error:", safeError(error));
 
     // Si fallamos antes de responder al cliente, liberamos el id para que
     // un retry legítimo de Meta pueda reprocesarse.
