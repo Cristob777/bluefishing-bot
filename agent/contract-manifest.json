@@ -7,6 +7,7 @@
     "recommendation-contract.json",
     "tool-policy.json",
     "security-contract.json",
-    "response-contract.json"
+    "response-contract.json",
+    "cybersecurity-baseline.json"
   ]
 }
