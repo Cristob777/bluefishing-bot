@@ -1,6 +1,5 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { OPENAI_MODEL } = require("../lib/ai");
 const { hasPersistentStore, persistenceBackend } = require("../lib/sessionStore");
 const { ping } = require("../lib/postgres");
 
@@ -21,22 +20,31 @@ module.exports = async (req, res) => {
   if (req.method !== "GET") return res.status(405).json({ error: "method_not_allowed" });
 
   const database = persistenceBackend === "postgres" ? await ping() : hasPersistentStore;
-  const checks = {
-    openai: Boolean(process.env.OPENAI_API_KEY),
-    whatsapp: Boolean(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID && process.env.VERIFY_TOKEN),
-    meta_signature: Boolean(process.env.META_APP_SECRET),
-    database,
-    persistence_backend: persistenceBackend,
-    catalog_products: countCatalog(),
-    knowledge_products: countKnowledge(),
-  };
+  const ready =
+    Boolean(process.env.OPENAI_API_KEY) &&
+    Boolean(process.env.WHATSAPP_TOKEN && process.env.PHONE_NUMBER_ID && process.env.VERIFY_TOKEN) &&
+    Boolean(process.env.META_APP_SECRET) &&
+    Boolean(database) &&
+    countCatalog() > 0;
 
-  const ready = checks.openai && checks.whatsapp && checks.meta_signature && checks.database && checks.catalog_products > 0;
+  const supplied = String(req.headers?.["x-health-token"] || "");
+  const authorized = Boolean(process.env.HEALTHCHECK_TOKEN) && supplied === process.env.HEALTHCHECK_TOKEN;
+
+  if (!authorized) {
+    return res.status(ready ? 200 : 503).json({
+      service: "bluefishing-whatsapp-bot",
+      status: ready ? "ok" : "not_ready"
+    });
+  }
+
   return res.status(ready ? 200 : 503).json({
     service: "bluefishing-whatsapp-bot",
     status: ready ? "ok" : "not_ready",
-    model: OPENAI_MODEL,
-    checks,
-    commit: process.env.APP_COMMIT_SHA?.slice(0,12) || null,
+    checks: {
+      database: Boolean(database),
+      catalog: countCatalog() > 0,
+      knowledge: countKnowledge() > 0
+    },
+    commit: process.env.APP_COMMIT_SHA?.slice(0,12) || null
   });
 };
