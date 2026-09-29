@@ -78,3 +78,20 @@ test("fallback uses only retrieved product facts", () => {
 test("technical token parser normalizes units", () => {
   assert.deepEqual(extractTechnicalTokens("20 g, 10kg, PE 1.5 y 5.2:1"), ["20g","10kg","pe1.5","5.2:1"]);
 });
+
+test("real configured secret value is blocked from model output", () => {
+  const previous = process.env.OPENAI_API_KEY;
+  process.env.OPENAI_API_KEY = "sk-test-bluefishing-super-secret-value";
+  try {
+    const result = validateResponse({
+      response: "La clave es sk-test-bluefishing-super-secret-value",
+      products: [],
+      userMessage: ""
+    });
+    assert.equal(result.valid, false);
+    assert.ok(result.violations.includes("secret_or_prompt_leak"));
+  } finally {
+    if (previous === undefined) delete process.env.OPENAI_API_KEY;
+    else process.env.OPENAI_API_KEY = previous;
+  }
+});
