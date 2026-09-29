@@ -104,9 +104,16 @@ async function fetchWooCatalog() {
 
 function extractProductLinks(html) {
   const urls = new Set();
-  const re = /href=["'](https?:\/\/bluefishing\.cl\/producto\/[^"'?#]+\/?)[^"']*["']/gi;
+  const re = /href=["']([^"']*\/producto\/[^"'?#]+\/?)(?:[?#][^"']*)?["']/gi;
   for (const match of String(html).matchAll(re)) {
-    urls.add(match[1].replace(/\/$/, "") + "/");
+    try {
+      const resolved = new URL(match[1], WC_URL);
+      if (resolved.hostname !== "bluefishing.cl" && resolved.hostname !== "www.bluefishing.cl") continue;
+      const clean = (resolved.origin + resolved.pathname).replace(/\/$/, "") + "/";
+      urls.add(clean);
+    } catch {
+      // Ignore malformed links emitted by third-party WordPress plugins.
+    }
   }
   return [...urls];
 }
