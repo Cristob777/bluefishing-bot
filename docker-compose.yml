@@ -47,6 +47,27 @@ services:
     networks:
       - internal
 
+  maintenance:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
+    command: ["sh","-c","while true; do node scripts/security-retention.js; sleep 86400; done"]
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
