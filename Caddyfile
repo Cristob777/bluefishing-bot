@@ -8,9 +8,4 @@
   reverse_proxy @health app:3000
 
   respond 404
-
-  log {
-    output stdout
-    format json
-  }
 }
