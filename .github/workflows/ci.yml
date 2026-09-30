@@ -5,9 +5,11 @@ on:
     branches:
       - main
       - prod/whatsapp-openai
+      - prod/hostinger-kvm4
   pull_request:
     branches:
       - main
+      - prod/whatsapp-openai
 
 permissions:
   contents: read
@@ -27,9 +29,21 @@ jobs:
         run: |
           node --check api/webhook.js
           node --check api/health.js
+          node --check api/admin.js
           node --check lib/salesEngine.js
+          node --check lib/classifier.js
           node --check lib/catalog.js
           node --check lib/productPage.js
           node --check lib/knowledgeExtractor.js
           node --check scripts/sync-catalogo.js
           node --check scripts/enrich-catalogo.js
+          node --check server.js
+          node --check lib/postgres.js
+          node --check lib/agentContract.js
+          node --check lib/securityGuard.js
+          node --check lib/responseValidator.js
+          node --check scripts/security-retention.js
+          node --check lib/rateLimiter.js
+          node --check lib/logSanitizer.js
+          node --check lib/tokenGovernor.js
+          node -e "require('./lib/agentContract')"

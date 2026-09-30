@@ -1,631 +1,151 @@
-const schema = require("../catalogo/schema-enriquecimiento");
+const crypto = require("node:crypto");
+const { query } = require("../lib/postgres");
+const { safeError } = require("../lib/logSanitizer");
 
-const SUPABASE_URL = process.env.SUPABASE_URL || "";
-const SUPABASE_ANON_KEY = process.env.SUPABASE_ANON_KEY || "";
+const COOKIE = "bf_admin";
+const TTL = 12 * 60 * 60;
+const attempts = new Map();
 
-function renderMissingConfigPage() {
-  return `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><title>BlueFishing — Admin no configurado</title></head>
-<body style="font-family: system-ui, sans-serif; max-width: 640px; margin: 80px auto; line-height: 1.6;">
-  <h1>Falta configurar Supabase</h1>
-  <p>Definí <code>SUPABASE_URL</code> y <code>SUPABASE_ANON_KEY</code> como variables de entorno en Vercel
-  (Project Settings → Environment Variables) y redeployá. Ver <code>supabase/schema.sql</code> y el
-  README para el setup completo.</p>
-</body></html>`;
+function esc(v) {
+  return String(v ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[c]));
 }
 
-function renderAdminPage() {
-  const schemaJson = JSON.stringify(schema).replace(/</g, "\\u003c");
-  const supabaseUrlJson = JSON.stringify(SUPABASE_URL);
-  const supabaseAnonKeyJson = JSON.stringify(SUPABASE_ANON_KEY);
-
-  return `<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BlueFishing Bot — Entrenar catálogo</title>
-<style>
-  :root { color-scheme: light; }
-  * { box-sizing: border-box; }
-  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; margin: 0; background: #f6f7f9; color: #1a1d21; }
-  header { background: #0b3d63; color: white; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
-  header h1 { font-size: 16px; margin: 0; font-weight: 600; }
-  header .stats { font-size: 13px; opacity: 0.9; }
-  #logout-btn { background: transparent; border: 1px solid rgba(255,255,255,0.4); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px; }
-
-  #login-screen { max-width: 360px; margin: 90px auto; background: white; padding: 28px; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-  #login-screen h2 { margin-top: 0; font-size: 18px; }
-  #login-screen input { width: 100%; padding: 9px 10px; margin-bottom: 10px; border: 1px solid #d3d7dc; border-radius: 6px; font-size: 14px; }
-  #login-screen button { width: 100%; padding: 10px; background: #0b3d63; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
-  #login-error { color: #b3261e; font-size: 13px; min-height: 18px; margin-bottom: 6px; }
-
-  #main-screen { display: flex; height: calc(100vh - 49px); }
-  #product-list { width: 340px; flex-shrink: 0; background: white; border-right: 1px solid #e3e5e8; overflow-y: auto; }
-  #product-list .toolbar { padding: 10px; border-bottom: 1px solid #eee; position: sticky; top: 0; background: white; }
-  #product-list input[type="search"] { width: 100%; padding: 8px; border: 1px solid #d3d7dc; border-radius: 6px; font-size: 13px; margin-bottom: 6px; }
-  #product-list label.filter { font-size: 12px; color: #555; display: flex; align-items: center; gap: 6px; }
-  .product-item { padding: 10px 12px; border-bottom: 1px solid #f0f1f2; cursor: pointer; font-size: 13px; }
-  .product-item:hover { background: #f6f9fc; }
-  .product-item.active { background: #e8f1fa; }
-  .product-item .name { font-weight: 500; margin-bottom: 3px; }
-  .product-item .meta { color: #666; font-size: 12px; display: flex; justify-content: space-between; align-items: center; }
-  .badge { font-size: 10px; padding: 2px 6px; border-radius: 10px; font-weight: 600; }
-  .badge.ok { background: #e3f4e6; color: #1e7b34; }
-  .badge.pending { background: #fdecea; color: #b3261e; }
-
-  #editor { flex: 1; overflow-y: auto; padding: 24px 32px; }
-  #editor .placeholder { color: #888; font-size: 14px; margin-top: 60px; text-align: center; }
-  #editor h2 { margin-top: 0; font-size: 18px; }
-  #editor .subtitle { color: #666; font-size: 13px; margin-bottom: 20px; }
-  #editor a { color: #0b6ab3; }
-  fieldset { border: 1px solid #e3e5e8; border-radius: 8px; margin-bottom: 16px; padding: 14px 16px; }
-  legend { font-size: 12px; font-weight: 600; color: #444; text-transform: uppercase; letter-spacing: 0.03em; padding: 0 6px; }
-  .field { margin-bottom: 14px; }
-  .field label.field-label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 4px; }
-  .field .help { font-size: 11.5px; color: #888; margin-top: 3px; }
-  .field input[type="text"], .field textarea, .field select { width: 100%; padding: 8px 9px; border: 1px solid #d3d7dc; border-radius: 6px; font-size: 13.5px; font-family: inherit; }
-  .field textarea { min-height: 60px; resize: vertical; }
-  .checkbox-group { display: flex; flex-wrap: wrap; gap: 10px; }
-  .checkbox-group label { font-size: 13px; display: flex; align-items: center; gap: 5px; background: #f2f4f6; padding: 5px 10px; border-radius: 14px; cursor: pointer; }
-  .checkbox-group input { margin: 0; }
-
-  #save-bar { position: sticky; bottom: 0; background: white; border-top: 1px solid #e3e5e8; padding: 12px 0; margin-top: 8px; display: flex; align-items: center; gap: 12px; }
-  #save-btn { background: #0b6ab3; color: white; border: none; padding: 10px 22px; border-radius: 6px; font-size: 14px; cursor: pointer; }
-  #save-btn:disabled { opacity: 0.6; cursor: default; }
-  #save-status { font-size: 13px; color: #1e7b34; }
-
-  .tab-bar { display: flex; gap: 4px; background: white; border-bottom: 1px solid #e3e5e8; padding: 0 20px; }
-  .tab-btn { background: transparent; border: none; padding: 12px 14px; font-size: 13.5px; cursor: pointer; color: #555; border-bottom: 2px solid transparent; }
-  .tab-btn.active { color: #0b3d63; border-bottom-color: #0b3d63; font-weight: 600; }
-  .tab-panel[hidden] { display: none; }
-
-  #chat-tab { display: flex; flex-direction: column; height: calc(100vh - 49px - 45px); max-width: 720px; margin: 0 auto; }
-  #chat-messages { flex: 1; overflow-y: auto; padding: 20px; }
-  .chat-msg { max-width: 75%; padding: 9px 13px; border-radius: 12px; margin-bottom: 4px; font-size: 13.5px; line-height: 1.45; white-space: pre-wrap; word-wrap: break-word; }
-  .chat-msg.user { background: #0b3d63; color: white; margin-left: auto; border-bottom-right-radius: 3px; }
-  .chat-msg.assistant { background: white; border: 1px solid #e3e5e8; margin-right: auto; border-bottom-left-radius: 3px; }
-  .chat-turn { margin-bottom: 14px; }
-  .chat-turn-tools { margin-right: auto; max-width: 75%; margin-top: 3px; }
-  .flag-btn { background: none; border: 1px solid #e3c2c0; color: #b3261e; font-size: 11px; padding: 3px 8px; border-radius: 10px; cursor: pointer; }
-  .flag-btn.flagged { border-color: #c8dcc9; color: #1e7b34; cursor: default; }
-  .correction-form { margin-top: 6px; background: #fff8f7; border: 1px solid #f0d4d2; border-radius: 8px; padding: 10px; max-width: 75%; }
-  .correction-form textarea { width: 100%; font-size: 12.5px; padding: 6px 8px; border: 1px solid #d3d7dc; border-radius: 6px; min-height: 50px; font-family: inherit; }
-  .correction-form .actions { display: flex; gap: 8px; margin-top: 6px; }
-  .correction-form button { font-size: 12px; padding: 5px 10px; border-radius: 6px; cursor: pointer; }
-  .correction-form .save-correction { background: #b3261e; color: white; border: none; }
-  .correction-form .cancel-correction { background: transparent; border: 1px solid #ccc; }
-  #chat-inputbar { display: flex; gap: 8px; padding: 14px 20px; border-top: 1px solid #e3e5e8; background: white; }
-  #chat-input { flex: 1; padding: 10px 14px; border: 1px solid #d3d7dc; border-radius: 20px; font-size: 13.5px; }
-  #chat-send-btn { background: #0b3d63; color: white; border: none; border-radius: 20px; padding: 0 18px; cursor: pointer; }
-  #chat-hint { font-size: 12px; color: #888; padding: 8px 20px 0; }
-
-  #feedback-tab { max-width: 820px; margin: 0 auto; padding: 20px; }
-  .feedback-item { background: white; border: 1px solid #e3e5e8; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px; }
-  .feedback-item .fb-meta { font-size: 11.5px; color: #888; margin-bottom: 8px; display: flex; justify-content: space-between; }
-  .feedback-item .fb-row { font-size: 13px; margin-bottom: 6px; }
-  .feedback-item .fb-label { font-weight: 600; color: #555; font-size: 11px; text-transform: uppercase; letter-spacing: .02em; }
-  .feedback-item .fb-bad { color: #b3261e; }
-  .feedback-item .fb-good { color: #1e7b34; }
-  .resolve-btn { margin-top: 6px; background: #0b6ab3; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; cursor: pointer; }
-  .status-pill { font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
-  .status-pill.flagged { background: #fdecea; color: #b3261e; }
-  .status-pill.resolved { background: #e3f4e6; color: #1e7b34; }
-</style>
-</head>
-<body>
-
-<div id="login-screen">
-  <h2>BlueFishing Bot — Entrenar catálogo</h2>
-  <p style="font-size:13px;color:#666;margin-top:-8px;">Ingresá con tu cuenta del equipo.</p>
-  <div id="login-error"></div>
-  <input id="login-email" type="email" placeholder="Email" autocomplete="username">
-  <input id="login-password" type="password" placeholder="Contraseña" autocomplete="current-password">
-  <button id="login-btn">Entrar</button>
-</div>
-
-<div id="app-screen" hidden>
-  <header>
-    <h1>BlueFishing Bot — Entrenar catálogo</h1>
-    <div style="display:flex;align-items:center;gap:16px;">
-      <span class="stats" id="stats-line"></span>
-      <button id="logout-btn">Salir</button>
-    </div>
-  </header>
-  <div class="tab-bar">
-    <button class="tab-btn active" data-tab="catalogo">Catálogo</button>
-    <button class="tab-btn" data-tab="chat">Chat de prueba</button>
-    <button class="tab-btn" data-tab="feedback">Correcciones</button>
-  </div>
-
-  <div id="catalogo-tab" class="tab-panel">
-    <div id="main-screen">
-      <aside id="product-list">
-        <div class="toolbar">
-          <input type="search" id="search-input" placeholder="Buscar producto...">
-          <label class="filter"><input type="checkbox" id="filter-pending"> Solo sin entrenar</label>
-        </div>
-        <div id="product-items"></div>
-      </aside>
-      <main id="editor">
-        <div class="placeholder">Elegí un producto de la lista para cargar su ficha técnica.</div>
-      </main>
-    </div>
-  </div>
-
-  <div id="chat-tab" class="tab-panel" hidden>
-    <div id="chat-hint">Chateá con Matías como si fueras cliente. Si responde algo incorrecto, marcalo para dejar la corrección en cola de revisión.</div>
-    <div id="chat-messages"></div>
-    <div id="chat-inputbar">
-      <input type="text" id="chat-input" placeholder="Escribí un mensaje de prueba..." maxlength="800">
-      <button id="chat-send-btn">Enviar</button>
-    </div>
-  </div>
-
-  <div id="feedback-tab" class="tab-panel" hidden>
-    <div id="feedback-items"></div>
-  </div>
-</div>
-
-<script type="module">
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const SCHEMA = ${schemaJson};
-const supabase = createClient(${supabaseUrlJson}, ${supabaseAnonKeyJson});
-
-const loginScreen = document.getElementById("login-screen");
-const appScreen = document.getElementById("app-screen");
-const loginError = document.getElementById("login-error");
-const productItemsEl = document.getElementById("product-items");
-const editorEl = document.getElementById("editor");
-const statsLine = document.getElementById("stats-line");
-const searchInput = document.getElementById("search-input");
-const filterPending = document.getElementById("filter-pending");
-
-let products = [];
-let attributesByUrl = new Map();
-let currentUser = null;
-let activeUrl = null;
-
-function normList(value) {
-  return (value || []).map((v) => String(v).trim()).filter(Boolean);
+function configured() {
+  return Boolean(process.env.ADMIN_DASHBOARD_USER && process.env.ADMIN_DASHBOARD_PASSWORD && process.env.ADMIN_SESSION_SECRET);
 }
 
-async function loadData() {
-  const [{ data: productRows, error: productsError }, { data: attrRows, error: attrsError }] = await Promise.all([
-    supabase.from("products").select("*").order("name"),
-    supabase.from("product_attributes").select("*"),
+function eq(a,b) {
+  const A=Buffer.from(String(a??"")), B=Buffer.from(String(b??""));
+  return A.length===B.length && crypto.timingSafeEqual(A,B);
+}
+
+function sign(user) {
+  const payload=Buffer.from(JSON.stringify({user,exp:Date.now()+TTL*1000})).toString("base64url");
+  const sig=crypto.createHmac("sha256",process.env.ADMIN_SESSION_SECRET).update(payload).digest("base64url");
+  return payload+"."+sig;
+}
+
+function verify(token) {
+  try {
+    const [payload,sig]=String(token||"").split(".");
+    if(!payload||!sig) return false;
+    const expected=crypto.createHmac("sha256",process.env.ADMIN_SESSION_SECRET).update(payload).digest("base64url");
+    if(!eq(sig,expected)) return false;
+    const data=JSON.parse(Buffer.from(payload,"base64url").toString("utf8"));
+    return data.user===process.env.ADMIN_DASHBOARD_USER && Number(data.exp)>Date.now();
+  } catch { return false; }
+}
+
+function cookies(req) {
+  return Object.fromEntries(String(req.headers.cookie||"").split(";").map(x=>x.trim()).filter(Boolean).map(x=>{
+    const i=x.indexOf("="); return i<0?[x,""]:[x.slice(0,i),x.slice(i+1)];
+  }));
+}
+
+function headers(res) {
+  res.setHeader("Cache-Control","no-store");
+  res.setHeader("X-Content-Type-Options","nosniff");
+  res.setHeader("X-Frame-Options","DENY");
+  res.setHeader("Referrer-Policy","no-referrer");
+  res.setHeader("Content-Security-Policy","default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'");
+}
+
+function send(res,status,body) {
+  headers(res); res.statusCode=status; res.setHeader("Content-Type","text/html; charset=utf-8"); res.end(body);
+}
+
+function redirect(res,where,cookie) {
+  headers(res); res.statusCode=303; res.setHeader("Location",where); if(cookie) res.setHeader("Set-Cookie",cookie); res.end();
+}
+
+function page(title,body) {
+  const css="body{margin:0;background:#07111f;color:#edf5ff;font-family:system-ui,sans-serif}.w{max-width:1200px;margin:auto;padding:24px}.card{background:#0d1b2e;border:1px solid #20364f;border-radius:14px;padding:16px}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:16px 0}.cols{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}.metric b{font-size:28px;display:block}.muted{color:#93a9c2;font-size:13px}a{color:#4fb8ff;text-decoration:none}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid #20364f;text-align:left;vertical-align:top}th{color:#93a9c2}.pill{display:inline-block;border:1px solid #20364f;border-radius:999px;padding:3px 7px;margin:2px;font-size:11px;color:#93a9c2}.msg{padding:12px;border-radius:12px;margin:8px 0;white-space:pre-wrap}.u{background:#143253;margin-left:18%}.a{background:#13281f;margin-right:18%}.login{max-width:400px;margin:12vh auto}input,button{width:100%;padding:11px;margin:7px 0;border-radius:8px;border:1px solid #20364f;background:#0d1b2e;color:#edf5ff}button{cursor:pointer}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.filters a{display:inline-block;border:1px solid #20364f;padding:6px 9px;border-radius:8px;margin-right:6px}.rank{display:flex;justify-content:space-between;margin:9px 0}@media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}.cols{grid-template-columns:1fr}}@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.w{padding:14px}}";
+  return "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title)+"</title><style>"+css+"</style></head><body>"+body+"</body></html>";
+}
+
+function login(error="") {
+  return page("BlueFishing Sales Console","<div class='w login'><h2>BlueFishing Sales Console</h2><p class='muted'>Acceso privado</p><div class='card'>"+(error?"<p>"+esc(error)+"</p>":"")+"<form method='post' action='/admin/login'><input name='username' placeholder='Usuario' autocomplete='username' required><input type='password' name='password' placeholder='Contraseña' autocomplete='current-password' required><button>Entrar</button></form></div></div>");
+}
+
+function fmt(n){return new Intl.NumberFormat("es-CL").format(Number(n||0));}
+function date(v){try{return new Intl.DateTimeFormat("es-CL",{timeZone:process.env.ADMIN_TIMEZONE||"America/Santiago",dateStyle:"short",timeStyle:"short"}).format(new Date(v));}catch{return String(v||"");}}
+function masked(id){const x=String(id||"").replace(/^wa:/,"");return x.length>7?x.slice(0,3)+" •••• "+x.slice(-4):"***"+x.slice(-3);}
+function days(v){const n=Number(v);return [1,7,30,90].includes(n)?n:7;}
+function form(body){return Object.fromEntries(new URLSearchParams(Buffer.from(body||"").toString("utf8")).entries());}
+function cost(s){
+  const i=Number(process.env.OPENAI_INPUT_COST_PER_1M||0), c=Number(process.env.OPENAI_CACHED_INPUT_COST_PER_1M||0), o=Number(process.env.OPENAI_OUTPUT_COST_PER_1M||0);
+  if(!(i>0)||!(o>0)) return null;
+  const input=Number(s.input_tokens||0), cached=Math.min(input,Number(s.cached_input_tokens||0));
+  return ((input-cached)*i+cached*(c>0?c:i)+Number(s.output_tokens||0)*o)/1000000;
+}
+
+async function dashboard(d) {
+  const q = await Promise.all([
+    query("select count(*)::int interactions,count(distinct session_id)::int customers,coalesce(sum((llm_usage->>'llm_calls')::int),0)::bigint llm_calls,coalesce(sum((llm_usage->>'input_tokens')::bigint),0)::bigint input_tokens,coalesce(sum((llm_usage->>'cached_input_tokens')::bigint),0)::bigint cached_input_tokens,coalesce(sum((llm_usage->>'output_tokens')::bigint),0)::bigint output_tokens,coalesce(sum((llm_usage->>'total_tokens')::bigint),0)::bigint total_tokens,coalesce(round(avg(latency_ms))::int,0) avg_latency_ms,count(*) filter(where jsonb_array_length(products)=0 and handoff=false)::int no_product_turns,count(*) filter(where route like '%fallback')::int fallbacks from bot_events where created_at>=now()-($1::int*interval '1 day')",[d]),
+    query("select count(*)::int count from bot_sessions where updated_at>=now()-($1::int*interval '1 day') and lower(coalesce(known_context->>'purchase_intent_level',''))='high'",[d]),
+    query("select count(*)::int count from handoff_requests where status='open'"),
+    query("select coalesce(intent,'sin_intent') name,count(*)::int count from bot_events where created_at>=now()-($1::int*interval '1 day') group by 1 order by count desc limit 6",[d]),
+    query("select item->>'name' name,count(*)::int count from bot_events e cross join lateral jsonb_array_elements(e.products)item where e.created_at>=now()-($1::int*interval '1 day') and coalesce(item->>'name','')<>'' group by 1 order by count desc limit 6",[d]),
+    query("select known_context->>'target_species' name,count(*)::int count from bot_sessions where updated_at>=now()-($1::int*interval '1 day') and coalesce(known_context->>'target_species','unknown') not in('','unknown') group by 1 order by count desc limit 6",[d]),
+    query("select session_id,max(created_at) last_at,count(*)::int turns,coalesce(sum((llm_usage->>'total_tokens')::bigint),0)::bigint tokens,(array_agg(coalesce(intent,'') order by created_at desc))[1] last_intent,(array_agg(user_message order by created_at desc))[1] last_message from bot_events where created_at>=now()-($1::int*interval '1 day') group by session_id order by max(created_at) desc limit 25",[d]),
+    query("select session_id,intent,last_message,created_at from handoff_requests where status='open' order by created_at desc limit 20")
   ]);
-
-  if (productsError) throw productsError;
-  if (attrsError) throw attrsError;
-
-  products = productRows || [];
-  attributesByUrl = new Map((attrRows || []).map((row) => [row.product_url, row]));
-  renderStats();
-  renderList();
+  return {s:q[0].rows[0]||{},high:Number(q[1].rows[0]?.count||0),handoffs:Number(q[2].rows[0]?.count||0),intents:q[3].rows,products:q[4].rows,species:q[5].rows,recent:q[6].rows,attention:q[7].rows};
 }
 
-function renderStats() {
-  const trained = products.filter((p) => attributesByUrl.has(p.url)).length;
-  statsLine.textContent = trained + "/" + products.length + " productos entrenados · " + (currentUser?.email || "");
+function ranks(rows){return rows.length?rows.map(r=>"<div class='rank'><span>"+esc(r.name||"Sin dato")+"</span><b>"+fmt(r.count)+"</b></div>").join(""):"<p class='muted'>Sin datos.</p>";}
+
+function dashboardHtml(x,d){
+  const s=x.s, ai=cost(s), cur=process.env.AI_COST_CURRENCY||"USD";
+  const recent=x.recent.map(r=>"<tr><td><a href='/admin?days="+d+"&session="+encodeURIComponent(r.session_id)+"'>"+esc(masked(r.session_id))+"</a></td><td>"+esc(r.last_intent||"—")+"</td><td>"+esc(String(r.last_message||"").slice(0,100))+"</td><td>"+fmt(r.turns)+"</td><td>"+fmt(r.tokens)+"</td><td>"+esc(date(r.last_at))+"</td></tr>").join("");
+  const hand=x.attention.map(r=>"<tr><td>"+esc(masked(r.session_id))+"</td><td>"+esc(r.intent||"—")+"</td><td>"+esc(String(r.last_message||"").slice(0,100))+"</td><td>"+esc(date(r.created_at))+"</td></tr>").join("");
+  return page("BlueFishing Sales Console","<div class='w'><div class='top'><div><h2>BlueFishing Sales Console</h2><div class='muted'>Matías · actividad comercial real</div></div><form method='post' action='/admin/logout'><button>Salir</button></form></div><div class='filters'><a href='/admin?days=1'>Hoy</a><a href='/admin?days=7'>7 días</a><a href='/admin?days=30'>30 días</a><a href='/admin?days=90'>90 días</a></div><div class='grid'>"+
+  [["Interacciones",s.interactions],["Clientes activos",s.customers],["Intención alta",x.high],["Handoffs abiertos",x.handoffs],["Tokens IA",s.total_tokens],["Coste IA",ai===null?"—":cur+" "+ai.toFixed(4)]].map(m=>"<div class='card metric'><span class='muted'>"+m[0]+"</span><b>"+fmt(m[1])+"</b></div>").join("")+
+  "</div><div class='cols'><div><div class='card'><h3>Conversaciones recientes</h3><table><tr><th>Cliente</th><th>Intención</th><th>Último mensaje</th><th>Turnos</th><th>Tokens</th><th>Actividad</th></tr>"+(recent||"<tr><td colspan='6'>Sin conversaciones.</td></tr>")+"</table></div><div class='card' style='margin-top:14px'><h3>Requiere atención humana</h3><table><tr><th>Cliente</th><th>Motivo</th><th>Último mensaje</th><th>Fecha</th></tr>"+(hand||"<tr><td colspan='4'>Sin handoffs abiertos.</td></tr>")+"</table></div></div><div><div class='card'><h3>Productos recomendados</h3>"+ranks(x.products)+"</div><div class='card' style='margin-top:14px'><h3>Especies consultadas</h3>"+ranks(x.species)+"</div><div class='card' style='margin-top:14px'><h3>Intenciones</h3>"+ranks(x.intents)+"</div><div class='card' style='margin-top:14px'><h3>Calidad operativa</h3><div class='rank'><span>Sin producto recuperado</span><b>"+fmt(s.no_product_turns)+"</b></div><div class='rank'><span>Fallbacks</span><b>"+fmt(s.fallbacks)+"</b></div><div class='rank'><span>Latencia media</span><b>"+fmt(s.avg_latency_ms)+" ms</b></div></div></div></div></div>");
 }
 
-function renderList() {
-  const query = (searchInput.value || "").toLowerCase().trim();
-  const onlyPending = filterPending.checked;
-
-  const filtered = products.filter((p) => {
-    const isTrained = attributesByUrl.has(p.url);
-    if (onlyPending && isTrained) return false;
-    if (!query) return true;
-    return (p.name + " " + (p.brand || "") + " " + (p.category || "")).toLowerCase().includes(query);
-  });
-
-  productItemsEl.innerHTML = "";
-  for (const p of filtered) {
-    const isTrained = attributesByUrl.has(p.url);
-    const item = document.createElement("div");
-    item.className = "product-item" + (p.url === activeUrl ? " active" : "");
-    item.innerHTML =
-      '<div class="name">' + escapeHtml(p.name) + '</div>' +
-      '<div class="meta"><span>' + escapeHtml(p.category || p.product_type || "") + '</span>' +
-      '<span class="badge ' + (isTrained ? "ok" : "pending") + '">' + (isTrained ? "Entrenado" : "Pendiente") + '</span></div>';
-    item.addEventListener("click", () => openEditor(p.url));
-    productItemsEl.appendChild(item);
-  }
+async function conversation(id){
+  const q=await Promise.all([
+    query("select known_context,updated_at from bot_sessions where session_id=$1 limit 1",[id]),
+    query("select user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id])
+  ]);
+  return {session:q[0].rows[0]||{},events:q[1].rows};
 }
 
-function escapeHtml(str) {
-  return String(str || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+function conversationHtml(id,x,d){
+  const c=x.session.known_context||{};
+  const pills=["product_type","target_species","water_type","fishing_position","technique","weight_range","weight_grams","budget_range","brand_preference","purchase_intent_level"].filter(k=>c[k]&&c[k]!=="unknown").map(k=>"<span class='pill'>"+esc(k)+": "+esc(c[k])+"</span>").join("");
+  const ev=x.events.map(e=>"<div class='card' style='margin-top:10px'><div class='msg u'><b>Cliente</b><br>"+esc(e.user_message)+"</div><div class='msg a'><b>Matías</b><br>"+esc(e.bot_response||"")+"</div><div class='muted'>"+esc(date(e.created_at))+" · "+esc(e.intent||"") +" · "+esc(e.route||"")+" · "+fmt(e.llm_usage?.total_tokens)+" tokens · "+fmt(e.latency_ms)+" ms</div></div>").join("");
+  return page("Conversación","<div class='w'><div class='top'><div><a href='/admin?days="+d+"'>← Dashboard</a><h2>Cliente "+esc(masked(id))+"</h2></div><form method='post' action='/admin/logout'><button>Salir</button></form></div><div class='card'><h3>Contexto detectado</h3>"+(pills||"<span class='muted'>Sin contexto confirmado.</span>")+"</div><h3 style='margin-top:18px'>Conversación</h3>"+(ev||"<div class='card'>Sin eventos.</div>")+"</div>");
 }
 
-function fieldsForProductType(productType) {
-  const extra = SCHEMA.FIELDS_BY_PRODUCT_TYPE[productType] || [];
-  if (productType === "combo") return [...extra, ...SCHEMA.COMBO_FIELDS];
-  return extra;
-}
+module.exports = async function(req,res){
+  if(!configured()){res.statusCode=404;return res.end("Not found");}
+  const path=req.path||"/admin", ck=cookies(req), ok=verify(ck[COOKIE]);
 
-function renderFieldInput(field, value) {
-  const id = "field_" + field.key;
-  const help = field.help ? '<div class="help">' + escapeHtml(field.help) + "</div>" : "";
-
-  if (field.type === "select") {
-    const options = ["", ...field.options].map((opt) => {
-      const selected = value === opt ? " selected" : "";
-      const label = opt === "" ? "— sin definir —" : opt;
-      return '<option value="' + escapeHtml(opt) + '"' + selected + ">" + escapeHtml(label) + "</option>";
-    }).join("");
-    return '<div class="field"><label class="field-label" for="' + id + '">' + escapeHtml(field.label) + '</label>' +
-      '<select id="' + id + '">' + options + "</select>" + help + "</div>";
+  if(path==="/admin/login"&&req.method==="POST"){
+    const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
+    const a=attempts.get(ip)||{n:0,t:Date.now()};
+    if(Date.now()-a.t>15*60*1000){a.n=0;a.t=Date.now();}
+    if(a.n>=5)return send(res,429,login("Demasiados intentos."));
+    const f=form(req.rawBody);
+    if(!eq(f.username,process.env.ADMIN_DASHBOARD_USER)||!eq(f.password,process.env.ADMIN_DASHBOARD_PASSWORD)){a.n++;attempts.set(ip,a);return send(res,401,login("Credenciales incorrectas."));}
+    attempts.delete(ip);
+    return redirect(res,"/admin",COOKIE+"="+sign(f.username)+"; Max-Age="+TTL+"; Path=/admin; HttpOnly; Secure; SameSite=Strict");
   }
 
-  if (field.type === "multiselect") {
-    const selectedList = normList(value);
-    const boxes = field.options.map((opt) => {
-      const checked = selectedList.includes(opt) ? " checked" : "";
-      return '<label><input type="checkbox" value="' + escapeHtml(opt) + '"' + checked + "> " + escapeHtml(opt) + "</label>";
-    }).join("");
-    return '<div class="field"><label class="field-label">' + escapeHtml(field.label) + '</label>' +
-      '<div class="checkbox-group" id="' + id + '">' + boxes + "</div>" + help + "</div>";
+  if(!ok)return send(res,200,login());
+  if(path==="/admin/logout"&&req.method==="POST")return redirect(res,"/admin",COOKIE+"=; Max-Age=0; Path=/admin; HttpOnly; Secure; SameSite=Strict");
+  if(req.method!=="GET"||path!=="/admin")return send(res,404,page("No encontrado","<div class='w'>No encontrado.</div>"));
+
+  try{
+    const d=days(req.query?.days), id=String(req.query?.session||"").slice(0,160);
+    if(id)return send(res,200,conversationHtml(id,await conversation(id),d));
+    return send(res,200,dashboardHtml(await dashboard(d),d));
+  }catch(error){
+    console.error("[Admin] Dashboard error:",safeError(error));
+    return send(res,500,page("Error","<div class='w'><div class='card'>No pudimos cargar el dashboard.</div></div>"));
   }
-
-  if (field.type === "multiselect_tags") {
-    const current = normList(value).join(", ");
-    const datalist = (field.options || []).map((opt) => '<option value="' + escapeHtml(opt) + '">').join("");
-    return '<div class="field"><label class="field-label" for="' + id + '">' + escapeHtml(field.label) + '</label>' +
-      '<input type="text" id="' + id + '" list="' + id + '_list" value="' + escapeHtml(current) + '" placeholder="separar con comas">' +
-      '<datalist id="' + id + '_list">' + datalist + "</datalist>" + help + "</div>";
-  }
-
-  if (field.type === "textarea") {
-    return '<div class="field"><label class="field-label" for="' + id + '">' + escapeHtml(field.label) + '</label>' +
-      '<textarea id="' + id + '">' + escapeHtml(value || "") + "</textarea>" + help + "</div>";
-  }
-
-  if (field.type === "boolean") {
-    const checked = value ? " checked" : "";
-    return '<div class="field"><label class="field-label"><input type="checkbox" id="' + id + '"' + checked + "> " + escapeHtml(field.label) + "</label>" + help + "</div>";
-  }
-
-  return '<div class="field"><label class="field-label" for="' + id + '">' + escapeHtml(field.label) + '</label>' +
-    '<input type="text" id="' + id + '" value="' + escapeHtml(value || "") + '">' + help + "</div>";
-}
-
-function readFieldValue(field) {
-  const id = "field_" + field.key;
-  if (field.type === "multiselect") {
-    const container = document.getElementById(id);
-    return [...container.querySelectorAll("input:checked")].map((el) => el.value);
-  }
-  if (field.type === "multiselect_tags") {
-    const raw = document.getElementById(id).value;
-    return raw.split(",").map((v) => v.trim()).filter(Boolean);
-  }
-  if (field.type === "boolean") {
-    return document.getElementById(id).checked;
-  }
-  return document.getElementById(id).value.trim();
-}
-
-function openEditor(url) {
-  activeUrl = url;
-  renderList();
-
-  const product = products.find((p) => p.url === url);
-  if (!product) return;
-  const attrs = attributesByUrl.get(url) || {};
-  const categoryFields = fieldsForProductType(product.product_type);
-
-  const commonHtml = SCHEMA.COMMON_FIELDS.map((field) => {
-    const value = field.key === "verified_notes" ? attrs.verified_notes : attrs[field.key];
-    return renderFieldInput(field, value);
-  }).join("");
-
-  const extraValues = attrs.extra || {};
-  const categoryHtml = categoryFields.map((field) => renderFieldInput(field, extraValues[field.key])).join("");
-
-  editorEl.innerHTML =
-    '<h2>' + escapeHtml(product.name) + "</h2>" +
-    '<div class="subtitle">' + escapeHtml(product.price || "") + " · " + escapeHtml(product.category || "") +
-    ' · <a href="' + escapeHtml(product.url) + '" target="_blank" rel="noopener">ver en la tienda ↗</a></div>' +
-    '<fieldset><legend>Datos generales</legend>' + commonHtml + "</fieldset>" +
-    (categoryHtml ? '<fieldset><legend>Specs de ' + escapeHtml(product.product_type || "categoría") + "</legend>" + categoryHtml + "</fieldset>" : "") +
-    '<div id="save-bar"><button id="save-btn">Guardar ficha</button><span id="save-status"></span></div>';
-
-  document.getElementById("save-btn").addEventListener("click", () => saveProduct(product, categoryFields));
-}
-
-async function saveProduct(product, categoryFields) {
-  const saveBtn = document.getElementById("save-btn");
-  const saveStatus = document.getElementById("save-status");
-  saveBtn.disabled = true;
-  saveStatus.textContent = "Guardando...";
-  saveStatus.style.color = "#666";
-
-  const commonValues = {};
-  for (const field of SCHEMA.COMMON_FIELDS) {
-    commonValues[field.key] = readFieldValue(field);
-  }
-
-  const extra = {};
-  for (const field of categoryFields) {
-    extra[field.key] = readFieldValue(field);
-  }
-
-  const row = {
-    product_url: product.url,
-    target_species: commonValues.target_species || [],
-    water_type: commonValues.water_type || [],
-    fishing_position: commonValues.fishing_position || [],
-    technique: commonValues.technique || [],
-    experience_level: commonValues.experience_level || null,
-    verified_notes: commonValues.verified_notes || "",
-    extra,
-    updated_by: currentUser?.email || null,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.from("product_attributes").upsert(row, { onConflict: "product_url" });
-
-  saveBtn.disabled = false;
-  if (error) {
-    saveStatus.textContent = "Error: " + error.message;
-    saveStatus.style.color = "#b3261e";
-    return;
-  }
-
-  attributesByUrl.set(product.url, row);
-  saveStatus.textContent = "Guardado ✓";
-  renderStats();
-  renderList();
-}
-
-// ---------- Pestañas ----------
-
-function switchTab(tab) {
-  for (const btn of document.querySelectorAll(".tab-btn")) {
-    btn.classList.toggle("active", btn.dataset.tab === tab);
-  }
-  document.getElementById("catalogo-tab").hidden = tab !== "catalogo";
-  document.getElementById("chat-tab").hidden = tab !== "chat";
-  document.getElementById("feedback-tab").hidden = tab !== "feedback";
-  if (tab === "feedback") loadFeedback();
-}
-
-for (const btn of document.querySelectorAll(".tab-btn")) {
-  btn.addEventListener("click", () => switchTab(btn.dataset.tab));
-}
-
-// ---------- Chat de prueba ----------
-
-function getTrainingSessionId() {
-  let id = localStorage.getItem("bf_admin_chat_session");
-  if (!id) {
-    id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2));
-    localStorage.setItem("bf_admin_chat_session", id);
-  }
-  return id;
-}
-
-const trainingSessionId = getTrainingSessionId();
-const chatMessagesEl = document.getElementById("chat-messages");
-const chatInput = document.getElementById("chat-input");
-const chatSendBtn = document.getElementById("chat-send-btn");
-let chatTurnCounter = 0;
-
-function renderCorrectionForm(container, turn) {
-  const form = document.createElement("div");
-  form.className = "correction-form";
-  form.innerHTML =
-    '<div class="fb-label">¿Cuál era la respuesta correcta?</div>' +
-    '<textarea placeholder="Escribí lo que Matías debería haber respondido..."></textarea>' +
-    '<div class="actions"><button class="save-correction">Guardar corrección</button><button class="cancel-correction">Cancelar</button></div>';
-
-  const textarea = form.querySelector("textarea");
-  form.querySelector(".cancel-correction").addEventListener("click", () => form.remove());
-  form.querySelector(".save-correction").addEventListener("click", async () => {
-    const correction = textarea.value.trim();
-    const { error } = await supabase.from("chat_feedback").insert({
-      session_id: trainingSessionId,
-      user_message: turn.userMessage,
-      bot_response: turn.botResponse,
-      correction: correction || null,
-      debug_snapshot: turn.debug || {},
-      status: "flagged",
-      flagged_by: currentUser?.email || null,
-    });
-
-    if (error) {
-      form.querySelector(".fb-label").textContent = "Error: " + error.message;
-      return;
-    }
-
-    form.remove();
-    turn.flagBtn.textContent = "✓ Marcada";
-    turn.flagBtn.className = "flag-btn flagged";
-    turn.flagBtn.disabled = true;
-  });
-
-  container.appendChild(form);
-}
-
-function renderChatTurn(userMessage, botResponse, debug) {
-  chatTurnCounter += 1;
-  const turn = { userMessage, botResponse, debug };
-
-  const userEl = document.createElement("div");
-  userEl.className = "chat-turn";
-  userEl.innerHTML = '<div class="chat-msg user"></div>';
-  userEl.querySelector(".chat-msg").textContent = userMessage;
-  chatMessagesEl.appendChild(userEl);
-
-  const assistantWrap = document.createElement("div");
-  assistantWrap.className = "chat-turn";
-  const bubble = document.createElement("div");
-  bubble.className = "chat-msg assistant";
-  bubble.textContent = botResponse;
-  assistantWrap.appendChild(bubble);
-
-  const tools = document.createElement("div");
-  tools.className = "chat-turn-tools";
-  const flagBtn = document.createElement("button");
-  flagBtn.className = "flag-btn";
-  flagBtn.textContent = "👎 Marcar incorrecta";
-  turn.flagBtn = flagBtn;
-  flagBtn.addEventListener("click", () => renderCorrectionForm(assistantWrap, turn));
-  tools.appendChild(flagBtn);
-  assistantWrap.appendChild(tools);
-
-  chatMessagesEl.appendChild(assistantWrap);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-}
-
-async function sendTrainingMessage() {
-  const text = chatInput.value.trim();
-  if (!text) return;
-  chatInput.value = "";
-  chatInput.disabled = true;
-  chatSendBtn.disabled = true;
-
-  const typingEl = document.createElement("div");
-  typingEl.className = "chat-msg assistant";
-  typingEl.style.color = "#888";
-  typingEl.style.fontStyle = "italic";
-  typingEl.textContent = "escribiendo...";
-  chatMessagesEl.appendChild(typingEl);
-  chatMessagesEl.scrollTop = chatMessagesEl.scrollHeight;
-
-  try {
-    const { data: { session } } = await supabase.auth.getSession();
-    const res = await fetch("/admin-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: "Bearer " + session.access_token },
-      body: JSON.stringify({ sessionId: trainingSessionId, message: text }),
-    });
-    const data = await res.json();
-    typingEl.remove();
-
-    if (!res.ok) {
-      renderChatTurn(text, "[Error] " + (data.error || "no se pudo responder"), {});
-    } else {
-      renderChatTurn(data.userMessage || text, data.reply, data.debug);
-    }
-  } catch (err) {
-    typingEl.remove();
-    renderChatTurn(text, "[Error de conexión] " + err.message, {});
-  }
-
-  chatInput.disabled = false;
-  chatSendBtn.disabled = false;
-  chatInput.focus();
-}
-
-chatSendBtn.addEventListener("click", sendTrainingMessage);
-chatInput.addEventListener("keydown", (e) => { if (e.key === "Enter") sendTrainingMessage(); });
-
-// ---------- Correcciones ----------
-
-async function loadFeedback() {
-  const feedbackEl = document.getElementById("feedback-items");
-  feedbackEl.innerHTML = '<div class="placeholder">Cargando...</div>';
-
-  const { data, error } = await supabase.from("chat_feedback").select("*").order("created_at", { ascending: false });
-  if (error) {
-    feedbackEl.innerHTML = '<div class="placeholder">Error: ' + escapeHtml(error.message) + "</div>";
-    return;
-  }
-
-  if (!data.length) {
-    feedbackEl.innerHTML = '<div class="placeholder">Sin correcciones cargadas todavía.</div>';
-    return;
-  }
-
-  feedbackEl.innerHTML = "";
-  for (const row of data) {
-    const item = document.createElement("div");
-    item.className = "feedback-item";
-    item.innerHTML =
-      '<div class="fb-meta"><span>' + escapeHtml(row.flagged_by || "—") + " · " + new Date(row.created_at).toLocaleString("es-CL") + '</span>' +
-      '<span class="status-pill ' + row.status + '">' + (row.status === "resolved" ? "Resuelta" : "Pendiente") + "</span></div>" +
-      '<div class="fb-row"><span class="fb-label">Cliente preguntó: </span>' + escapeHtml(row.user_message) + "</div>" +
-      '<div class="fb-row fb-bad"><span class="fb-label">Bot respondió (incorrecto): </span>' + escapeHtml(row.bot_response) + "</div>" +
-      (row.correction ? '<div class="fb-row fb-good"><span class="fb-label">Debería responder: </span>' + escapeHtml(row.correction) + "</div>" : "");
-
-    if (row.status === "flagged") {
-      const resolveBtn = document.createElement("button");
-      resolveBtn.className = "resolve-btn";
-      resolveBtn.textContent = "Marcar resuelta";
-      resolveBtn.addEventListener("click", async () => {
-        resolveBtn.disabled = true;
-        await supabase.from("chat_feedback").update({
-          status: "resolved",
-          resolved_by: currentUser?.email || null,
-          resolved_at: new Date().toISOString(),
-        }).eq("id", row.id);
-        loadFeedback();
-      });
-      item.appendChild(resolveBtn);
-    }
-
-    feedbackEl.appendChild(item);
-  }
-}
-
-async function handleLogin() {
-  loginError.textContent = "";
-  const email = document.getElementById("login-email").value.trim();
-  const password = document.getElementById("login-password").value;
-  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) {
-    loginError.textContent = error.message;
-    return;
-  }
-  currentUser = data.user;
-  await enterApp();
-}
-
-async function enterApp() {
-  loginScreen.hidden = true;
-  appScreen.hidden = false;
-  try {
-    await loadData();
-  } catch (err) {
-    editorEl.innerHTML = '<div class="placeholder">Error cargando el catálogo: ' + escapeHtml(err.message) + "</div>";
-  }
-}
-
-document.getElementById("login-btn").addEventListener("click", handleLogin);
-document.getElementById("login-password").addEventListener("keydown", (e) => { if (e.key === "Enter") handleLogin(); });
-document.getElementById("logout-btn").addEventListener("click", async () => {
-  await supabase.auth.signOut();
-  location.reload();
-});
-searchInput.addEventListener("input", renderList);
-filterPending.addEventListener("change", renderList);
-
-(async () => {
-  const { data } = await supabase.auth.getSession();
-  if (data?.session?.user) {
-    currentUser = data.session.user;
-    await enterApp();
-  }
-})();
-</script>
-</body>
-</html>`;
-}
-
-module.exports = async (req, res) => {
-  if (req.method !== "GET") {
-    return res.status(405).send("Method not allowed");
-  }
-
-  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    res.setHeader("Content-Type", "text/html; charset=utf-8");
-    return res.status(200).send(renderMissingConfigPage());
-  }
-
-  res.setHeader("Content-Type", "text/html; charset=utf-8");
-  return res.status(200).send(renderAdminPage());
 };
+
+module.exports._test={esc,sign,verify,days,masked,cost};

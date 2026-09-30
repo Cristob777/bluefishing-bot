@@ -1,0 +1,17 @@
+{
+  "id": "bluefishing.tools.v1",
+  "policy": {
+    "search_catalog":{"permission":"automatic","risk":"read"},
+    "read_product_knowledge":{"permission":"automatic","risk":"read"},
+    "read_session":{"permission":"automatic","risk":"read"},
+    "save_session":{"permission":"automatic","risk":"low_write"},
+    "create_handoff":{"permission":"automatic","risk":"low_write"},
+    "record_telemetry":{"permission":"automatic","risk":"low_write"},
+    "modify_price":{"permission":"forbidden","risk":"high_write"},
+    "modify_stock":{"permission":"forbidden","risk":"high_write"},
+    "refund_order":{"permission":"human_approval_required","risk":"financial"},
+    "cancel_order":{"permission":"human_approval_required","risk":"high_write"},
+    "execute_shell":{"permission":"forbidden","risk":"critical"},
+    "read_secrets":{"permission":"forbidden","risk":"critical"}
+  }
+}

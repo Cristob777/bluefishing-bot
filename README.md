@@ -1,211 +1,158 @@
-# BlueFishing WhatsApp Sales Bot
+# BlueFishing AI Sales Agent
 
-Production-focused WhatsApp sales assistant for [BlueFishing.cl](https://bluefishing.cl).
+BlueFishing is building **Matías**, an AI sales agent designed to help customers choose fishing products through WhatsApp using the real BlueFishing catalog.
 
-The bot does not treat the language model as the catalog database. It classifies the customer's intent, retrieves compatible products from BlueFishing's catalog and technical knowledge layer, then uses OpenAI to write a short grounded sales response.
+The project combines product knowledge, conversational AI and commercial analytics so the store can answer customers faster, recommend products more consistently and understand what customers are looking for.
 
-## Production scope
+## What Matías does
 
-- Channel: WhatsApp Cloud API only
-- Runtime: Vercel Functions, Node.js 22
-- AI: OpenAI Responses API
-- Default model: `gpt-6-luna`
-- Catalog: versioned BlueFishing catalog
-- Product knowledge: scraped product pages + structured extraction
-- Persistence: Supabase when configured, with safe runtime fallbacks
-- CI: GitHub Actions tests + catalog/enrichment validation
+Matías acts as a technical sales assistant for fishing products.
 
-The previous web widget and admin routes are not exposed by the production Vercel routing configuration.
-
-## Request flow
+A customer can write something like:
 
 ```text
-Customer WhatsApp
-       |
-       v
-Meta WhatsApp Cloud API
-       |
-       v
-/api/webhook.js
-  - verifies ingress
-  - rejects stale/duplicate messages
-  - sanitizes text
-       |
-       v
-lib/salesEngine.js
-       |
-       +--> lib/classifier.js
-       |       intent + customer context
-       |
-       +--> lib/catalog.js
-       |       evidence-based compatible-product retrieval
-       |
-       +--> lib/ai.js
-               OpenAI Responses API
-       |
-       v
-Meta WhatsApp Cloud API
-       |
-       v
-Customer
+Busco una caña para corvina desde roca y uso señuelos de 30-50 g.
 ```
+
+Matías can identify useful context such as:
+
+- product type;
+- target species;
+- fishing position;
+- technique;
+- gram range;
+- brand preference;
+- budget;
+- purchase intent.
+
+It then searches the BlueFishing catalog and uses the available product information to prepare a concise recommendation.
+
+The goal is to answer with real BlueFishing products and avoid inventing prices, links or technical specifications.
+
+## What the customer sees
+
+The customer interacts with Matías through a normal WhatsApp conversation.
+
+Typical experience:
+
+```text
+Customer asks what they need
+        ↓
+Matías understands the fishing context
+        ↓
+Matías searches the BlueFishing catalog
+        ↓
+Matías recommends suitable products
+        ↓
+Customer receives a short explanation and product links
+```
+
+If information is missing, Matías can ask a relevant clarification.
+
+If the request needs human attention, the conversation can be escalated to the BlueFishing team.
 
 ## Product knowledge
 
-`catalogo/catalogo_para_bot.txt` contains the sellable catalog snapshot.
+The agent uses structured product knowledge derived from the BlueFishing catalog and product information.
 
-`catalogo/product_knowledge.json` contains structured technical knowledge keyed by product URL. The enrichment pipeline extracts fields such as:
+This can include:
 
-- target species
-- water type
-- fishing position
-- fishing technique
-- use case
-- rod/reel/lure-specific specifications
-- evidence
-- extraction confidence
+- target species;
+- water type;
+- fishing position;
+- technique;
+- product weight range;
+- rod characteristics;
+- reel characteristics;
+- lure type and action;
+- use cases;
+- supporting product information.
 
-The bot may recommend only products returned by retrieval. Missing technical information is treated as unknown; the model is explicitly instructed not to invent specifications.
+The objective is to make recommendations based on available product evidence instead of relying only on general model knowledge.
 
-### Refresh pipeline
+## BlueFishing Sales Console
 
-```text
-WooCommerce REST API (preferred)
-        |
-        +-- unavailable --> preserve last known valid catalog
-        |
-        v
-catalogo_para_bot.txt
-        |
-        v
-BlueFishing product pages / JSON-LD
-        |
-        v
-OpenAI structured extraction
-        |
-        +-- OpenAI unavailable --> conservative heuristic extraction
-        |
-        v
-product_knowledge.json
-        |
-        +--> optional Supabase mirror
-```
+The store owners have access to a private sales dashboard that helps them understand how customers interact with Matías.
 
-Commands:
+The dashboard can show:
 
-```bash
-npm run sync-catalogo
-npm run enrich-catalogo
-npm run catalog:refresh
-npm test
-```
+- number of customer interactions;
+- active customers;
+- recent conversations;
+- detected customer intent;
+- products recommended most often;
+- species and fishing needs customers ask about;
+- customers with stronger purchase intent;
+- conversations that require human attention;
+- operational AI usage;
+- response performance.
 
-GitHub Actions runs tests and a small enrichment sample on pull requests. Scheduled/manual runs perform the full refresh and may commit updated catalog knowledge.
+Owners can also review individual conversations and the customer context detected by Matías.
 
-## Retrieval rules
+The dashboard is intended as a visibility and decision-support tool for the store team.
 
-Recommendations are ranked using evidence including:
+## Business value
 
-- product type
-- exact/partial product name
-- brand
-- target species
-- water type
-- fishing position
-- technique
-- lure/rod weight compatibility
-- customer budget
-- requested attribute
+The project is designed to help BlueFishing:
 
-There is no "first five products" fallback. If nothing compatible scores, the assistant says it cannot make a safe recommendation from the retrieved catalog.
+- respond to customers faster;
+- maintain more consistent technical product guidance;
+- reduce repetitive sales questions handled manually;
+- make the online catalog easier to navigate through conversation;
+- identify what products and fishing needs generate the most interest;
+- detect conversations that need a salesperson;
+- create better commercial data from WhatsApp interactions.
 
-## Persistence and operations
-
-When Supabase is configured:
-
-- `bot_sessions` stores conversation context
-- `processed_whatsapp_messages` makes webhook processing idempotent
-- `product_attributes` stores automatic and human-reviewed product knowledge
-- `bot_events` stores operational telemetry
-- `handoff_requests` stores human handoff requests
-- `chat_feedback` stores reviewed corrections
-
-When Supabase is unavailable, product knowledge still loads from the versioned JSON file. The assistant does not claim a human handoff was registered unless persistence actually succeeded.
-
-## Required production environment
-
-```env
-OPENAI_API_KEY=
-OPENAI_MODEL=gpt-6-luna
-
-VERIFY_TOKEN=
-WEBHOOK_INGRESS_SECRET=
-WHATSAPP_TOKEN=
-PHONE_NUMBER_ID=
-GRAPH_API_VERSION=v24.0
-
-# Recommended for durable sessions / handoff / telemetry
-SUPABASE_URL=
-SUPABASE_SERVICE_ROLE_KEY=
-
-# Optional preferred catalog source
-WC_URL=https://bluefishing.cl
-WC_CONSUMER_KEY=
-WC_CONSUMER_SECRET=
-```
-
-Never commit secrets to the repository.
-
-The Meta callback URL is expected to use the ingress secret:
+## High-level flow
 
 ```text
-https://<production-domain>/webhook?ingress=<WEBHOOK_INGRESS_SECRET>
+Customer
+   ↓
+WhatsApp
+   ↓
+Matías AI Sales Agent
+   ↓
+BlueFishing product catalog and product knowledge
+   ↓
+Recommendation / clarification / human handoff
+   ↓
+Sales activity data
+   ↓
+BlueFishing Sales Console
+   ↓
+Store owners and sales team
 ```
 
-The Meta webhook verification token must match `VERIFY_TOKEN`.
+## Current scope
 
-## Health check
+The current version focuses on:
 
-`GET /health` returns the production readiness state without exposing secret values.
+- WhatsApp sales assistance;
+- fishing-product recommendations;
+- product catalog retrieval;
+- structured product knowledge;
+- conversational context;
+- human handoff;
+- usage and sales telemetry;
+- owner-facing dashboard.
 
-Expected states:
+## Future phase
 
-- `ok`: required configuration present and persistent store available
-- `degraded`: WhatsApp/OpenAI/catalog ready but persistent store unavailable
-- `not_ready`: one or more required production inputs missing
+A full CRM is intentionally left for a later phase.
 
-Do not promote a new production release until the health endpoint is at least `degraded`; for the intended production architecture it should be `ok`.
+The initial objective is to put Matías into real use, observe actual customer conversations and understand how BlueFishing's sales workflow behaves in practice.
 
-## Tests
+That production data can then be used to define the right CRM workflow for:
 
-The repository includes Node tests for:
+- leads;
+- follow-up;
+- opportunities;
+- customer history;
+- sales pipeline;
+- salesperson assignment.
 
-- product-page/JSON-LD extraction
-- technical knowledge heuristics
-- catalog URL discovery
-- CLP price formatting
-- gram-range compatibility
-- budget matching
-- truthful handoff behavior
+## Project principle
 
-CI also syntax-checks production entrypoints.
+Matías is not designed to be a general-purpose chatbot.
 
-## Deployment
-
-The repository is connected to Vercel through GitHub. Pull requests produce preview deployments. Merging to `main` should be treated as a production release and should happen only after:
-
-1. CI is green.
-2. Catalog/enrichment validation is green.
-3. Required Vercel environment variables are present.
-4. `/health` is healthy.
-5. Meta's production WhatsApp callback points to the production deployment.
-6. A real inbound/outbound WhatsApp smoke test succeeds.
-
-## Security notes
-
-- No default verification token is committed.
-- Webhook ingress requires a secret query parameter in addition to Meta verification.
-- Duplicate WhatsApp message IDs are persisted when Supabase is available.
-- The bot does not expose web-chat endpoints in the production routing configuration.
-- Product recommendations are grounded in retrieved catalog records and verified/enriched technical data.
-- The OpenAI API key, WhatsApp token, WooCommerce credentials and Supabase service role must remain server-side.
+It is a focused sales assistant for BlueFishing whose role is to understand the customer's fishing need, use the store's own product information and help move the conversation toward the right product or the right human salesperson.

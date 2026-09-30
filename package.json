@@ -4,7 +4,8 @@
   "description": "Chatbot Matías - Bluefishing.cl",
   "main": "api/webhook.js",
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
     "csv-parse": "^5.5.6"
@@ -14,7 +15,10 @@
     "sync-catalogo": "node scripts/sync-catalogo.js",
     "enrich-catalogo": "node scripts/enrich-catalogo.js",
     "catalog:refresh": "npm run sync-catalogo && npm run enrich-catalogo",
-    "test": "node --test tests/*.test.js"
+    "test": "node --test tests/*.test.js",
+    "start": "node server.js",
+    "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql",
+    "security:retention": "node scripts/security-retention.js"
   },
   "engines": {
     "node": ">=22"
