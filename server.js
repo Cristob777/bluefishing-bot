@@ -2,6 +2,7 @@ const http = require("node:http");
 const { URL } = require("node:url");
 const webhookHandler = require("./api/webhook");
 const healthHandler = require("./api/health");
+const adminHandler = require("./api/admin");
 const { safeError } = require("./lib/logSanitizer");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -74,6 +75,8 @@ const server = http.createServer(async (req, res) => {
       await webhookHandler(req, response);
     } else if (url.pathname === "/health") {
       await healthHandler(req, response);
+    } else if (url.pathname === "/admin" || url.pathname === "/admin/login" || url.pathname === "/admin/logout") {
+      await adminHandler(req, res);
     } else {
       response.status(404).json({ error: "not_found" });
     }
