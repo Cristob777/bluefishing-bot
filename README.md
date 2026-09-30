@@ -386,6 +386,32 @@ TOKEN_GOVERNOR_CLASSIFIER_MAX_OUTPUT_TOKENS=460
 
 The Product Knowledge enrichment pipeline remains offline/batch: product pages are enriched once and the resulting structured knowledge is reused across customer conversations instead of paying to re-read product pages on every turn.
 
+## BlueFishing Sales Console
+
+A protected, read-only owner dashboard is available at:
+
+```text
+https://bot.bluefishing.cl/admin
+```
+
+It reads directly from production PostgreSQL and shows:
+
+- interactions and active customers by period;
+- high purchase-intent sessions;
+- open human handoffs;
+- recent conversations and conversation detail;
+- detected fishing context;
+- most recommended products;
+- most requested species and intents;
+- actual LLM calls and token usage;
+- operational fallback / no-product counts;
+- average response latency;
+- optional AI cost estimates when current per-million-token rates are configured.
+
+The console is disabled unless `ADMIN_DASHBOARD_USER`, `ADMIN_DASHBOARD_PASSWORD` and `ADMIN_SESSION_SECRET` are set. Sessions are HMAC-signed, HTTPS-only, HttpOnly and SameSite=Strict. Login attempts are rate-limited in-process. The dashboard does not modify products, stock, prices, agent policy or CRM data.
+
+The previous Supabase/Vercel training admin has been replaced in the Hostinger production branch so the owner console uses the same PostgreSQL source of truth as Matías.
+
 ## Hostinger KVM4 deployment
 
 Production stack:
