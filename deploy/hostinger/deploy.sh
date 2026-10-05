@@ -55,7 +55,7 @@ echo
 
 HEALTHCHECK_TOKEN="$(grep '^HEALTHCHECK_TOKEN=' "$ENV_FILE" | cut -d= -f2-)"
 AGENT_HOST_PORT="$(grep '^AGENT_HOST_PORT=' "$ENV_FILE" | cut -d= -f2- || true)"
-AGENT_HOST_PORT="${AGENT_HOST_PORT:-18087}"
+AGENT_HOST_PORT="${AGENT_HOST_PORT:-18080}"
 
 curl -fsS -H "X-Health-Token: $HEALTHCHECK_TOKEN" "http://127.0.0.1:$AGENT_HOST_PORT/health"
 echo
