@@ -34,7 +34,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
       APP_COMMIT_SHA: ${APP_COMMIT_SHA:-local}
     ports:
-      - "127.0.0.1:${AGENT_HOST_PORT:-18087}:3000"
+      - "127.0.0.1:${AGENT_HOST_PORT:-18080}:3000"
     volumes:
       - ./catalogo:/app/catalogo
     depends_on:
