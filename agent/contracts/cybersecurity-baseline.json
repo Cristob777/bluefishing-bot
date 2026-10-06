@@ -1,0 +1,53 @@
+{
+  "id": "bluefishing.cybersecurity.v1",
+  "frameworks": [
+    "NIST CSF 2.0",
+    "NIST AI RMF 1.0 + Generative AI Profile",
+    "OWASP GenAI/LLM Top 10 2025"
+  ],
+  "functions": {
+    "GOVERN": [
+      "version_control_security_contracts",
+      "least_privilege_tool_policy",
+      "ci_required_for_security_changes",
+      "secrets_outside_source_control"
+    ],
+    "IDENTIFY": [
+      "inventory_credentials_data_and_external_integrations",
+      "classify_customer_and_product_data",
+      "document_prompt_injection_and_data_exfiltration_threats"
+    ],
+    "PROTECT": [
+      "meta_hmac_verification",
+      "prompt_trust_boundaries",
+      "output_validation",
+      "secret_redaction",
+      "non_root_containers",
+      "drop_linux_capabilities",
+      "read_only_application_filesystem",
+      "internal_only_database",
+      "rate_limiting",
+      "data_retention"
+    ],
+    "DETECT": [
+      "prompt_injection_security_events",
+      "signature_failures",
+      "contract_violations",
+      "rate_limit_events",
+      "sanitized_runtime_errors"
+    ],
+    "RESPOND": [
+      "fail_closed_model_output",
+      "deterministic_grounded_fallback",
+      "credential_rotation_on_exposure",
+      "stop_service_if_integrity_unknown"
+    ],
+    "RECOVER": [
+      "rebuild_from_known_good_git_commit",
+      "restore_postgres_from_backup",
+      "rotate_credentials_before_reconnect",
+      "security_smoke_test_before_reopening_whatsapp"
+    ]
+  },
+  "security_invariant": "A compromised or manipulated model must not have direct access to secrets, privileged tools, shell execution, database administration, or unvalidated outbound responses."
+}
