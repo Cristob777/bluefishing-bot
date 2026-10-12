@@ -2,16 +2,20 @@
   "name": "bluefishing-bot",
   "version": "1.0.0",
   "description": "Chatbot Matías - Bluefishing.cl",
-  "main": "api/webhook.js",
+  "main": "server.js",
   "dependencies": {
+    "express": "^4.21.0",
     "@anthropic-ai/sdk": "^0.32.1",
     "@google/generative-ai": "^0.21.0",
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "^2.45.4",
+    "dotenv": "^16.4.5"
   },
   "devDependencies": {
     "csv-parse": "^5.5.6"
   },
   "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
     "build-catalogo": "node scripts/build-catalogo.js",
     "sync-catalogo": "node scripts/sync-catalogo.js"
   },
