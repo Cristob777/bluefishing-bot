@@ -1,4 +1,5 @@
 const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
+const { recordExchange } = require("../lib/conversationStore");
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN || "bluefishing123";
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -117,8 +118,22 @@ module.exports = async (req, res) => {
     const { reply: response } = await handleMessage({ sessionId: `wa:${from}`, text: sanitizedText });
 
     console.log("[Webhook] Enviando a WhatsApp to:", from);
-    await sendWhatsAppMessage(from, response);
-    console.log("[Webhook] Respuesta enviada OK");
+    try {
+      await sendWhatsAppMessage(from, response);
+      console.log("[Webhook] Respuesta enviada OK");
+    } finally {
+      // Persistencia CRM: sin await, nunca bloquea ni rompe la respuesta.
+      const profileName = value?.contacts?.[0]?.profile?.name || null;
+      recordExchange({
+        channel: "whatsapp",
+        externalId: from,
+        name: profileName,
+        phone: from,
+        userText: sanitizedText,
+        botReply: response,
+        metadata: { wa_message_id: messageId || null },
+      }).catch(() => {});
+    }
 
     return res.status(200).json({ status: "ok" });
   } catch (error) {

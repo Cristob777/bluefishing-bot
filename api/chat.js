@@ -1,4 +1,5 @@
 const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
+const { recordExchange } = require("../lib/conversationStore");
 
 const HAS_AI = !!(process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY);
 
@@ -51,6 +52,15 @@ module.exports = async (req, res) => {
     }
 
     const { reply } = await handleMessage({ sessionId: `web:${sessionId}`, text: sanitizedText });
+
+    // Persistencia CRM: sin await, nunca bloquea ni rompe la respuesta.
+    recordExchange({
+      channel: "web",
+      externalId: sessionId,
+      userText: sanitizedText,
+      botReply: reply,
+      metadata: { origin: req.headers.origin || null },
+    }).catch(() => {});
 
     return res.status(200).json({ reply });
   } catch (error) {

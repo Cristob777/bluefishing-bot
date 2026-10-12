@@ -92,3 +92,5 @@ create policy "authenticated insert feedback" on public.chat_feedback
 drop policy if exists "authenticated update feedback" on public.chat_feedback;
 create policy "authenticated update feedback" on public.chat_feedback
   for update to authenticated using (true) with check (true);
+
+-- CRM (contactos/conversaciones/mensajes): ver supabase/migrations/20261012_crm_conversations.sql

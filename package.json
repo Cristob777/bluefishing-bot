@@ -17,7 +17,8 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "build-catalogo": "node scripts/build-catalogo.js",
-    "sync-catalogo": "node scripts/sync-catalogo.js"
+    "sync-catalogo": "node scripts/sync-catalogo.js",
+    "test": "node --test test/"
   },
   "engines": {
     "node": ">=18"
