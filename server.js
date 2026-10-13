@@ -3,6 +3,8 @@ const { URL } = require("node:url");
 const webhookHandler = require("./api/webhook");
 const healthHandler = require("./api/health");
 const adminHandler = require("./api/admin");
+const chatHandler = require("./api/chat");
+const widgetHandler = require("./api/widget");
 const { safeError } = require("./lib/logSanitizer");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -24,7 +26,7 @@ function makeResponse(res) {
         if (!res.headersSent) res.setHeader("Content-Type", "application/json; charset=utf-8");
         return res.end(JSON.stringify(payload));
       }
-      if (!res.headersSent) res.setHeader("Content-Type", "text/plain; charset=utf-8");
+      if (!res.headersSent && !res.getHeader("Content-Type")) res.setHeader("Content-Type", "text/plain; charset=utf-8");
       res.end(String(payload ?? ""));
     },
   };
@@ -73,6 +75,10 @@ const server = http.createServer(async (req, res) => {
 
     if (url.pathname === "/webhook") {
       await webhookHandler(req, response);
+    } else if (url.pathname === "/chat") {
+      await chatHandler(req, Object.assign(res, response));
+    } else if (url.pathname === "/widget.js") {
+      await widgetHandler(req, Object.assign(res, response));
     } else if (url.pathname === "/health") {
       await healthHandler(req, response);
     } else if (url.pathname === "/admin" || url.pathname === "/admin/login" || url.pathname === "/admin/logout") {
