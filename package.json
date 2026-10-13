@@ -18,7 +18,8 @@
     "test": "node --test tests/*.test.js",
     "start": "node server.js",
     "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql",
-    "security:retention": "node scripts/security-retention.js"
+    "security:retention": "node scripts/security-retention.js",
+    "crm:sync": "node scripts/atomic-crm-sync.js --once"
   },
   "engines": {
     "node": ">=22"
