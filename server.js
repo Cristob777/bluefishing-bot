@@ -5,6 +5,7 @@ const healthHandler = require("./api/health");
 const adminHandler = require("./api/admin");
 const chatHandler = require("./api/chat");
 const widgetHandler = require("./api/widget");
+const chatwootHandler = require("./api/chatwoot");
 const { safeError } = require("./lib/logSanitizer");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -77,6 +78,8 @@ const server = http.createServer(async (req, res) => {
       await webhookHandler(req, response);
     } else if (url.pathname === "/chat") {
       await chatHandler(req, Object.assign(res, response));
+    } else if (url.pathname === "/chatwoot/webhook") {
+      await chatwootHandler(req, response);
     } else if (url.pathname === "/widget.js") {
       await widgetHandler(req, Object.assign(res, response));
     } else if (url.pathname === "/health") {

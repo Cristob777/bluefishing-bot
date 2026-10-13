@@ -150,6 +150,12 @@ Embed on the store site:
 - Only origins listed in `ALLOWED_ORIGIN` may call `/chat` (CORS plus a server-side 403); leaving it empty disables web chat.
 - Rate limited per IP and per session; uses the same body-size limit and log pseudonymisation as WhatsApp.
 
+## Chatwoot (optional, behind `CHATWOOT_ENABLED`)
+
+Chatwoot can act as the owner/sales inbox with Matías as its Agent Bot (`POST /chatwoot/webhook`, HMAC-signed).
+The bot answers pending conversations and hands off to humans (status `open`, label `humano`, `handoff_requests`).
+The direct WhatsApp webhook is unchanged; moving WhatsApp into Chatwoot is a later step. Setup: `deploy/chatwoot/README.md`.
+
 ## Future phase
 
 A full CRM is intentionally left for a later phase.
