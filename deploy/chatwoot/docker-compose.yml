@@ -1,0 +1,59 @@
+# Chatwoot self-hosted para BlueFishing — basado en docker-compose.production.yaml oficial
+# (https://github.com/chatwoot/chatwoot/blob/develop/docker-compose.production.yaml).
+# Proyecto Docker SEPARADO del bot: su propio Postgres y Redis, sin compartir red con la DB del bot.
+# Uso: cp .env.example .env  &&  editar  &&  ver README.md
+name: bluefishing-chatwoot
+
+x-base: &base
+  # Fijar una versión probada en CHATWOOT_IMAGE_TAG (ej. v4.x.y) en vez de latest.
+  image: chatwoot/chatwoot:${CHATWOOT_IMAGE_TAG:-latest}
+  env_file: .env
+  volumes:
+    - storage_data:/app/storage
+  restart: unless-stopped
+
+services:
+  rails:
+    <<: *base
+    depends_on: [postgres, redis]
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    # Solo localhost: el proxy (Caddy/Traefik) publica chat.<dominio>.
+    ports:
+      - "127.0.0.1:${CHATWOOT_HOST_PORT:-3100}:3000"
+
+  sidekiq:
+    <<: *base
+    depends_on: [postgres, redis]
+    environment:
+      - NODE_ENV=production
+      - RAILS_ENV=production
+      - INSTALLATION_ENV=docker
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=chatwoot
+      - POSTGRES_USER=${POSTGRES_USERNAME:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?definir POSTGRES_PASSWORD en .env}
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+    command: ["sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    env_file: .env
+    volumes:
+      - redis_data:/data
+
+volumes:
+  storage_data:
+  postgres_data:
+  redis_data:
