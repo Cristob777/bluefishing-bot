@@ -128,6 +128,8 @@ Store owners and sales team
 The current version focuses on:
 
 - WhatsApp sales assistance;
+- website chat widget (same sales engine, sessions, telemetry and handoff as WhatsApp);
+- CRM contact records per channel (WhatsApp and web);
 - fishing-product recommendations;
 - product catalog retrieval;
 - structured product knowledge;
@@ -135,6 +137,18 @@ The current version focuses on:
 - human handoff;
 - usage and sales telemetry;
 - owner-facing dashboard.
+
+## Website chat widget
+
+Embed on the store site:
+
+```html
+<script src="https://bot.bluefishing.cl/widget.js" defer></script>
+```
+
+- `GET /widget.js` serves the widget; `POST /chat` answers with the same engine as WhatsApp (`web:<sessionId>` sessions).
+- Only origins listed in `ALLOWED_ORIGIN` may call `/chat` (CORS plus a server-side 403); leaving it empty disables web chat.
+- Rate limited per IP and per session; uses the same body-size limit and log pseudonymisation as WhatsApp.
 
 ## Future phase
 

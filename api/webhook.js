@@ -3,6 +3,7 @@ const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
 const { claimInboundMessage, releaseInboundMessage, hasPersistentStore } = require("../lib/sessionStore");
 const { pseudonymize, safeError } = require("../lib/logSanitizer");
 const { allowMessage } = require("../lib/rateLimiter");
+const { trackContact } = require("../lib/contactStore");
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -153,6 +154,13 @@ module.exports = async (req, res) => {
       sender: pseudonymize(from),
       chars: sanitizedText.length,
       persistentStore: hasPersistentStore,
+    });
+
+    // CRM: registrar/actualizar contacto sin bloquear la respuesta (fail-safe).
+    trackContact({
+      channel: "whatsapp",
+      externalId: from,
+      name: value?.contacts?.[0]?.profile?.name,
     });
 
     const { reply } = await handleMessage({
