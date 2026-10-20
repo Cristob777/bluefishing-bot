@@ -80,7 +80,7 @@ const NOTICES = {
   csrf: ["err", "Tu sesión expiró por seguridad. Vuelve a intentarlo."],
 };
 
-const NAV = [["/panel", "Inicio", "home"], ["/panel/conexiones", "Conexiones", "plug"], ["/panel/conversaciones", "Conversaciones", "chat"], ["/panel/ajustes", "Ajustes", "cog"]];
+const NAV = [["/panel", "Inicio", "home"], ["/panel/resultados", "Resultados", "chart"], ["/panel/conexiones", "Conexiones", "plug"], ["/panel/conversaciones", "Conversaciones", "chat"], ["/panel/ajustes", "Ajustes", "cog"]];
 function layout(ctx, active, title, body) {
   const n = NOTICES[ctx.notice];
   return ui.shell({ title, product: "Blue Fishing", nav: NAV.map(([href, label, ic]) => ({ href, label, icon: ic, on: href === active })),
@@ -316,6 +316,11 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
           return html(res, 200, recordPage(ctx, sid, x));
         }
         return html(res, 200, conversationsPage(ctx, store.conversations ? await store.conversations(tenantId) : []));
+      }
+      if (path === "/panel/resultados") {
+        const R = require("../lib/results");
+        const r = store.results ? await store.results(tenantId, req.query?.days || 30) : null;
+        return html(res, 200, layout(ctx, "/panel/resultados", "Resultados", r ? R.resultsBody(ui, require("../lib/charts"), r, "/panel/resultados") : ui.empty("chart", "Sin datos", "Aún no hay resultados.")));
       }
       if (path === "/panel/ajustes") return html(res, 200, settingsPage(ctx));
       return html(res, 404, ui.errorPage("Página no encontrada", "El enlace no existe o cambió.", "/panel", "Volver a tu panel"));

@@ -80,7 +80,7 @@ function cost(s){
   return ((input-cached)*i+cached*(c>0?c:i)+Number(s.output_tokens||0)*o)/1000000;
 }
 
-const NAV=[["","Inicio","home"],["conversaciones","Conversaciones","chat"],["embudo","Embudo","board"]];
+const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["conversaciones","Conversaciones","chat"],["embudo","Embudo","board"]];
 function shell(view,d,title,body){
   return ui.shell({title,product:"Blue Fishing",nav:NAV.map(([v,l,i])=>({href:"/admin?days="+d+(v?"&view="+v:""),label:l,icon:i,on:v===view})),
     user:{name:process.env.ADMIN_DASHBOARD_USER||"Operador",sub:"Operador"},logout:{action:"/admin/logout"},body});
@@ -177,6 +177,7 @@ module.exports = async function(req,res){
     const d=days(req.query?.days), id=String(req.query?.session||"").slice(0,160);
     if(id)return send(res,200,conversationHtml(id,await conversation(id),d));
     const view=String(req.query?.view||"");
+    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const r=await R.results(query,{days:rd});return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados")));}
     if(view==="embudo")return send(res,200,funnelHtml(await funnel(),d));
     if(view==="conversaciones")return send(res,200,conversationsHtml((await dashboard(d)).recent,d));
     return send(res,200,dashboardHtml(await dashboard(d),d));
