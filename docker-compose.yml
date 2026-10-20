@@ -9,6 +9,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./db/migrations/002_tenant_onboarding.sql:/docker-entrypoint-initdb.d/002-tenant-onboarding.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bluefishing} -d ${POSTGRES_DB:-bluefishing}"]
       interval: 10s
