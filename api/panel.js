@@ -61,40 +61,47 @@ function html(res, status, body, csp) { headers(res, csp); res.statusCode = stat
 function json(res, status, obj) { headers(res); res.statusCode = status; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(obj)); }
 function redirect(res, where, cookie) { headers(res); res.statusCode = 303; res.setHeader("Location", where); if (cookie) res.setHeader("Set-Cookie", cookie); res.end(); }
 
-const CSS = "body{margin:0;background:#07111f;color:#edf5ff;font-family:system-ui,sans-serif}.w{max-width:760px;margin:auto;padding:24px}.card{background:#0d1b2e;border:1px solid #20364f;border-radius:14px;padding:16px;margin:14px 0}.muted{color:#93a9c2;font-size:13px}input,button{width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border-radius:8px;border:1px solid #20364f;background:#0d1b2e;color:#edf5ff}button{cursor:pointer;background:#14406b}.ok{color:#5fd39a}.err{color:#ff8a8a}code{background:#13253b;padding:2px 5px;border-radius:5px;word-break:break-all}";
+const CSS = "body{margin:0;background:#07111f;color:#edf5ff;font-family:system-ui,sans-serif}.w{max-width:760px;margin:auto;padding:24px}.card{background:#0d1b2e;border:1px solid #20364f;border-radius:14px;padding:16px;margin:14px 0}.muted{color:#93a9c2;font-size:13px}input,button{width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border-radius:8px;border:1px solid #20364f;background:#0d1b2e;color:#edf5ff}button{cursor:pointer;background:#14406b}.ok{color:#5fd39a}.err{color:#ff8a8a}.lnk,a{color:#4fb8ff}.sec{background:transparent;border-color:#33506f;color:#93a9c2}details summary{cursor:pointer;color:#4fb8ff;margin:8px 0}ol{padding-left:20px;line-height:1.6}.step{display:inline-block;background:#14406b;border-radius:999px;padding:2px 10px;font-size:12px;margin-bottom:6px}code{background:#13253b;padding:2px 5px;border-radius:5px;word-break:break-all}";
 function page(title, body) {
   return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${CSS}</style></head><body><div class="w">${body}</div></body></html>`;
 }
 
 function authPage(msg = "") {
-  return page("BlueFishing · Panel", `<h2>Panel de tu empresa</h2>${msg ? `<p class="err">${esc(msg)}</p>` : ""}
+  return page("BlueFishing · Panel", `<h2>Panel de tu empresa</h2><p class="muted">Conecta tu tienda y tu WhatsApp para que Matías atienda a tus clientes.</p>${msg ? `<p class="err">${esc(msg)}</p>` : ""}
 <div class="card"><h3>Entrar</h3><form method="post" action="/panel/login"><input name="email" type="email" placeholder="Correo" autocomplete="username" required><input name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required><button>Entrar</button></form></div>
-<div class="card"><h3>Crear cuenta</h3><form method="post" action="/panel/signup"><input name="company" placeholder="Nombre de la empresa" required maxlength="160"><input name="email" type="email" placeholder="Correo del dueño" autocomplete="username" required><input name="password" type="password" placeholder="Contraseña (mínimo 12 caracteres)" minlength="12" autocomplete="new-password" required><button>Crear cuenta</button></form></div>`);
+<div class="card"><h3>Crear cuenta</h3><form method="post" action="/panel/signup"><p class="muted">¿Primera vez? Crea la cuenta de tu empresa.</p><input name="company" placeholder="Nombre de la empresa" required maxlength="160"><input name="email" type="email" placeholder="Correo del dueño" autocomplete="username" required><input name="password" type="password" placeholder="Contraseña (mínimo 12 caracteres)" minlength="12" autocomplete="new-password" required><button>Crear cuenta</button></form></div>`);
 }
 
 const NOTICES = {
   woo_ok: ["ok", "Tienda conectada."], woo_err: ["err", "No pudimos conectar la tienda. Revisa la URL (https) e inténtalo de nuevo."],
-  wa_ok: ["ok", "WhatsApp conectado y webhook suscrito."], wa_err: ["err", "Meta rechazó los datos de WhatsApp. Revisa token, Phone number ID y WABA ID."],
+  wa_ok: ["ok", "WhatsApp conectado y webhook suscrito."], wa_err: ["err", "Meta rechazó los datos de WhatsApp. Revisa el token, el Phone number ID, el WABA ID y el App secret (32 caracteres)."],
   wa_taken: ["err", "Ese número de WhatsApp ya está conectado a otra empresa."],
-  csrf: ["err", "La sesión expiró, vuelve a intentarlo."],
+  csrf: ["err", "Tu sesión expiró por seguridad. Vuelve a intentarlo."],
 };
 
 function dashboardPage(user, st, csrf, verifyToken, notice) {
   const n = NOTICES[notice];
-  const wooState = st.woo_connected_at ? `<p class="ok">Conectada: ${esc(st.woo_store_url)} (permiso ${esc(st.woo_key_permissions || "read")})</p>` : `<p class="muted">Sin conectar.</p>`;
-  const waState = st.wa_connected_at ? `<p class="ok">Conectado: ${esc(st.wa_display_phone || st.wa_phone_number_id)} · modo ${esc(st.wa_mode)}</p>` : `<p class="muted">Sin conectar.</p>`;
-  const es = flag("WA_EMBEDDED_SIGNUP_ENABLED") ? `<p><a style="color:#4fb8ff" href="/panel/whatsapp/embedded">Conectar con Facebook (Embedded Signup)</a></p>` : "";
-  return page("BlueFishing · Panel", `<h2>${esc(user.tenant_name)}</h2><p class="muted">${esc(user.email)}</p>${n ? `<p class="${n[0]}">${esc(n[1])}</p>` : ""}
-<div class="card"><h3>Tienda WooCommerce</h3>${wooState}<form method="post" action="/panel/woo/connect"><input type="hidden" name="csrf" value="${esc(csrf)}"><input name="store_url" type="url" placeholder="https://tutienda.cl" required><button>Conectar tienda</button></form><p class="muted">Te llevamos a tu WordPress para aprobar un acceso de solo lectura. Nunca vemos tu contraseña.</p></div>
-<div class="card"><h3>WhatsApp</h3>${waState}${es}
-<form method="post" action="/panel/whatsapp/connect"><input type="hidden" name="csrf" value="${esc(csrf)}">
-<input name="access_token" type="password" placeholder="Token permanente (System User)" autocomplete="off" required>
-<input name="phone_number_id" placeholder="Phone number ID" inputmode="numeric" required>
-<input name="waba_id" placeholder="WhatsApp Business Account ID (WABA)" inputmode="numeric" required>
-<input name="app_secret" type="password" placeholder="App secret de tu app de Meta" autocomplete="off" required>
-<button>Conectar WhatsApp</button></form>
-<p class="muted">En tu app de Meta configura el webhook con:<br>URL: <code>${esc(baseUrl())}/webhook</code><br>Verify token: <code>${esc(verifyToken)}</code><br>Campo suscrito: <code>messages</code></p></div>
-<form method="post" action="/panel/logout"><input type="hidden" name="csrf" value="${esc(csrf)}"><button>Salir</button></form>`);
+  const wooOk = Boolean(st.woo_connected_at), waOk = Boolean(st.wa_connected_at);
+  const done = Number(wooOk) + Number(waOk);
+  const progress = done === 2
+    ? `<div class="card"><p class="ok"><b>¡Listo!</b> Tu tienda y tu WhatsApp están conectados. Matías ya responde a tus clientes.</p></div>`
+    : `<div class="card"><p><b>Configura tu asistente en 2 pasos</b> · ${done} de 2 listos</p><p class="muted">1) Conecta tu tienda para que Matías conozca tus productos. 2) Conecta tu WhatsApp para que responda a tus clientes.</p></div>`;
+  const wooState = wooOk ? `<p class="ok">✓ Conectada: ${esc(st.woo_store_url)} (solo lectura)</p>` : `<p class="muted">Aún no conectada.</p>`;
+  const waState = waOk ? `<p class="ok">✓ Conectado: ${esc(st.wa_display_phone || st.wa_phone_number_id)}</p>` : `<p class="muted">Aún no conectado.</p>`;
+  const es = flag("WA_EMBEDDED_SIGNUP_ENABLED") ? `<p><a class="lnk" href="/panel/whatsapp/embedded">Conectar con Facebook (Embedded Signup)</a></p>` : "";
+  const wooForm = `<form method="post" action="/panel/woo/connect"><input type="hidden" name="csrf" value="${esc(csrf)}"><label class="muted" for="su">Dirección de tu tienda</label><input id="su" name="store_url" type="url" placeholder="https://tutienda.cl" required><button>${wooOk ? "Volver a conectar" : "Conectar tienda"}</button></form><p class="muted">Te llevamos a tu WordPress para aprobar un acceso de <b>solo lectura</b>. Nunca vemos tu contraseña.</p>`;
+  const waForm = `<form method="post" action="/panel/whatsapp/connect"><input type="hidden" name="csrf" value="${esc(csrf)}">
+<label class="muted" for="t1">Token permanente (usuario del sistema)</label><input id="t1" name="access_token" type="password" placeholder="EAAG…" autocomplete="off" required>
+<label class="muted" for="t2">Identificador del número (Phone number ID)</label><input id="t2" name="phone_number_id" placeholder="Ej: 123456789012345" inputmode="numeric" pattern="[0-9]+" required>
+<label class="muted" for="t3">Identificador de la cuenta (WABA ID)</label><input id="t3" name="waba_id" placeholder="Ej: 109876543210987" inputmode="numeric" pattern="[0-9]+" required>
+<label class="muted" for="t4">Clave secreta de la app (App secret)</label><input id="t4" name="app_secret" type="password" placeholder="32 caracteres" autocomplete="off" required>
+<button>${waOk ? "Actualizar datos" : "Conectar WhatsApp"}</button></form>
+<details><summary>¿Dónde encuentro estos datos?</summary><ol class="muted"><li>Entra a <b>developers.facebook.com</b> → tu app → <b>WhatsApp → Configuración de la API</b>: ahí están el <i>Phone number ID</i> y el <i>WABA ID</i>.</li><li>En <b>business.facebook.com → Configuración → Usuarios del sistema</b> crea un usuario, asígnale la app y genera un <b>token permanente</b> con permisos <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>.</li><li>En tu app → <b>Configuración → Básica</b> copia la <b>clave secreta de la app</b>.</li></ol></details>
+<details${waOk ? "" : " open"}><summary>Datos del webhook para pegar en Meta</summary><p class="muted">En tu app de Meta → WhatsApp → Configuración → Webhook:<br>URL de devolución: <code>${esc(baseUrl())}/webhook</code><br>Token de verificación: <code>${esc(verifyToken)}</code><br>Suscríbete al campo: <code>messages</code></p></details>`;
+  return page("BlueFishing · Panel", `<h2>${esc(user.tenant_name)}</h2><p class="muted">${esc(user.email)}</p>${n ? `<p class="${n[0]}" role="status">${esc(n[1])}</p>` : ""}${progress}
+<div class="card"><span class="step">Paso 1</span><h3>Tu tienda WooCommerce</h3>${wooState}${wooOk ? `<details><summary>Cambiar tienda</summary>${wooForm}</details>` : wooForm}</div>
+<div class="card"><span class="step">Paso 2</span><h3>Tu WhatsApp</h3>${waState}${es}${waOk ? `<details><summary>Cambiar datos de WhatsApp</summary>${waForm}</details>` : waForm}</div>
+<form method="post" action="/panel/logout"><input type="hidden" name="csrf" value="${esc(csrf)}"><button class="sec">Cerrar sesión</button></form>`);
 }
 
 function embeddedPage(csrf, nonce) {
@@ -235,7 +242,7 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
         const p = embeddedPage(csrf, nonce);
         return html(res, 200, p.body, p.csp);
       }
-      if (path !== "/panel") return html(res, 404, page("No encontrado", "No encontrado."));
+      if (path !== "/panel") return html(res, 404, page("No encontrado", `<h2>Página no encontrada</h2><p><a class="lnk" href="/panel">← Volver a tu panel</a></p>`));
 
       const verifyToken = verifyTokenFor(tenantId);
       await store.ensureVerifyTokenHash(tenantId, box.sha256(verifyToken));
@@ -243,7 +250,7 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
       return html(res, 200, dashboardPage(user, await store.status(tenantId), csrf, verifyToken, notice));
     } catch (error) {
       console.error("[Panel] Error:", safeError(error));
-      return html(res, 500, page("Error", "No pudimos procesar la solicitud."));
+      return html(res, 500, page("Error", `<h2>Algo salió mal</h2><p>No pudimos procesar la solicitud. Inténtalo de nuevo en unos minutos.</p><p><a class="lnk" href="/panel">← Volver a tu panel</a></p>`));
     }
   };
 }
