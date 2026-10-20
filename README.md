@@ -178,6 +178,8 @@ Migración: `npm run db:migrate` (`db/migrations/002_tenant_onboarding.sql`, ide
 | `META_APP_ID` | App ID de Meta (fase 2). |
 | `META_ES_CONFIG_ID` | `config_id` de Facebook Login for Business (fase 2). |
 
-Todas son opcionales para el deploy: si faltan, `/panel` responde 404 y el bot sigue funcionando igual con `WHATSAPP_TOKEN`/`PHONE_NUMBER_ID`. `deploy/hostinger/deploy.sh` valida su formato solo si están puestas y aplica `db/migrations/*.sql` (idempotentes). Caddy enruta `/panel*` al app.
+Todas son opcionales para el deploy: si faltan, `/panel` responde 404 y el bot sigue funcionando igual con `WHATSAPP_TOKEN`/`PHONE_NUMBER_ID`. `deploy/hostinger/deploy.sh` valida su formato solo si están puestas y aplica `db/migrations/*.sql` (idempotentes). `/panel` lo sirve el mismo proceso Node que `/webhook` (puerto 3000 del contenedor, `127.0.0.1:18080` en el host), así que el proxy (Traefik de Hostinger) no necesita reglas nuevas: basta con que enrute el dominio al app.
+
+Overrides solo para pruebas locales (no definir en producción): `GRAPH_API_BASE_URL`, `OPENAI_BASE_URL` (apuntan a mocks) y `WOO_ALLOW_LOCAL_TEST_STORE=1` (acepta `http://127.0.0.1` como tienda; se ignora con `NODE_ENV=production`).
 
 Limitación actual: Matías usa el catálogo de BlueFishing para todos los tenants; el catálogo por tenant (usando sus claves de WooCommerce) queda para un PR posterior.

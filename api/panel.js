@@ -75,6 +75,7 @@ function authPage(msg = "") {
 const NOTICES = {
   woo_ok: ["ok", "Tienda conectada."], woo_err: ["err", "No pudimos conectar la tienda. Revisa la URL (https) e inténtalo de nuevo."],
   wa_ok: ["ok", "WhatsApp conectado y webhook suscrito."], wa_err: ["err", "Meta rechazó los datos de WhatsApp. Revisa token, Phone number ID y WABA ID."],
+  wa_taken: ["err", "Ese número de WhatsApp ya está conectado a otra empresa."],
   csrf: ["err", "La sesión expiró, vuelve a intentarlo."],
 };
 
@@ -198,6 +199,7 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
             await store.ensureVerifyTokenHash(tenantId, box.sha256(verifyTokenFor(tenantId)));
             return redirect(res, "/panel?n=wa_ok");
           } catch (error) {
+            if (error.code === "23505") return redirect(res, "/panel?n=wa_taken");
             console.warn("[Panel] WhatsApp connect rejected:", safeError(error));
             return redirect(res, "/panel?n=wa_err");
           }

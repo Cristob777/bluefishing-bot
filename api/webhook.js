@@ -61,7 +61,8 @@ async function sendWhatsAppMessage(to, message, target) {
     ? message.substring(0, MAX_WHATSAPP_MESSAGE - 20) + "\n\n(Respuesta recortada)"
     : message;
 
-  const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${target.phoneNumberId}/messages`;
+  const graphBase = String(process.env.GRAPH_API_BASE_URL || "https://graph.facebook.com").replace(/\/+$/, "");
+  const url = `${graphBase}/${GRAPH_API_VERSION}/${target.phoneNumberId}/messages`;
   const response = await deps.fetchImpl(url, {
     method: "POST",
     headers: {
