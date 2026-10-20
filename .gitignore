@@ -2,3 +2,6 @@ node_modules/
 .env
 .vercel
 catalogo/wc-product-export*.csv
+.env.production
+deploy/chatwoot/.env
+deploy/atomic-crm/.env

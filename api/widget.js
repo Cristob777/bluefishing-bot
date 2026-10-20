@@ -6,6 +6,7 @@ const WIDGET_SCRIPT = `
     color: (scriptEl && scriptEl.dataset.color) || "#0b3d63",
     greeting: (scriptEl && scriptEl.dataset.greeting) || "¡Hola! Soy Matías, el asistente de Bluefishing. ¿En qué te puedo ayudar?",
     position: (scriptEl && scriptEl.dataset.position === "left") ? "left" : "right",
+    key: (scriptEl && scriptEl.dataset.key) || "",
   };
 
   var STORAGE_SESSION_KEY = "bf_chat_session_id";
@@ -15,6 +16,7 @@ const WIDGET_SCRIPT = `
     var id = localStorage.getItem(STORAGE_SESSION_KEY);
     if (!id) {
       id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2));
+      id = id.replace(/[^A-Za-z0-9_-]/g, "");
       localStorage.setItem(STORAGE_SESSION_KEY, id);
     }
     return id;
@@ -120,7 +122,7 @@ const WIDGET_SCRIPT = `
 
     var typingEl = renderMessage("assistant typing", "escribiendo...");
 
-    fetch(config.apiBase + "/chat", {
+    fetch(config.apiBase + "/chat" + (config.key ? "?k=" + encodeURIComponent(config.key) : ""), {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ sessionId: sessionId, message: text }),
@@ -163,5 +165,7 @@ module.exports = async (req, res) => {
 
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   return res.status(200).send(WIDGET_SCRIPT);
 };
