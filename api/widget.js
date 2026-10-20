@@ -15,6 +15,7 @@ const WIDGET_SCRIPT = `
     var id = localStorage.getItem(STORAGE_SESSION_KEY);
     if (!id) {
       id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : (Date.now() + "-" + Math.random().toString(16).slice(2));
+      id = id.replace(/[^A-Za-z0-9_-]/g, "");
       localStorage.setItem(STORAGE_SESSION_KEY, id);
     }
     return id;
@@ -163,5 +164,7 @@ module.exports = async (req, res) => {
 
   res.setHeader("Content-Type", "application/javascript; charset=utf-8");
   res.setHeader("Cache-Control", "public, max-age=300");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cross-Origin-Resource-Policy", "cross-origin");
   return res.status(200).send(WIDGET_SCRIPT);
 };
