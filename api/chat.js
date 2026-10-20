@@ -12,9 +12,29 @@ function allowedOrigins() {
   return (process.env.ALLOWED_ORIGIN || "").split(",").map((o) => o.trim()).filter(Boolean);
 }
 
-function applyCors(req, res) {
+// Empresa del widget: /chat?k=<widget_key>. Sin clave = cuenta del operador (ALLOWED_ORIGIN).
+const KEY_RE = /^[a-f0-9]{24}$/;
+const tenantCache = new Map();
+async function tenantForKey(key) {
+  if (!key || !KEY_RE.test(key)) return null;
+  const hit = tenantCache.get(key);
+  if (hit && hit.t > Date.now() - 60000) return hit.v;
+  let v = null;
+  try {
+    const { query, isConfigured } = require("../lib/postgres");
+    if (isConfigured) {
+      const r = await query("select id, widget_origins from tenants where widget_key=$1", [key]);
+      v = r.rows[0] ? { id: r.rows[0].id, origins: r.rows[0].widget_origins || [] } : null;
+    }
+  } catch (error) { console.error("[Chat] tenant lookup failed:", safeError(error)); }
+  tenantCache.set(key, { v, t: Date.now() });
+  return v;
+}
+
+function applyCors(req, res, tenant = null) {
   const origin = req.headers.origin;
-  const allowed = Boolean(origin) && allowedOrigins().includes(origin);
+  const list = tenant ? tenant.origins : allowedOrigins();
+  const allowed = Boolean(origin) && list.includes(origin);
   if (allowed) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
@@ -32,7 +52,10 @@ function clientIp(req) {
 }
 
 module.exports = async (req, res) => {
-  const originAllowed = applyCors(req, res);
+  const key = String(req.query?.k || "");
+  const tenant = key ? await tenantForKey(key) : null;
+  if (key && !tenant) { applyCors(req, res, { origins: [] }); return res.status(403).json({ error: "unknown_widget" }); }
+  const originAllowed = applyCors(req, res, tenant);
 
   if (req.method === "OPTIONS") {
     res.statusCode = originAllowed ? 204 : 403;
@@ -62,8 +85,8 @@ module.exports = async (req, res) => {
 
   try {
     console.log("[Chat] Message received", { session: pseudonymize(sessionId), chars: text.length });
-    trackContact({ channel: "web", externalId: sessionId });
-    const { reply } = await handleMessage({ sessionId: `web:${sessionId}`, text });
+    trackContact({ channel: "web", externalId: sessionId, tenantId: tenant?.id || null });
+    const { reply } = await handleMessage(tenant ? { sessionId: `web:${tenant.id}:${sessionId}`, tenantId: tenant.id, text } : { sessionId: `web:${sessionId}`, text });
     return res.status(200).json({ reply });
   } catch (error) {
     console.error("[Chat] Error:", safeError(error));
@@ -73,3 +96,4 @@ module.exports = async (req, res) => {
 
 module.exports.clientIp = clientIp;
 module.exports.SESSION_ID_RE = SESSION_ID_RE;
+module.exports._tenantCache = tenantCache;

@@ -87,7 +87,7 @@ const server = http.createServer(async (req, res) => {
       await healthHandler(req, response);
     } else if (url.pathname === "/panel" || url.pathname.startsWith("/panel/")) {
       await panelHandler(req, res);
-    } else if (url.pathname === "/admin" || url.pathname === "/admin/login" || url.pathname === "/admin/logout") {
+    } else if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
       await adminHandler(req, res);
     } else {
       response.status(404).json({ error: "not_found" });

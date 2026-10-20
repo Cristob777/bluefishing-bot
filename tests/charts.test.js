@@ -20,6 +20,6 @@ test("charts render inline SVG with real values and conversion %", () => {
 
 test("results body never fakes sales and escapes labels", () => {
   const html = resultsBody(ui, charts, { days: 30, daily: [], split: {}, first: {}, products: [{ name: "<x>", count: 1 }], intents: [], funnel: { steps: [], partial: true }, sales: null }, "/panel/resultados");
-  assert.match(html, /Ventas y cotizaciones atribuidas[\s\S]*Sin datos/);
+  assert.match(html, /Ventas atribuidas al bot[\s\S]*Sin datos/);
   assert.ok(!html.includes("<x>"));
 });

@@ -117,12 +117,30 @@ Guía completa: `deploy/atomic-crm/README.md`. El `Caddyfile.snippet` sirve solo
    docker compose --env-file .env.production --profile atomic-crm up -d
    ```
 
-## 10. Verificación final
+## 10. CRM multiempresa y ventas atribuidas
+- **Migración 005** (la aplica `deploy.sh`): agrega `tenant_id` a los contactos, la clave del widget por empresa, el historial de etapas y los pedidos de WooCommerce. Es **idempotente** y el backfill es seguro:
+  - los contactos sin empresa quedan como **cuenta del operador** (`tenant_id` vacío, es decir el número y la tienda del `.env`);
+  - un contacto de WhatsApp se asigna a una empresa solo si ese teléfono habló **únicamente** con esa empresa. Si hay dudas, queda en el operador.
+- **Chat web por empresa:** cada dueño, en `/panel → Ajustes`, escribe sus dominios y copia su línea:
+  ```html
+  <script src="https://bot.bluefishing.cl/widget.js" data-key="CLAVE-DE-LA-EMPRESA" async></script>
+  ```
+  Sin `data-key`, el widget usa la cuenta del operador y `ALLOWED_ORIGIN`.
+- **Pedidos y ventas atribuidas** (solo lectura): el dueño aprieta «Sincronizar pedidos ahora» en Resultados, y tú puedes agendar un cron diario:
+  ```bash
+  0 6 * * * cd /ruta/bluefishing-bot && docker compose --env-file .env.production exec -T app node scripts/woo-orders-sync.js
+  ```
+  Un pedido se atribuye al bot cuando su teléfono (últimos 9 dígitos) o su correo coincide con un contacto de la misma empresa que habló con Matías como máximo `ATTRIBUTION_WINDOW_DAYS` (por defecto 30) antes del pedido. Solo cuentan los pedidos `completed` y `processing`, y el contacto pasa solo a «Compró».
+- **Chatwoot y Atomic CRM** siguen siendo de la **cuenta del operador**: Atomic sincroniza solo los contactos sin empresa (un proyecto Supabase corresponde a una empresa). Para darle Chatwoot o Atomic a otra empresa hay que crearle su propia instancia; eso todavía no se automatiza.
+
+## 11. Verificación final
 - [ ] `https://bot.bluefishing.cl/health` responde.
 - [ ] `/admin`: entras con el usuario del paso 2 y ves "Panel de ventas".
 - [ ] `/panel`: un dueño de prueba crea su cuenta, conecta la tienda y ve "2 de 2 listos".
 - [ ] Un mensaje de WhatsApp recibe respuesta, y la conversación aparece en `/admin`.
 - [ ] Chat web (si aplica): la burbuja responde en tu sitio.
+- [ ] `/panel → Contactos` y `Embudo` muestran solo los contactos de esa empresa, y «Mover» cambia la etapa.
+- [ ] `/panel → Resultados → Sincronizar pedidos` termina con «Pedidos sincronizados».
 - [ ] Respaldo de `.env.production` y de `CREDENTIALS_MASTER_KEY` fuera del VPS.
 
 ## Problemas comunes
