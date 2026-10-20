@@ -39,6 +39,10 @@ jobs:
           node --check scripts/enrich-catalogo.js
           node --check server.js
           node --check lib/postgres.js
+          node --check lib/contactStore.js
+          node --check api/chatwoot.js
+          node --check lib/atomicCrmSync.js
+          node --check scripts/atomic-crm-sync.js
           node --check lib/agentContract.js
           node --check lib/securityGuard.js
           node --check lib/responseValidator.js

@@ -58,18 +58,19 @@ function redirect(res,where,cookie) {
   headers(res); res.statusCode=303; res.setHeader("Location",where); if(cookie) res.setHeader("Set-Cookie",cookie); res.end();
 }
 
-function page(title,body) {
-  const css="body{margin:0;background:#07111f;color:#edf5ff;font-family:system-ui,sans-serif}.w{max-width:1200px;margin:auto;padding:24px}.card{background:#0d1b2e;border:1px solid #20364f;border-radius:14px;padding:16px}.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin:16px 0}.cols{display:grid;grid-template-columns:1.3fr .7fr;gap:14px}.metric b{font-size:28px;display:block}.muted{color:#93a9c2;font-size:13px}a{color:#4fb8ff;text-decoration:none}table{width:100%;border-collapse:collapse;font-size:13px}th,td{padding:9px;border-bottom:1px solid #20364f;text-align:left;vertical-align:top}th{color:#93a9c2}.pill{display:inline-block;border:1px solid #20364f;border-radius:999px;padding:3px 7px;margin:2px;font-size:11px;color:#93a9c2}.msg{padding:12px;border-radius:12px;margin:8px 0;white-space:pre-wrap}.u{background:#143253;margin-left:18%}.a{background:#13281f;margin-right:18%}.login{max-width:400px;margin:12vh auto}input,button{width:100%;padding:11px;margin:7px 0;border-radius:8px;border:1px solid #20364f;background:#0d1b2e;color:#edf5ff}button{cursor:pointer}.top{display:flex;justify-content:space-between;align-items:center;gap:15px}.filters a{display:inline-block;border:1px solid #20364f;padding:6px 9px;border-radius:8px;margin-right:6px}.rank{display:flex;justify-content:space-between;margin:9px 0}@media(max-width:900px){.grid{grid-template-columns:repeat(3,1fr)}.cols{grid-template-columns:1fr}}@media(max-width:600px){.grid{grid-template-columns:repeat(2,1fr)}.w{padding:14px}}";
-  return "<!doctype html><html lang='es'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'><title>"+esc(title)+"</title><style>"+css+"</style></head><body>"+body+"</body></html>";
-}
+const ui = require("../lib/ui");
+const { icon } = ui;
+function page(title, body) { return ui.doc(title, `<div class="content" style="margin:auto">${body}</div>`); }
 
-function login(error="") {
-  return page("BlueFishing Sales Console","<div class='w login'><h2>BlueFishing Sales Console</h2><p class='muted'>Acceso privado</p><div class='card'>"+(error?"<p>"+esc(error)+"</p>":"")+"<form method='post' action='/admin/login'><input name='username' placeholder='Usuario' autocomplete='username' required><input type='password' name='password' placeholder='Contraseña' autocomplete='current-password' required><button>Entrar</button></form></div></div>");
+function login(error = "") {
+  const form = `<h1>Panel de ventas</h1><p class="muted" style="margin:6px 0 20px">Acceso privado del operador.</p>${error ? `<div class="alert err" role="alert">${icon("alert", 16)} ${esc(error)}</div>` : ""}
+<div class="card"><form method="post" action="/admin/login"><label for="au">Usuario</label><input id="au" name="username" placeholder="Usuario" autocomplete="username" required><label for="ap">Contraseña</label><input id="ap" type="password" name="password" placeholder="••••••••••••" autocomplete="current-password" required><div style="margin-top:16px"><button class="btn full">Entrar</button></div></form></div>`;
+  return ui.authLayout({ title: "BlueFishing · Panel de ventas", tagline: "Todo lo que Matías vende, en un solo panel.", feats: ["Conversaciones de WhatsApp y web", "Embudo de clientes por etapa", "Derivaciones a humano al instante"], form });
 }
 
 function fmt(n){return new Intl.NumberFormat("es-CL").format(Number(n||0));}
 function date(v){try{return new Intl.DateTimeFormat("es-CL",{timeZone:process.env.ADMIN_TIMEZONE||"America/Santiago",dateStyle:"short",timeStyle:"short"}).format(new Date(v));}catch{return String(v||"");}}
-function masked(id){const x=String(id||"").replace(/^wa:/,"");return x.length>7?x.slice(0,3)+" •••• "+x.slice(-4):"***"+x.slice(-3);}
+function masked(id){const s=String(id||"");const ch=s.startsWith("web:")?"Web ":s.startsWith("cw:")?"Chatwoot ":"";const x=s.replace(/^(wa|web|cw):([0-9a-f-]{36}:)?/,"");return ch+(x.length>7?x.slice(0,3)+" •••• "+x.slice(-4):"•••"+x.slice(-3));}
 function days(v){const n=Number(v);return [1,7,30,90].includes(n)?n:7;}
 function form(body){return Object.fromEntries(new URLSearchParams(Buffer.from(body||"").toString("utf8")).entries());}
 function cost(s){
@@ -78,6 +79,13 @@ function cost(s){
   const input=Number(s.input_tokens||0), cached=Math.min(input,Number(s.cached_input_tokens||0));
   return ((input-cached)*i+cached*(c>0?c:i)+Number(s.output_tokens||0)*o)/1000000;
 }
+
+const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["conversaciones","Conversaciones","chat"],["embudo","Embudo","board"]];
+function shell(view,d,title,body){
+  return ui.shell({title,product:"Blue Fishing",nav:NAV.map(([v,l,i])=>({href:"/admin?days="+d+(v?"&view="+v:""),label:l,icon:i,on:v===view})),
+    user:{name:process.env.ADMIN_DASHBOARD_USER||"Operador",sub:"Operador"},logout:{action:"/admin/logout"},body});
+}
+const tabs=(d,view)=>"<div class='tabs'>"+[[1,"Hoy"],[7,"7 días"],[30,"30 días"],[90,"90 días"]].map(([n,l])=>"<a class='"+(n===d?"on":"")+"' href='/admin?days="+n+(view?"&view="+view:"")+"'>"+l+"</a>").join("")+"</div>";
 
 async function dashboard(d) {
   const q = await Promise.all([
@@ -93,30 +101,57 @@ async function dashboard(d) {
   return {s:q[0].rows[0]||{},high:Number(q[1].rows[0]?.count||0),handoffs:Number(q[2].rows[0]?.count||0),intents:q[3].rows,products:q[4].rows,species:q[5].rows,recent:q[6].rows,attention:q[7].rows};
 }
 
-function ranks(rows){return rows.length?rows.map(r=>"<div class='rank'><span>"+esc(r.name||"Sin dato")+"</span><b>"+fmt(r.count)+"</b></div>").join(""):"<p class='muted'>Sin datos.</p>";}
-
+function ranks(rows,lab=(x)=>x){return rows.length?"<div class='list'>"+rows.map(r=>"<div class='it'><span>"+esc(lab(r.name)||"Sin dato")+"</span><b>"+fmt(r.count)+"</b></div>").join("")+"</div>":"<div class='muted small'>Sin datos en este período.</div>";}
+const kpi=(ic,v,l)=>"<div class='card kpi'><span class='ic'>"+icon(ic,20)+"</span><div><b>"+v+"</b><span>"+l+"</span></div></div>";
+function convTable(rows,d){
+  if(!rows.length)return "<div class='card'>"+ui.empty("chat","Sin conversaciones en este período","Prueba con «30 días» o «90 días».")+"</div>";
+  return "<div class='tw'><table><thead><tr><th>Cliente</th><th>Intención</th><th>Último mensaje</th><th>Turnos</th><th>Actividad</th></tr></thead><tbody>"+rows.map(r=>"<tr><td><a href='/admin?days="+d+"&session="+encodeURIComponent(r.session_id)+"'><b>"+esc(masked(r.session_id))+"</b></a></td><td><span class='badge b-brand'>"+esc(ui.intentLabel(r.last_intent))+"</span></td><td>"+esc(String(r.last_message||"").slice(0,100))+"</td><td>"+fmt(r.turns)+"</td><td class='muted small'>"+esc(date(r.last_at))+"</td></tr>").join("")+"</tbody></table></div>";
+}
 function dashboardHtml(x,d){
   const s=x.s, ai=cost(s), cur=process.env.AI_COST_CURRENCY||"USD";
-  const recent=x.recent.map(r=>"<tr><td><a href='/admin?days="+d+"&session="+encodeURIComponent(r.session_id)+"'>"+esc(masked(r.session_id))+"</a></td><td>"+esc(r.last_intent||"—")+"</td><td>"+esc(String(r.last_message||"").slice(0,100))+"</td><td>"+fmt(r.turns)+"</td><td>"+fmt(r.tokens)+"</td><td>"+esc(date(r.last_at))+"</td></tr>").join("");
-  const hand=x.attention.map(r=>"<tr><td>"+esc(masked(r.session_id))+"</td><td>"+esc(r.intent||"—")+"</td><td>"+esc(String(r.last_message||"").slice(0,100))+"</td><td>"+esc(date(r.created_at))+"</td></tr>").join("");
-  return page("BlueFishing Sales Console","<div class='w'><div class='top'><div><h2>BlueFishing Sales Console</h2><div class='muted'>Matías · actividad comercial real</div></div><form method='post' action='/admin/logout'><button>Salir</button></form></div><div class='filters'><a href='/admin?days=1'>Hoy</a><a href='/admin?days=7'>7 días</a><a href='/admin?days=30'>30 días</a><a href='/admin?days=90'>90 días</a></div><div class='grid'>"+
-  [["Interacciones",s.interactions],["Clientes activos",s.customers],["Intención alta",x.high],["Handoffs abiertos",x.handoffs],["Tokens IA",s.total_tokens],["Coste IA",ai===null?"—":cur+" "+ai.toFixed(4)]].map(m=>"<div class='card metric'><span class='muted'>"+m[0]+"</span><b>"+fmt(m[1])+"</b></div>").join("")+
-  "</div><div class='cols'><div><div class='card'><h3>Conversaciones recientes</h3><table><tr><th>Cliente</th><th>Intención</th><th>Último mensaje</th><th>Turnos</th><th>Tokens</th><th>Actividad</th></tr>"+(recent||"<tr><td colspan='6'>Sin conversaciones.</td></tr>")+"</table></div><div class='card' style='margin-top:14px'><h3>Requiere atención humana</h3><table><tr><th>Cliente</th><th>Motivo</th><th>Último mensaje</th><th>Fecha</th></tr>"+(hand||"<tr><td colspan='4'>Sin handoffs abiertos.</td></tr>")+"</table></div></div><div><div class='card'><h3>Productos recomendados</h3>"+ranks(x.products)+"</div><div class='card' style='margin-top:14px'><h3>Especies consultadas</h3>"+ranks(x.species)+"</div><div class='card' style='margin-top:14px'><h3>Intenciones</h3>"+ranks(x.intents)+"</div><div class='card' style='margin-top:14px'><h3>Calidad operativa</h3><div class='rank'><span>Sin producto recuperado</span><b>"+fmt(s.no_product_turns)+"</b></div><div class='rank'><span>Fallbacks</span><b>"+fmt(s.fallbacks)+"</b></div><div class='rank'><span>Latencia media</span><b>"+fmt(s.avg_latency_ms)+" ms</b></div></div></div></div></div>");
+  const hand=x.attention.length?"<div class='list'>"+x.attention.map(r=>"<div class='it'><span><a href='/admin?days="+d+"&session="+encodeURIComponent(r.session_id)+"'><b>"+esc(masked(r.session_id))+"</b></a><div class='muted small'>"+esc(String(r.last_message||"").slice(0,80))+"</div></span><span class='muted small'>"+esc(date(r.created_at))+"</span></div>").join("")+"</div>":ui.empty("check","Nadie está esperando","No hay clientes pidiendo atención humana.");
+  return shell("",d,"Inicio","<div class='head'><div><h1>Panel de ventas</h1><div class='muted'>Matías · actividad comercial real</div></div>"+tabs(d,"")+"</div>"+
+  "<div class='grid g4' style='margin-bottom:16px'>"+kpi("msg",fmt(s.interactions),"Mensajes")+kpi("users",fmt(s.customers),"Contactos activos")+kpi("hand",fmt(x.handoffs),"Derivados a humano")+kpi("bolt",fmt(x.high),"Intención alta")+"</div>"+
+  "<div class='grid' style='grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px' id='cols'><div><div class='head' style='margin:6px 0 10px'><h2>Conversaciones recientes</h2><a class='small' href='/admin?days="+d+"&view=conversaciones'>Ver todas →</a></div>"+convTable(x.recent.slice(0,8),d)+
+  "<div class='card' style='margin-top:16px'><h3>Requiere atención humana</h3>"+hand+"</div></div><div class='grid' style='gap:16px;align-content:start'>"+
+  "<div class='card'><h3>Productos recomendados</h3>"+ranks(x.products)+"</div><div class='card'><h3>Especies consultadas</h3>"+ranks(x.species)+"</div><div class='card'><h3>Intenciones</h3>"+ranks(x.intents,ui.intentLabel)+"</div>"+
+  "<div class='card'><h3>Calidad y costo</h3><div class='list'><div class='it'><span>Sin producto encontrado</span><b>"+fmt(s.no_product_turns)+"</b></div><div class='it'><span>Respuestas de respaldo</span><b>"+fmt(s.fallbacks)+"</b></div><div class='it'><span>Latencia media</span><b>"+fmt(s.avg_latency_ms)+" ms</b></div><div class='it'><span>Tokens IA</span><b>"+fmt(s.total_tokens)+"</b></div><div class='it'><span>Coste IA</span><b>"+(ai===null?"—":esc(cur+" "+ai.toFixed(4)))+"</b></div></div></div></div></div>"+
+  "<style>@media(max-width:1000px){#cols{grid-template-columns:1fr!important}}</style>");
+}
+function conversationsHtml(rows,d){return shell("conversaciones",d,"Conversaciones","<div class='head'><div><h1>Conversaciones</h1><div class='muted'>WhatsApp, web y Chatwoot.</div></div>"+tabs(d,"conversaciones")+"</div>"+convTable(rows,d));}
+
+const STAGES=[["nuevo","Nuevo"],["interesado","Interesado"],["cotizado","Cotizado"],["compro","Compró"],["perdido","Perdido"]];
+async function funnel(){
+  try{return (await query("select c.stage,c.session_id,c.name,c.channel,c.message_count,c.last_seen_at from contacts c order by c.last_seen_at desc limit 300")).rows;}catch{return [];}
+}
+function funnelHtml(rows,d){
+  const cols=STAGES.map(([k,l])=>{const it=rows.filter(r=>r.stage===k);return "<div class='col'><h3><span>"+l+"</span><span class='badge b-off'>"+it.length+"</span></h3>"+(it.length?it.map(r=>"<a class='dcard' href='/admin?days="+d+"&session="+encodeURIComponent(r.session_id)+"'><b>"+esc(r.name||masked(r.session_id))+"</b><div class='muted small'>"+esc(r.channel==="web"?"Chat web":r.channel==="chatwoot"?"Chatwoot":"WhatsApp")+" · "+fmt(r.message_count)+(Number(r.message_count)===1?" mensaje":" mensajes")+"</div><div class='muted small'>"+esc(date(r.last_seen_at))+"</div></a>").join(""):"<div class='muted small' style='text-align:center;padding:20px 0'>Sin contactos</div>")+"</div>";}).join("");
+  return shell("embudo",d,"Embudo","<div class='head'><div><h1>Embudo de clientes</h1><div class='muted'>Cada contacto en su etapa. Las etapas se sincronizan con Atomic CRM si está activo.</div></div></div>"+(rows.length?"<div class='kan'>"+cols+"</div>":"<div class='card'>"+ui.empty("board","El embudo está vacío","Los contactos aparecen aquí cuando escriben por WhatsApp o por el chat web.")+"</div>"));
 }
 
 async function conversation(id){
   const q=await Promise.all([
     query("select known_context,updated_at from bot_sessions where session_id=$1 limit 1",[id]),
-    query("select user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id])
+    query("select user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id]),
+    query("select status,created_at from handoff_requests where session_id=$1 order by created_at desc limit 5",[id]).catch(()=>({rows:[]})),
+    query("select stage,name,channel,phone from contacts where session_id=$1 limit 1",[id]).catch(()=>({rows:[]}))
   ]);
-  return {session:q[0].rows[0]||{},events:q[1].rows};
+  return {session:q[0].rows[0]||{},events:q[1].rows,handoffs:q[2].rows,contact:q[3].rows[0]||null};
 }
 
 function conversationHtml(id,x,d){
-  const c=x.session.known_context||{};
-  const pills=["product_type","target_species","water_type","fishing_position","technique","weight_range","weight_grams","budget_range","brand_preference","purchase_intent_level"].filter(k=>c[k]&&c[k]!=="unknown").map(k=>"<span class='pill'>"+esc(k)+": "+esc(c[k])+"</span>").join("");
-  const ev=x.events.map(e=>"<div class='card' style='margin-top:10px'><div class='msg u'><b>Cliente</b><br>"+esc(e.user_message)+"</div><div class='msg a'><b>Matías</b><br>"+esc(e.bot_response||"")+"</div><div class='muted'>"+esc(date(e.created_at))+" · "+esc(e.intent||"") +" · "+esc(e.route||"")+" · "+fmt(e.llm_usage?.total_tokens)+" tokens · "+fmt(e.latency_ms)+" ms</div></div>").join("");
-  return page("Conversación","<div class='w'><div class='top'><div><a href='/admin?days="+d+"'>← Dashboard</a><h2>Cliente "+esc(masked(id))+"</h2></div><form method='post' action='/admin/logout'><button>Salir</button></form></div><div class='card'><h3>Contexto detectado</h3>"+(pills||"<span class='muted'>Sin contexto confirmado.</span>")+"</div><h3 style='margin-top:18px'>Conversación</h3>"+(ev||"<div class='card'>Sin eventos.</div>")+"</div>");
+  const c=x.session.known_context||{}, ct=x.contact||{};
+  const L={product_type:"Producto",target_species:"Especie",water_type:"Tipo de agua",fishing_position:"Desde",technique:"Técnica",weight_range:"Rango de peso",weight_grams:"Peso (g)",budget_range:"Presupuesto",brand_preference:"Marca",purchase_intent_level:"Intención de compra"};
+  const props=[["Cliente",ct.name||masked(id)],["Canal",ct.channel==="web"||id.startsWith("web:")?"Chat web":id.startsWith("cw:")?"Chatwoot":"WhatsApp"],["Mensajes",fmt(x.events.length)],["Última actividad",x.events.length?date(x.events[x.events.length-1].created_at):"—"]].concat(Object.keys(L).filter(k=>c[k]&&c[k]!=="unknown").map(k=>[L[k],c[k]]));
+  const tl=x.events.length?x.events.map(e=>"<div class='ev'><div class='muted small'>"+esc(date(e.created_at))+" · "+esc(ui.intentLabel(e.intent))+" · "+fmt(e.latency_ms)+" ms</div><div class='bub u'>"+esc(e.user_message)+"</div>"+(e.bot_response?"<div class='bub a'>"+esc(e.bot_response)+"</div>":"")+"</div>").join(""):ui.empty("chat","Sin mensajes","No hay eventos para este cliente.");
+  const stage=(STAGES.find(s=>s[0]===ct.stage)||[null,"Sin etapa"])[1];
+  const prods=[...new Set(x.events.flatMap(e=>(Array.isArray(e.products)?e.products:[]).map(p=>p&&p.name).filter(Boolean)))].slice(0,6);
+  return shell("conversaciones",d,"Contacto","<div class='head'><div><a class='small' href='/admin?days="+d+"&view=conversaciones'>← Conversaciones</a><h1 style='margin-top:6px'>"+esc(ct.name||masked(id))+"</h1></div><span class='badge b-brand'>"+esc(stage)+"</span></div>"+
+  "<div class='rec'><div class='card'><h3>Propiedades</h3>"+props.map(p=>"<div class='prop'><span>"+esc(p[0])+"</span><b>"+esc(p[1])+"</b></div>").join("")+"</div>"+
+  "<div class='card'><h3>Actividad</h3><div class='tl'>"+tl+"</div></div>"+
+  "<div class='grid' style='gap:16px'><div class='card'><h3>Etapa del embudo</h3><div class='list'>"+STAGES.map(s=>"<div class='it'><span>"+s[1]+"</span>"+(s[0]===ct.stage?"<span class='badge b-ok'>Actual</span>":"")+"</div>").join("")+"</div></div>"+
+  "<div class='card'><h3>Productos recomendados</h3>"+(prods.length?"<div class='list'>"+prods.map(p=>"<div class='it'><span>"+esc(p)+"</span></div>").join("")+"</div>":"<div class='muted small'>Aún ninguno.</div>")+"</div>"+
+  "<div class='card'><h3>Derivaciones</h3>"+(x.handoffs.length?"<div class='list'>"+x.handoffs.map(h=>"<div class='it'><span class='badge "+(h.status==="open"?"b-err":"b-off")+"'>"+(h.status==="open"?"Abierta":h.status==="contacted"?"Contactado":"Cerrada")+"</span><span class='muted small'>"+esc(date(h.created_at))+"</span></div>").join("")+"</div>":"<div class='muted small'>No pidió hablar con una persona.</div>")+"</div></div></div>");
 }
 
 module.exports = async function(req,res){
@@ -136,15 +171,19 @@ module.exports = async function(req,res){
 
   if(!ok)return send(res,200,login());
   if(path==="/admin/logout"&&req.method==="POST")return redirect(res,"/admin",COOKIE+"=; Max-Age=0; Path=/admin; HttpOnly; Secure; SameSite=Strict");
-  if(req.method!=="GET"||path!=="/admin")return send(res,404,page("No encontrado","<div class='w'>No encontrado.</div>"));
+  if(req.method!=="GET"||path!=="/admin")return send(res,404,ui.errorPage("Página no encontrada","El enlace no existe o cambió.","/admin","Volver al panel de ventas"));
 
   try{
     const d=days(req.query?.days), id=String(req.query?.session||"").slice(0,160);
     if(id)return send(res,200,conversationHtml(id,await conversation(id),d));
+    const view=String(req.query?.view||"");
+    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const r=await R.results(query,{days:rd});return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados")));}
+    if(view==="embudo")return send(res,200,funnelHtml(await funnel(),d));
+    if(view==="conversaciones")return send(res,200,conversationsHtml((await dashboard(d)).recent,d));
     return send(res,200,dashboardHtml(await dashboard(d),d));
   }catch(error){
     console.error("[Admin] Dashboard error:",safeError(error));
-    return send(res,500,page("Error","<div class='w'><div class='card'>No pudimos cargar el dashboard.</div></div>"));
+    return send(res,500,ui.errorPage("Algo salió mal","No pudimos cargar el panel. Inténtalo de nuevo.","/admin","Reintentar"));
   }
 };
 
