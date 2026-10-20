@@ -14,7 +14,7 @@ test("upserts WhatsApp contact keyed to existing session_id format", async () =>
   store._setQuery(async (sql, params) => { calls.push({ sql, params }); return { rows: [{ id: 7 }] }; });
   const id = await store.upsertContact({ channel: "whatsapp", externalId: "+56 9 0000 0000", name: "  Ana\nPérez " });
   assert.equal(id, 7);
-  assert.deepEqual(calls[0].params, ["whatsapp", "56900000000", "wa:56900000000", "Ana Pérez", "56900000000"]);
+  assert.deepEqual(calls[0].params, ["whatsapp", "56900000000", "wa:56900000000", "Ana Pérez", "56900000000", null]);
   assert.match(calls[0].sql, /on conflict \(channel, external_id\)/);
   assert.match(calls[0].sql, /\$1/); // parametrizado, sin interpolar datos del usuario
 });
