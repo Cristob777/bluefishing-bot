@@ -19,7 +19,8 @@
     "start": "node server.js",
     "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql",
     "security:retention": "node scripts/security-retention.js",
-    "db:migrate": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f db/migrations/002_tenant_onboarding.sql"
+    "db:migrate": "psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f db/migrations/002_tenant_onboarding.sql",
+    "crm:sync": "node scripts/atomic-crm-sync.js --once"
   },
   "engines": {
     "node": ">=22"

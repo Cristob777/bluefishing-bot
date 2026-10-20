@@ -156,6 +156,11 @@ Chatwoot can act as the owner/sales inbox with Matías as its Agent Bot (`POST /
 The bot answers pending conversations and hands off to humans (status `open`, label `humano`, `handoff_requests`).
 The direct WhatsApp webhook is unchanged; moving WhatsApp into Chatwoot is a later step. Setup: `deploy/chatwoot/README.md`.
 
+## Atomic CRM (optional, behind `ATOMIC_CRM_ENABLED`)
+
+Sales pipeline for the owner on Atomic CRM (Supabase cloud + static SPA). A one-way, idempotent job
+(`scripts/atomic-crm-sync.js`, compose profile `atomic-crm`) syncs contacts, inferred stages, deals and handoff notes. Setup: `deploy/atomic-crm/README.md`.
+
 ## Future phase
 
 A full CRM is intentionally left for a later phase.

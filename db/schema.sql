@@ -119,3 +119,14 @@ select
   (select max(e.created_at) from bot_events e where e.session_id = c.session_id) as last_event_at,
   exists (select 1 from handoff_requests h where h.session_id = c.session_id and h.status = 'open') as handoff_open
 from contacts c;
+
+-- Atomic CRM sync (ver db/migrations/003_atomic_crm_sync.sql)
+create table if not exists atomic_crm_sync (
+  entity text not null check (entity in ('contact','deal','handoff_note')),
+  source_id text not null,
+  target_id bigint not null,
+  payload_hash text,
+  synced_at timestamptz not null default now(),
+  primary key (entity, source_id)
+);
+create index if not exists atomic_crm_sync_synced_idx on atomic_crm_sync(synced_at desc);
