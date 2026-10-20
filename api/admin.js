@@ -80,10 +80,13 @@ function cost(s){
   return ((input-cached)*i+cached*(c>0?c:i)+Number(s.output_tokens||0)*o)/1000000;
 }
 
-const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["conversaciones","Conversaciones","chat"],["embudo","Embudo","board"]];
+const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["contactos","Contactos","users"],["embudo","Embudo","board"],["conversaciones","Conversaciones","chat"]];
+const crm=require("../lib/crm");
+const NOTE={stage_ok:["ok","Etapa actualizada."],stage_err:["err","No pudimos mover el contacto."],sync_ok:["ok","Pedidos sincronizados."],sync_err:["err","No pudimos sincronizar pedidos (revisa WC_* o las tiendas conectadas)."],csrf:["err","Sesión expirada, vuelve a intentarlo."]};
+let NOTICE=null;
 function shell(view,d,title,body){
   return ui.shell({title,product:"Blue Fishing",nav:NAV.map(([v,l,i])=>({href:"/admin?days="+d+(v?"&view="+v:""),label:l,icon:i,on:v===view})),
-    user:{name:process.env.ADMIN_DASHBOARD_USER||"Operador",sub:"Operador"},logout:{action:"/admin/logout"},body});
+    user:{name:process.env.ADMIN_DASHBOARD_USER||"Operador",sub:"Operador"},logout:{action:"/admin/logout"},body,toast:NOTICE?{kind:NOTICE[0],text:NOTICE[1]}:null});
 }
 const tabs=(d,view)=>"<div class='tabs'>"+[[1,"Hoy"],[7,"7 días"],[30,"30 días"],[90,"90 días"]].map(([n,l])=>"<a class='"+(n===d?"on":"")+"' href='/admin?days="+n+(view?"&view="+view:"")+"'>"+l+"</a>").join("")+"</div>";
 
@@ -134,7 +137,7 @@ async function conversation(id){
     query("select known_context,updated_at from bot_sessions where session_id=$1 limit 1",[id]),
     query("select user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id]),
     query("select status,created_at from handoff_requests where session_id=$1 order by created_at desc limit 5",[id]).catch(()=>({rows:[]})),
-    query("select stage,name,channel,phone from contacts where session_id=$1 limit 1",[id]).catch(()=>({rows:[]}))
+    query("select id,stage,name,channel,phone,email from contacts where session_id=$1 limit 1",[id]).catch(()=>({rows:[]}))
   ]);
   return {session:q[0].rows[0]||{},events:q[1].rows,handoffs:q[2].rows,contact:q[3].rows[0]||null};
 }
@@ -149,7 +152,7 @@ function conversationHtml(id,x,d){
   return shell("conversaciones",d,"Contacto","<div class='head'><div><a class='small' href='/admin?days="+d+"&view=conversaciones'>← Conversaciones</a><h1 style='margin-top:6px'>"+esc(ct.name||masked(id))+"</h1></div><span class='badge b-brand'>"+esc(stage)+"</span></div>"+
   "<div class='rec'><div class='card'><h3>Propiedades</h3>"+props.map(p=>"<div class='prop'><span>"+esc(p[0])+"</span><b>"+esc(p[1])+"</b></div>").join("")+"</div>"+
   "<div class='card'><h3>Actividad</h3><div class='tl'>"+tl+"</div></div>"+
-  "<div class='grid' style='gap:16px'><div class='card'><h3>Etapa del embudo</h3><div class='list'>"+STAGES.map(s=>"<div class='it'><span>"+s[1]+"</span>"+(s[0]===ct.stage?"<span class='badge b-ok'>Actual</span>":"")+"</div>").join("")+"</div></div>"+
+  "<div class='grid' style='gap:16px'><div class='card'><h3>Etapa del embudo</h3><div class='list'>"+STAGES.map(s=>"<div class='it'><span>"+s[1]+"</span>"+(s[0]===ct.stage?"<span class='badge b-ok'>Actual</span>":"")+"</div>").join("")+"</div>"+(ct.id?crm.CRM_CSS+crm.moveForm({action:"/admin/crm/stage",csrf:x.csrf,contactId:ct.id,stage:ct.stage,back:"/admin?days="+d+"&session="+encodeURIComponent(id)}):"")+"</div>"+
   "<div class='card'><h3>Productos recomendados</h3>"+(prods.length?"<div class='list'>"+prods.map(p=>"<div class='it'><span>"+esc(p)+"</span></div>").join("")+"</div>":"<div class='muted small'>Aún ninguno.</div>")+"</div>"+
   "<div class='card'><h3>Derivaciones</h3>"+(x.handoffs.length?"<div class='list'>"+x.handoffs.map(h=>"<div class='it'><span class='badge "+(h.status==="open"?"b-err":"b-off")+"'>"+(h.status==="open"?"Abierta":h.status==="contacted"?"Contactado":"Cerrada")+"</span><span class='muted small'>"+esc(date(h.created_at))+"</span></div>").join("")+"</div>":"<div class='muted small'>No pidió hablar con una persona.</div>")+"</div></div></div>");
 }
@@ -170,15 +173,37 @@ module.exports = async function(req,res){
   }
 
   if(!ok)return send(res,200,login());
+  NOTICE=NOTE[String(req.query?.n||"")]||null;
+  const csrf=crypto.createHmac("sha256",process.env.ADMIN_SESSION_SECRET).update("csrf:"+String(ck[COOKIE])).digest("base64url");
+  if(req.method==="POST"&&(path==="/admin/crm/stage"||path==="/admin/woo/sync")){
+    const f=form(req.rawBody);
+    if(!eq(f.csrf,csrf))return redirect(res,"/admin?n=csrf");
+    if(path==="/admin/crm/stage"){
+      const okm=await crm.moveStage(query,{tenantId:undefined,contactId:f.contact_id,stage:f.stage,actor:"admin:"+process.env.ADMIN_DASHBOARD_USER}).catch(()=>false);
+      const back=crm.safeBack(f.back,"/admin");return redirect(res,back+(back.includes("?")?"&":"?")+"n="+(okm?"stage_ok":"stage_err"));
+    }
+    const W=require("../lib/wooOrders");let any=false,okAll=true;
+    const op=W.operatorCreds();if(op){any=true;okAll=(await W.syncOrders(query,{tenantId:null,creds:op})).ok&&okAll;}
+    const store=require("../lib/tenantStore").createStore();
+    const t=await query("select tenant_id from tenant_credentials where woo_connected_at is not null").catch(()=>({rows:[]}));
+    for(const {tenant_id} of t.rows){const c=await store.getWooCredentials(tenant_id).catch(()=>null);if(c){any=true;okAll=(await W.syncOrders(query,{tenantId:tenant_id,creds:c})).ok&&okAll;}}
+    return redirect(res,"/admin?view=resultados&n="+(any&&okAll?"sync_ok":"sync_err"));
+  }
   if(path==="/admin/logout"&&req.method==="POST")return redirect(res,"/admin",COOKIE+"=; Max-Age=0; Path=/admin; HttpOnly; Secure; SameSite=Strict");
   if(req.method!=="GET"||path!=="/admin")return send(res,404,ui.errorPage("Página no encontrada","El enlace no existe o cambió.","/admin","Volver al panel de ventas"));
 
   try{
     const d=days(req.query?.days), id=String(req.query?.session||"").slice(0,160);
-    if(id)return send(res,200,conversationHtml(id,await conversation(id),d));
+    if(id){const x=await conversation(id);x.csrf=csrf;return send(res,200,conversationHtml(id,x,d));}
     const view=String(req.query?.view||"");
-    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const r=await R.results(query,{days:rd});return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados")));}
-    if(view==="embudo")return send(res,200,funnelHtml(await funnel(),d));
+    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const W=require("../lib/wooOrders");const conn=Boolean(W.operatorCreds())||Boolean((await query("select 1 from tenant_credentials where woo_connected_at is not null limit 1").catch(()=>({rows:[]}))).rows.length);const r=await R.results(query,{days:rd,salesConnected:conn});const sync=conn?"<form method='post' action='/admin/woo/sync' style='margin-top:12px'><input type='hidden' name='csrf' value='"+esc(csrf)+"'><button class='btn ghost full'>Sincronizar pedidos ahora</button></form>":"";return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados",sync)));}
+    if(view==="embudo"||view==="contactos"){
+      const q=req.query||{},filters={q:q.q||"",stage:q.stage||"",channel:q.channel||"",sort:q.sort||"",dir:q.dir||""};
+      const rows=await crm.listContacts(query,{tenantId:undefined,...filters}).catch(()=>[]);
+      const detail=(c)=>"/admin?days="+d+"&session="+encodeURIComponent(c.session_id);
+      if(view==="embudo")return send(res,200,shell("embudo",d,"Embudo","<div class='head'><div><h1>Embudo de clientes</h1><div class='muted'>Todas las empresas. Mueve contactos entre etapas; los pedidos atribuidos pasan solos a «Compró».</div></div><a class='btn ghost' href='/admin?view=contactos'>Ver como tabla</a></div>"+crm.kanban(rows,{detail,csrf,action:"/admin/crm/stage",back:"/admin?view=embudo",showTenant:true})));
+      return send(res,200,shell("contactos",d,"Contactos","<div class='head'><div><h1>Contactos</h1><div class='muted'>Todas las empresas.</div></div><a class='btn ghost' href='/admin?view=embudo'>Ver embudo</a></div>"+crm.contactsTable(rows,{base:"/admin?view=contactos",sep:"&",detail,filters,showTenant:true,csrf,action:"/admin/crm/stage"})));
+    }
     if(view==="conversaciones")return send(res,200,conversationsHtml((await dashboard(d)).recent,d));
     return send(res,200,dashboardHtml(await dashboard(d),d));
   }catch(error){

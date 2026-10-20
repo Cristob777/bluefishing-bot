@@ -14,8 +14,8 @@ test("upserts WhatsApp contact keyed to existing session_id format", async () =>
   store._setQuery(async (sql, params) => { calls.push({ sql, params }); return { rows: [{ id: 7 }] }; });
   const id = await store.upsertContact({ channel: "whatsapp", externalId: "+56 9 0000 0000", name: "  Ana\nPérez " });
   assert.equal(id, 7);
-  assert.deepEqual(calls[0].params, ["whatsapp", "56900000000", "wa:56900000000", "Ana Pérez", "56900000000", null]);
-  assert.match(calls[0].sql, /on conflict \(channel, external_id\)/);
+  assert.deepEqual(calls[0].params, ["whatsapp", "56900000000", "wa:56900000000", "Ana Pérez", "56900000000", null, null]);
+  assert.match(calls[0].sql, /on conflict \(\(coalesce\(tenant_id/);
   assert.match(calls[0].sql, /\$1/); // parametrizado, sin interpolar datos del usuario
 });
 
@@ -50,4 +50,15 @@ test("migration is idempotent and mirrored in schema.sql", () => {
   assert.match(mig, /create or replace view crm_contact_overview/);
   assert.match(schema, /create table if not exists contacts/);
   assert.match(mig, /stage text not null default 'nuevo'/);
+});
+
+test("contact is scoped to its company (tenant) with wa:<tenant>:<phone> session", async () => {
+  const calls = [];
+  store._setQuery(async (sql, params) => { calls.push({ sql, params }); return { rows: [{ id: 9 }] }; });
+  const t = "11111111-2222-3333-4444-555555555555";
+  await store.upsertContact({ channel: "whatsapp", externalId: "56911112222", tenantId: t });
+  assert.equal(calls[0].params[2], `wa:${t}:56911112222`);
+  assert.equal(calls[0].params[6], t);
+  await store.upsertContact({ channel: "whatsapp", externalId: "56911112222", tenantId: "not-a-uuid" });
+  assert.equal(calls[1].params[6], null);
 });

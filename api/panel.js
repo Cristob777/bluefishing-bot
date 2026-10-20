@@ -62,6 +62,7 @@ function json(res, status, obj) { headers(res); res.statusCode = status; res.set
 function redirect(res, where, cookie) { headers(res); res.statusCode = 303; res.setHeader("Location", where); if (cookie) res.setHeader("Set-Cookie", cookie); res.end(); }
 
 const ui = require("../lib/ui");
+const crm = require("../lib/crm");
 const { icon } = ui;
 function page(title, body) { return ui.doc(title, `<div class="content" style="margin:auto;max-width:640px">${body}</div>`); }
 
@@ -78,9 +79,12 @@ const NOTICES = {
   wa_ok: ["ok", "WhatsApp conectado y webhook suscrito."], wa_err: ["err", "Meta rechazó los datos de WhatsApp. Revisa el token, el Phone number ID, el WABA ID y el App secret (32 caracteres)."],
   wa_taken: ["err", "Ese número de WhatsApp ya está conectado a otra empresa."],
   csrf: ["err", "Tu sesión expiró por seguridad. Vuelve a intentarlo."],
+  stage_ok: ["ok", "Etapa actualizada."], stage_err: ["err", "No pudimos mover el contacto."],
+  sync_ok: ["ok", "Pedidos sincronizados."], sync_err: ["err", "No pudimos leer los pedidos de tu tienda. Revisa la conexión."],
+  web_ok: ["ok", "Dominios del chat web guardados."], web_err: ["err", "Revisa los dominios: deben empezar con https:// (máximo 5)."],
 };
 
-const NAV = [["/panel", "Inicio", "home"], ["/panel/resultados", "Resultados", "chart"], ["/panel/conexiones", "Conexiones", "plug"], ["/panel/conversaciones", "Conversaciones", "chat"], ["/panel/ajustes", "Ajustes", "cog"]];
+const NAV = [["/panel", "Inicio", "home"], ["/panel/resultados", "Resultados", "chart"], ["/panel/contactos", "Contactos", "users"], ["/panel/embudo", "Embudo", "board"], ["/panel/conversaciones", "Conversaciones", "chat"], ["/panel/conexiones", "Conexiones", "plug"], ["/panel/ajustes", "Ajustes", "cog"]];
 function layout(ctx, active, title, body) {
   const n = NOTICES[ctx.notice];
   return ui.shell({ title, product: "Blue Fishing", nav: NAV.map(([href, label, ic]) => ({ href, label, icon: ic, on: href === active })),
@@ -88,7 +92,7 @@ function layout(ctx, active, title, body) {
 }
 const fmt = (n) => new Intl.NumberFormat("es-CL").format(Number(n || 0));
 const when = (v) => { try { return new Intl.DateTimeFormat("es-CL", { timeZone: process.env.ADMIN_TIMEZONE || "America/Santiago", dateStyle: "medium", timeStyle: "short" }).format(new Date(v)); } catch { return ""; } };
-const phoneOf = (sid) => { const x = String(sid).split(":").pop(); return x.length > 7 ? `+${x.slice(0, 3)} •••• ${x.slice(-4)}` : x; };
+const phoneOf = (sid) => { const x = String(sid).split(":").pop(); if (String(sid).startsWith("web:")) return `Visitante web ${x.slice(-4)}`; return x.length > 7 ? `+${x.slice(0, 3)} •••• ${x.slice(-4)}` : x; };
 const webOn = () => Boolean(String(process.env.ALLOWED_ORIGIN || "").trim());
 const badge = (on, pendText = "Pendiente") => on ? `<span class="badge b-ok"><span class="dot"></span>Conectado</span>` : `<span class="badge b-pend"><span class="dot"></span>${pendText}</span>`;
 
@@ -143,22 +147,28 @@ function conversationsPage(ctx, rows) {
 
 function recordPage(ctx, sid, x) {
   const c = x.context || {}, last = x.events[x.events.length - 1];
-  const props = [["Teléfono", phoneOf(sid)], ["Canal", "WhatsApp"], ["Primer contacto", x.events[0] ? when(x.events[0].created_at) : "—"], ["Última actividad", last ? when(last.created_at) : "—"], ["Producto buscado", c.product_type], ["Especie", c.target_species], ["Técnica", c.technique], ["Presupuesto", c.budget_range], ["Marca preferida", c.brand_preference]]
+  const props = [["Teléfono", phoneOf(sid)], ["Canal", sid.startsWith("web:") ? "Chat web" : "WhatsApp"], ["Correo", x.contact?.email], ["Primer contacto", x.events[0] ? when(x.events[0].created_at) : "—"], ["Última actividad", last ? when(last.created_at) : "—"], ["Producto buscado", c.product_type], ["Especie", c.target_species], ["Técnica", c.technique], ["Presupuesto", c.budget_range], ["Marca preferida", c.brand_preference]]
     .filter(([, v]) => v && v !== "unknown").map(([k, v]) => `<div class="prop"><span>${k}</span><b>${esc(v)}</b></div>`).join("");
   const tl = x.events.length ? x.events.map((e) => `<div class="ev"><div class="muted small">${esc(when(e.created_at))} · ${esc(ui.intentLabel(e.intent))}</div><div class="bub u">${esc(e.user_message)}</div>${e.bot_response ? `<div class="bub a">${esc(e.bot_response)}</div>` : ""}</div>`).join("") : ui.empty("chat", "Sin mensajes", "Esta conversación no tiene mensajes.");
-  const stage = STAGE({ handoff: x.handoffs.some((h) => h.status === "open"), intent_level: c.purchase_intent_level, turns: x.events.length });
+  const stage = x.contact ? [crm.STAGE_LABEL[x.contact.stage] || x.contact.stage, { nuevo: "b-off", interesado: "b-brand", cotizado: "b-pend", compro: "b-ok", perdido: "b-err" }[x.contact.stage] || "b-off"] : STAGE({ handoff: x.handoffs.some((h) => h.status === "open"), intent_level: c.purchase_intent_level, turns: x.events.length });
+  const mover = x.contact ? crm.CRM_CSS + crm.moveForm({ action: "/panel/crm/stage", csrf: ctx.csrf, contactId: x.contact.id, stage: x.contact.stage, back: `/panel/conversaciones?s=${encodeURIComponent(sid)}` }) : "";
   const prods = [...new Set(x.events.flatMap((e) => (Array.isArray(e.products) ? e.products : []).map((p) => p && p.name).filter(Boolean)))].slice(0, 6);
   return layout(ctx, "/panel/conversaciones", "Contacto", `<div class="head"><div><a class="small" href="/panel/conversaciones">← Conversaciones</a><h1 style="margin-top:6px">${esc(phoneOf(sid))}</h1></div><span class="badge ${stage[1]}">${stage[0]}</span></div>
 <div class="rec"><div class="card"><h3>Propiedades</h3>${props}</div><div class="card"><h3>Actividad</h3><div class="tl">${tl}</div></div>
-<div class="grid" style="gap:16px"><div class="card"><h3>Etapa del embudo</h3><span class="badge ${stage[1]}">${stage[0]}</span><div class="muted small" style="margin-top:8px">Intención de compra: ${esc(c.purchase_intent_level && c.purchase_intent_level !== "unknown" ? c.purchase_intent_level : "sin datos")}</div></div>
+<div class="grid" style="gap:16px"><div class="card"><h3>Etapa del embudo</h3><span class="badge ${stage[1]}">${stage[0]}</span>${mover}<div class="muted small" style="margin-top:8px">Intención de compra: ${esc(c.purchase_intent_level && c.purchase_intent_level !== "unknown" ? c.purchase_intent_level : "sin datos")}</div></div>
 <div class="card"><h3>Productos recomendados</h3>${prods.length ? `<div class="list">${prods.map((p) => `<div class="it"><span>${esc(p)}</span></div>`).join("")}</div>` : `<div class="muted small">Aún ninguno.</div>`}</div>
 <div class="card"><h3>Derivaciones</h3>${x.handoffs.length ? `<div class="list">${x.handoffs.map((h) => `<div class="it"><span class="badge ${h.status === "open" ? "b-err" : "b-off"}">${h.status === "open" ? "Abierta" : "Cerrada"}</span><span class="muted small">${esc(when(h.created_at))}</span></div>`).join("")}</div>` : `<div class="muted small">No pidió hablar con una persona.</div>`}</div></div></div>`);
 }
 
 function settingsPage(ctx) {
+  const u = ctx.user, origins = (u.widget_origins || []).join(", ");
+  const snippet = `<script src="${baseUrl()}/widget.js" data-key="${u.widget_key || ""}" async></script>`;
   return layout(ctx, "/panel/ajustes", "Ajustes", `<div class="head"><div><h1>Ajustes</h1><div class="muted">Tu cuenta y canales.</div></div></div>
-<div class="grid g2"><div class="card"><h3>Cuenta</h3><div class="prop"><span>Empresa</span><b>${esc(ctx.user.tenant_name)}</b></div><div class="prop"><span>Correo</span><b>${esc(ctx.user.email)}</b></div><div class="prop"><span>Seguridad</span><b>Contraseña cifrada · sesión de 12 h</b></div></div>
-<div class="card" id="web"><h3>Chat web</h3>${badge(webOn(), "No activado")}<p class="muted small">Para mostrar la burbuja de Matías en tu sitio, tu operador agrega tu dominio y pega esta línea en el pie de página de tu web:</p><code>&lt;script src="${esc(baseUrl())}/widget.js" async&gt;&lt;/script&gt;</code></div></div>`);
+<div class="grid g2"><div class="card"><h3>Cuenta</h3><div class="prop"><span>Empresa</span><b>${esc(u.tenant_name)}</b></div><div class="prop"><span>Correo</span><b>${esc(u.email)}</b></div><div class="prop"><span>Seguridad</span><b>Contraseña cifrada · sesión de 12 h</b></div></div>
+<div class="card" id="web"><h3>Chat web de tu empresa</h3>${badge((u.widget_origins || []).length > 0, "No activado")}
+<p class="muted small">1) Escribe los dominios de tu sitio. 2) Pega esta línea en el pie de página de tu web. Las conversaciones quedarán en <b>tu</b> CRM.</p>
+<code>${esc(snippet)}</code>
+<form method="post" action="/panel/ajustes/web"><input type="hidden" name="csrf" value="${esc(ctx.csrf)}"><label for="wo">Dominios permitidos (separados por coma)</label><input id="wo" name="origins" placeholder="https://tutienda.cl, https://www.tutienda.cl" value="${esc(origins)}"><div style="margin-top:12px"><button class="btn">Guardar dominios</button></div></form></div></div>`);
 }
 
 function embeddedPage(csrf, nonce) {
@@ -244,6 +254,24 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
         const sent = req.headers["x-csrf-token"] || f.csrf;
         if (!eq(sent, csrf)) return path.startsWith("/panel/whatsapp/embedded/") ? json(res, 403, { error: "csrf" }) : redirect(res, "/panel?n=csrf");
 
+        if (path === "/panel/crm/stage") {
+          const ok = store.query ? await crm.moveStage(store.query, { tenantId, contactId: f.contact_id, stage: f.stage, actor: `panel:${user.email}` }) : false;
+          const back = crm.safeBack(f.back, "/panel/");
+          return redirect(res, `${back}${back.includes("?") ? "&" : "?"}n=${ok ? "stage_ok" : "stage_err"}`);
+        }
+        if (path === "/panel/woo/sync") {
+          const creds = await store.getWooCredentials(tenantId).catch(() => null);
+          const r = creds && store.query ? await require("../lib/wooOrders").syncOrders(store.query, { tenantId, creds, fetchImpl }) : { ok: false };
+          return redirect(res, `/panel/resultados?n=${r.ok ? "sync_ok" : "sync_err"}`);
+        }
+        if (path === "/panel/ajustes/web") {
+          const list = String(f.origins || "").split(/[,\s]+/).map((x) => x.trim().replace(/\/+$/, "")).filter(Boolean);
+          const valid = list.length <= 5 && list.every((o) => { try { const u = new URL(o); return u.protocol === "https:" && u.origin === o; } catch { return false; } });
+          if (!valid) return redirect(res, "/panel/ajustes?n=web_err#web");
+          await store.setWidgetOrigins(tenantId, list);
+          require("./chat")._tenantCache.clear();
+          return redirect(res, "/panel/ajustes?n=web_ok#web");
+        }
         if (path === "/panel/logout") { await store.bumpSession(user.id); return redirect(res, "/panel", cookieHeader("", 0)); }
 
         if (path === "/panel/woo/connect") {
@@ -313,14 +341,24 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
         if (sid) {
           const x = store.conversation ? await store.conversation(tenantId, sid) : null;
           if (!x) return html(res, 404, ui.errorPage("Conversación no encontrada", "Puede que no exista o sea de otra empresa.", "/panel/conversaciones", "Volver a conversaciones"));
+          x.contact = store.query ? await crm.contactBySession(store.query, { tenantId, sessionId: sid }) : null;
           return html(res, 200, recordPage(ctx, sid, x));
         }
         return html(res, 200, conversationsPage(ctx, store.conversations ? await store.conversations(tenantId) : []));
       }
       if (path === "/panel/resultados") {
         const R = require("../lib/results");
-        const r = store.results ? await store.results(tenantId, req.query?.days || 30) : null;
-        return html(res, 200, layout(ctx, "/panel/resultados", "Resultados", r ? R.resultsBody(ui, require("../lib/charts"), r, "/panel/resultados") : ui.empty("chart", "Sin datos", "Aún no hay resultados.")));
+        const st = await store.status(tenantId);
+        const r = store.results ? await store.results(tenantId, req.query?.days || 30, { salesConnected: Boolean(st.woo_connected_at) }) : null;
+        const sync = st.woo_connected_at ? `<form method="post" action="/panel/woo/sync" style="margin-top:12px"><input type="hidden" name="csrf" value="${esc(csrf)}"><button class="btn ghost full">Sincronizar pedidos ahora</button></form>` : `<a class="btn ghost full" style="margin-top:12px" href="/panel/conexiones#tienda">Conectar tienda</a>`;
+        return html(res, 200, layout(ctx, "/panel/resultados", "Resultados", r ? R.resultsBody(ui, require("../lib/charts"), r, "/panel/resultados", sync) : ui.empty("chart", "Sin datos", "Aún no hay resultados.")));
+      }
+      if (path === "/panel/contactos" || path === "/panel/embudo") {
+        const q = req.query || {}, filters = { q: q.q || "", stage: q.stage || "", channel: q.channel || "", sort: q.sort || "", dir: q.dir || "" };
+        const rows = store.query ? await crm.listContacts(store.query, { tenantId, ...filters }) : [];
+        const detail = (c) => `/panel/conversaciones?s=${encodeURIComponent(c.session_id)}`;
+        if (path === "/panel/embudo") return html(res, 200, layout(ctx, path, "Embudo", `<div class="head"><div><h1>Embudo</h1><div class="muted">Mueve cada contacto a su etapa. Los pedidos atribuidos pasan solos a «Compró».</div></div><a class="btn ghost" href="/panel/contactos">Ver como tabla</a></div>${crm.kanban(rows, { detail, csrf, action: "/panel/crm/stage", back: "/panel/embudo" })}`));
+        return html(res, 200, layout(ctx, path, "Contactos", `<div class="head"><div><h1>Contactos</h1><div class="muted">Todos tus clientes de WhatsApp y chat web.</div></div><a class="btn ghost" href="/panel/embudo">Ver embudo</a></div>${crm.contactsTable(rows, { base: "/panel/contactos", detail, filters, csrf, action: "/panel/crm/stage" })}`));
       }
       if (path === "/panel/ajustes") return html(res, 200, settingsPage(ctx));
       return html(res, 404, ui.errorPage("Página no encontrada", "El enlace no existe o cambió.", "/panel", "Volver a tu panel"));

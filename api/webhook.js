@@ -215,6 +215,7 @@ module.exports = async (req, res) => {
       channel: "whatsapp",
       externalId: from,
       name: value?.contacts?.[0]?.profile?.name,
+      tenantId: target.tenantId || null,
     });
 
     const { reply } = await deps.handleMessage({

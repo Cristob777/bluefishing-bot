@@ -12,6 +12,7 @@ services:
       - ./db/migrations/002_tenant_onboarding.sql:/docker-entrypoint-initdb.d/002-tenant-onboarding.sql:ro
       - ./db/migrations/003_crm_contacts.sql:/docker-entrypoint-initdb.d/003-crm-contacts.sql:ro
       - ./db/migrations/004_atomic_crm_sync.sql:/docker-entrypoint-initdb.d/004-atomic-crm-sync.sql:ro
+      - ./db/migrations/005_crm_multiempresa.sql:/docker-entrypoint-initdb.d/005-crm-multiempresa.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bluefishing} -d ${POSTGRES_DB:-bluefishing}"]
       interval: 10s
