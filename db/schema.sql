@@ -94,6 +94,7 @@ create table if not exists contacts (
   channel text not null default 'whatsapp' check (channel in ('whatsapp','web','instagram','chatwoot')),
   external_id text not null,
   session_id text not null,
+  source_channel text,
   name text,
   phone text,
   stage text not null default 'nuevo'

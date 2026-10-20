@@ -26,6 +26,8 @@ create table if not exists contacts (
   unique (channel, external_id),
   unique (session_id)
 );
+-- Instalaciones donde contacts se creó antes de Chatwoot (sin source_channel).
+alter table contacts add column if not exists source_channel text;
 create index if not exists contacts_last_seen_idx on contacts(last_seen_at desc);
 create index if not exists contacts_stage_idx on contacts(stage, last_seen_at desc);
 create index if not exists handoff_requests_session_id_idx on handoff_requests(session_id);
