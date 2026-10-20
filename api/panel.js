@@ -61,15 +61,16 @@ function html(res, status, body, csp) { headers(res, csp); res.statusCode = stat
 function json(res, status, obj) { headers(res); res.statusCode = status; res.setHeader("Content-Type", "application/json; charset=utf-8"); res.end(JSON.stringify(obj)); }
 function redirect(res, where, cookie) { headers(res); res.statusCode = 303; res.setHeader("Location", where); if (cookie) res.setHeader("Set-Cookie", cookie); res.end(); }
 
-const CSS = "body{margin:0;background:#07111f;color:#edf5ff;font-family:system-ui,sans-serif}.w{max-width:760px;margin:auto;padding:24px}.card{background:#0d1b2e;border:1px solid #20364f;border-radius:14px;padding:16px;margin:14px 0}.muted{color:#93a9c2;font-size:13px}input,button{width:100%;box-sizing:border-box;padding:11px;margin:6px 0;border-radius:8px;border:1px solid #20364f;background:#0d1b2e;color:#edf5ff}button{cursor:pointer;background:#14406b}.ok{color:#5fd39a}.err{color:#ff8a8a}.lnk,a{color:#4fb8ff}.sec{background:transparent;border-color:#33506f;color:#93a9c2}details summary{cursor:pointer;color:#4fb8ff;margin:8px 0}ol{padding-left:20px;line-height:1.6}.step{display:inline-block;background:#14406b;border-radius:999px;padding:2px 10px;font-size:12px;margin-bottom:6px}code{background:#13253b;padding:2px 5px;border-radius:5px;word-break:break-all}";
-function page(title, body) {
-  return `<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>${CSS}</style></head><body><div class="w">${body}</div></body></html>`;
-}
+const ui = require("../lib/ui");
+const { icon } = ui;
+function page(title, body) { return ui.doc(title, `<div class="content" style="margin:auto;max-width:640px">${body}</div>`); }
 
 function authPage(msg = "") {
-  return page("BlueFishing · Panel", `<h2>Panel de tu empresa</h2><p class="muted">Conecta tu tienda y tu WhatsApp para que Matías atienda a tus clientes.</p>${msg ? `<p class="err">${esc(msg)}</p>` : ""}
-<div class="card"><h3>Entrar</h3><form method="post" action="/panel/login"><input name="email" type="email" placeholder="Correo" autocomplete="username" required><input name="password" type="password" placeholder="Contraseña" autocomplete="current-password" required><button>Entrar</button></form></div>
-<div class="card"><h3>Crear cuenta</h3><form method="post" action="/panel/signup"><p class="muted">¿Primera vez? Crea la cuenta de tu empresa.</p><input name="company" placeholder="Nombre de la empresa" required maxlength="160"><input name="email" type="email" placeholder="Correo del dueño" autocomplete="username" required><input name="password" type="password" placeholder="Contraseña (mínimo 12 caracteres)" minlength="12" autocomplete="new-password" required><button>Crear cuenta</button></form></div>`);
+  const form = `<h1>Bienvenido</h1><p class="muted" style="margin:6px 0 20px">Entra al panel de tu empresa o crea una cuenta nueva.</p>
+${msg ? `<div class="alert err" role="alert">${icon("alert", 16)} ${esc(msg)}</div>` : ""}
+<div class="card"><h2>Entrar</h2><form method="post" action="/panel/login"><label for="le">Correo</label><input id="le" name="email" type="email" placeholder="tu@empresa.cl" autocomplete="username" required><label for="lp">Contraseña</label><input id="lp" name="password" type="password" placeholder="••••••••••••" autocomplete="current-password" required><div style="margin-top:16px"><button class="btn full">Entrar</button></div></form></div>
+<details style="background:#fff"><summary>¿Primera vez? Crea la cuenta de tu empresa</summary><form method="post" action="/panel/signup"><label for="sc">Nombre de la empresa</label><input id="sc" name="company" placeholder="Pesca Sur SpA" required maxlength="160"><label for="se">Correo del dueño</label><input id="se" name="email" type="email" placeholder="tu@empresa.cl" autocomplete="username" required><label for="sp">Contraseña</label><input id="sp" name="password" type="password" placeholder="Mínimo 12 caracteres" minlength="12" autocomplete="new-password" required><div style="margin-top:16px"><button class="btn full">Crear cuenta</button></div></form></details>`;
+  return ui.authLayout({ title: "Blue Fishing · Panel", tagline: "Tu asistente de ventas atendiendo WhatsApp y tu web, 24/7.", feats: ["Conecta tu tienda WooCommerce en un clic", "Conecta tu WhatsApp Business sin compartir claves", "Mira conversaciones y clientes en un solo lugar"], form });
 }
 
 const NOTICES = {
@@ -79,29 +80,85 @@ const NOTICES = {
   csrf: ["err", "Tu sesión expiró por seguridad. Vuelve a intentarlo."],
 };
 
-function dashboardPage(user, st, csrf, verifyToken, notice) {
-  const n = NOTICES[notice];
-  const wooOk = Boolean(st.woo_connected_at), waOk = Boolean(st.wa_connected_at);
-  const done = Number(wooOk) + Number(waOk);
-  const progress = done === 2
-    ? `<div class="card"><p class="ok"><b>¡Listo!</b> Tu tienda y tu WhatsApp están conectados. Matías ya responde a tus clientes.</p></div>`
-    : `<div class="card"><p><b>Configura tu asistente en 2 pasos</b> · ${done} de 2 listos</p><p class="muted">1) Conecta tu tienda para que Matías conozca tus productos. 2) Conecta tu WhatsApp para que responda a tus clientes.</p></div>`;
-  const wooState = wooOk ? `<p class="ok">✓ Conectada: ${esc(st.woo_store_url)} (solo lectura)</p>` : `<p class="muted">Aún no conectada.</p>`;
-  const waState = waOk ? `<p class="ok">✓ Conectado: ${esc(st.wa_display_phone || st.wa_phone_number_id)}</p>` : `<p class="muted">Aún no conectado.</p>`;
-  const es = flag("WA_EMBEDDED_SIGNUP_ENABLED") ? `<p><a class="lnk" href="/panel/whatsapp/embedded">Conectar con Facebook (Embedded Signup)</a></p>` : "";
-  const wooForm = `<form method="post" action="/panel/woo/connect"><input type="hidden" name="csrf" value="${esc(csrf)}"><label class="muted" for="su">Dirección de tu tienda</label><input id="su" name="store_url" type="url" placeholder="https://tutienda.cl" required><button>${wooOk ? "Volver a conectar" : "Conectar tienda"}</button></form><p class="muted">Te llevamos a tu WordPress para aprobar un acceso de <b>solo lectura</b>. Nunca vemos tu contraseña.</p>`;
-  const waForm = `<form method="post" action="/panel/whatsapp/connect"><input type="hidden" name="csrf" value="${esc(csrf)}">
-<label class="muted" for="t1">Token permanente (usuario del sistema)</label><input id="t1" name="access_token" type="password" placeholder="EAAG…" autocomplete="off" required>
-<label class="muted" for="t2">Identificador del número (Phone number ID)</label><input id="t2" name="phone_number_id" placeholder="Ej: 123456789012345" inputmode="numeric" pattern="[0-9]+" required>
-<label class="muted" for="t3">Identificador de la cuenta (WABA ID)</label><input id="t3" name="waba_id" placeholder="Ej: 109876543210987" inputmode="numeric" pattern="[0-9]+" required>
-<label class="muted" for="t4">Clave secreta de la app (App secret)</label><input id="t4" name="app_secret" type="password" placeholder="32 caracteres" autocomplete="off" required>
-<button>${waOk ? "Actualizar datos" : "Conectar WhatsApp"}</button></form>
-<details><summary>¿Dónde encuentro estos datos?</summary><ol class="muted"><li>Entra a <b>developers.facebook.com</b> → tu app → <b>WhatsApp → Configuración de la API</b>: ahí están el <i>Phone number ID</i> y el <i>WABA ID</i>.</li><li>En <b>business.facebook.com → Configuración → Usuarios del sistema</b> crea un usuario, asígnale la app y genera un <b>token permanente</b> con permisos <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>.</li><li>En tu app → <b>Configuración → Básica</b> copia la <b>clave secreta de la app</b>.</li></ol></details>
-<details${waOk ? "" : " open"}><summary>Datos del webhook para pegar en Meta</summary><p class="muted">En tu app de Meta → WhatsApp → Configuración → Webhook:<br>URL de devolución: <code>${esc(baseUrl())}/webhook</code><br>Token de verificación: <code>${esc(verifyToken)}</code><br>Suscríbete al campo: <code>messages</code></p></details>`;
-  return page("BlueFishing · Panel", `<h2>${esc(user.tenant_name)}</h2><p class="muted">${esc(user.email)}</p>${n ? `<p class="${n[0]}" role="status">${esc(n[1])}</p>` : ""}${progress}
-<div class="card"><span class="step">Paso 1</span><h3>Tu tienda WooCommerce</h3>${wooState}${wooOk ? `<details><summary>Cambiar tienda</summary>${wooForm}</details>` : wooForm}</div>
-<div class="card"><span class="step">Paso 2</span><h3>Tu WhatsApp</h3>${waState}${es}${waOk ? `<details><summary>Cambiar datos de WhatsApp</summary>${waForm}</details>` : waForm}</div>
-<form method="post" action="/panel/logout"><input type="hidden" name="csrf" value="${esc(csrf)}"><button class="sec">Cerrar sesión</button></form>`);
+const NAV = [["/panel", "Inicio", "home"], ["/panel/conexiones", "Conexiones", "plug"], ["/panel/conversaciones", "Conversaciones", "chat"], ["/panel/ajustes", "Ajustes", "cog"]];
+function layout(ctx, active, title, body) {
+  const n = NOTICES[ctx.notice];
+  return ui.shell({ title, product: "Blue Fishing", nav: NAV.map(([href, label, ic]) => ({ href, label, icon: ic, on: href === active })),
+    user: { name: ctx.user.tenant_name, sub: ctx.user.email }, logout: { action: "/panel/logout", csrf: ctx.csrf }, body, toast: n ? { kind: n[0], text: n[1] } : null });
+}
+const fmt = (n) => new Intl.NumberFormat("es-CL").format(Number(n || 0));
+const when = (v) => { try { return new Intl.DateTimeFormat("es-CL", { timeZone: process.env.ADMIN_TIMEZONE || "America/Santiago", dateStyle: "medium", timeStyle: "short" }).format(new Date(v)); } catch { return ""; } };
+const phoneOf = (sid) => { const x = String(sid).split(":").pop(); return x.length > 7 ? `+${x.slice(0, 3)} •••• ${x.slice(-4)}` : x; };
+const webOn = () => Boolean(String(process.env.ALLOWED_ORIGIN || "").trim());
+const badge = (on, pendText = "Pendiente") => on ? `<span class="badge b-ok"><span class="dot"></span>Conectado</span>` : `<span class="badge b-pend"><span class="dot"></span>${pendText}</span>`;
+
+function services(st) {
+  const wa = Boolean(st.wa_connected_at), woo = Boolean(st.woo_connected_at), web = webOn();
+  const card = (cls, ic, name, on, detail, cta) => `<div class="card svc"><div class="row"><span class="ic ${cls}">${icon(ic, 20)}</span>${badge(on, ic === "globe" ? "No activado" : "Pendiente")}</div><div><h2>${name}</h2><div class="muted small">${detail}</div></div>${cta}</div>`;
+  return `<div class="grid g3">
+${card("i-wa", "wa", "WhatsApp", wa, wa ? esc(st.wa_display_phone || st.wa_phone_number_id) : "Matías responde a tus clientes por WhatsApp.", `<a class="btn ${wa ? "ghost" : ""}" href="/panel/conexiones#whatsapp">${wa ? "Administrar" : "Conectar WhatsApp"}</a>`)}
+${card("i-woo", "store", "WooCommerce", woo, woo ? `${esc(st.woo_store_url)} · solo lectura` : "Para que Matías conozca tus productos y stock.", `<a class="btn ${woo ? "ghost" : ""}" href="/panel/conexiones#tienda">${woo ? "Administrar" : "Conectar tienda"}</a>`)}
+${card("i-web", "globe", "Chat web", web, web ? "Burbuja de chat activa en tu sitio." : "Lo activa tu operador al instalar el widget.", `<a class="btn ghost" href="/panel/ajustes#web">Ver instrucciones</a>`)}
+</div>`;
+}
+
+function homePage(ctx, st, m) {
+  const wa = Boolean(st.wa_connected_at), woo = Boolean(st.woo_connected_at);
+  const steps = [["Cuenta creada", "Listo", true], ["Conectar tienda", woo ? "Listo" : "Catálogo", woo], ["Conectar WhatsApp", wa ? "Listo" : "Mensajes", wa]];
+  const done = steps.filter((x) => x[2]).length, cur = steps.findIndex((x) => !x[2]);
+  const onboarding = done === 3 ? "" : `<div class="card" style="margin-bottom:16px"><div class="head" style="margin:0"><div><h2>Configura tu asistente</h2><div class="muted">${done} de 3 pasos listos · te toma unos 5 minutos</div></div><a class="btn" href="/panel/conexiones">Continuar ${icon("bolt", 16)}</a></div>
+<div class="bar" style="margin-top:14px"><i style="width:${Math.round(done / 3 * 100)}%"></i></div>
+<div class="stepper">${steps.map((x, i) => `<div class="st ${x[2] ? "done" : i === cur ? "cur" : ""}"><span class="n">${x[2] ? icon("check", 14) : i + 1}</span><div><b>${x[0]}</b><span>${x[1]}</span></div></div>`).join("")}</div></div>`;
+  const kpi = (ic, v, l) => `<div class="card kpi"><span class="ic">${icon(ic, 20)}</span><div><b>${fmt(v)}</b><span>${l}</span></div></div>`;
+  return layout(ctx, "/panel", "Inicio", `<div class="head"><div><h1>Hola, ${esc(ctx.user.tenant_name)} 👋</h1><div class="muted">Esto es lo que pasó con tu asistente en los últimos 30 días.</div></div></div>
+${onboarding}<div class="grid g4" style="margin-bottom:16px">${kpi("msg", m.messages, "Mensajes atendidos")}${kpi("users", m.contacts, "Contactos")}${kpi("hand", m.handoffs, "Derivados a humano")}${kpi("clock", m.today, "Mensajes hoy")}</div>
+<h2 style="margin:22px 0 12px">Tus canales</h2>${services(st)}`);
+}
+
+function connectionsPage(ctx, st, verifyToken) {
+  const wa = Boolean(st.wa_connected_at), woo = Boolean(st.woo_connected_at);
+  const es = flag("WA_EMBEDDED_SIGNUP_ENABLED") ? `<p><a href="/panel/whatsapp/embedded">Conectar con Facebook (Embedded Signup)</a></p>` : "";
+  const wooForm = `<form method="post" action="/panel/woo/connect"><input type="hidden" name="csrf" value="${esc(ctx.csrf)}"><label for="su">Dirección de tu tienda</label><input id="su" name="store_url" type="url" placeholder="https://tutienda.cl" required><div class="help">Te llevamos a tu WordPress para aprobar un acceso de <b>solo lectura</b>. Nunca vemos tu contraseña.</div><div style="margin-top:14px"><button class="btn">${woo ? "Volver a conectar" : "Conectar tienda"}</button></div></form>`;
+  const waForm = `<form method="post" action="/panel/whatsapp/connect"><input type="hidden" name="csrf" value="${esc(ctx.csrf)}"><div class="grid g2" style="gap:0 16px">
+<div><label for="t1">Token permanente</label><input id="t1" name="access_token" type="password" placeholder="EAAG…" autocomplete="off" required></div>
+<div><label for="t4">Clave secreta de la app (App secret)</label><input id="t4" name="app_secret" type="password" placeholder="32 caracteres" autocomplete="off" required></div>
+<div><label for="t2">Identificador del número (Phone number ID)</label><input id="t2" name="phone_number_id" placeholder="Ej: 123456789012345" inputmode="numeric" pattern="[0-9]+" required></div>
+<div><label for="t3">Identificador de la cuenta (WABA ID)</label><input id="t3" name="waba_id" placeholder="Ej: 109876543210987" inputmode="numeric" pattern="[0-9]+" required></div></div>
+<div style="margin-top:16px"><button class="btn">${wa ? "Actualizar datos" : "Conectar WhatsApp"}</button></div></form>
+<details><summary>¿Dónde encuentro estos datos?</summary><ol><li>En <b>developers.facebook.com</b> → tu app → <b>WhatsApp → Configuración de la API</b> están el <i>Phone number ID</i> y el <i>WABA ID</i>.</li><li>En <b>business.facebook.com → Configuración → Usuarios del sistema</b> crea un usuario, asígnale la app y genera un <b>token permanente</b> con <code>whatsapp_business_messaging</code> y <code>whatsapp_business_management</code>.</li><li>En tu app → <b>Configuración → Básica</b> copia la <b>clave secreta de la app</b>.</li></ol></details>`;
+  const hook = `<details${wa ? "" : " open"}><summary>Datos del webhook para pegar en Meta</summary><div class="muted" style="margin-top:8px">En tu app de Meta → WhatsApp → Configuración → Webhook:</div><div class="list" style="margin-top:6px"><div class="it"><span>URL de devolución</span><code>${esc(baseUrl())}/webhook</code></div><div class="it"><span>Token de verificación: <code>${esc(verifyToken)}</code></span></div><div class="it"><span>Campo</span><code>messages</code></div></div></details>`;
+  const block = (id, cls, ic, title, on, detail, inner) => `<div class="card" id="${id}" style="margin-bottom:16px"><div class="head" style="margin-bottom:6px;align-items:center"><div style="display:flex;gap:12px;align-items:center"><span class="ic ${cls}" style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;flex:none">${icon(ic, 20)}</span><div><h2>${title}</h2><div class="muted small">${detail}</div></div></div>${badge(on)}</div>${inner}</div>`;
+  return layout(ctx, "/panel/conexiones", "Conexiones", `<div class="head"><div><h1>Conexiones</h1><div class="muted">Conecta tus canales. Tus claves se guardan cifradas.</div></div></div>
+${block("tienda", "i-woo", "store", "Paso 1 · Tu tienda WooCommerce", woo, woo ? `${esc(st.woo_store_url)} · solo lectura` : "Para que Matías conozca tus productos.", woo ? `<details><summary>Cambiar tienda</summary>${wooForm}</details>` : wooForm)}
+${block("whatsapp", "i-wa", "wa", "Paso 2 · Tu WhatsApp", wa, wa ? esc(st.wa_display_phone || st.wa_phone_number_id) : "Para que Matías responda a tus clientes.", es + (wa ? `<details><summary>Cambiar datos de WhatsApp</summary>${waForm}</details>` : waForm) + hook)}`);
+}
+
+const STAGE = (c) => c.handoff ? ["Derivado a humano", "b-err"] : String(c.intent_level || "").toLowerCase() === "high" ? ["Interesado", "b-ok"] : c.turns > 1 ? ["En conversación", "b-brand"] : ["Nuevo", "b-off"];
+
+function conversationsPage(ctx, rows) {
+  const body = rows.length ? `<div class="tw"><table><thead><tr><th>Contacto</th><th>Etapa</th><th>Último mensaje</th><th>Mensajes</th><th>Actividad</th></tr></thead><tbody>${rows.map((c) => { const s = STAGE(c); return `<tr><td><a href="/panel/conversaciones?s=${encodeURIComponent(c.session_id)}"><b>${esc(phoneOf(c.session_id))}</b></a><div class="muted small">${esc(ui.intentLabel(c.last_intent))}</div></td><td><span class="badge ${s[1]}">${s[0]}</span></td><td>${esc(String(c.last_message || "").slice(0, 90))}</td><td>${fmt(c.turns)}</td><td class="muted small">${esc(when(c.last_at))}</td></tr>`; }).join("")}</tbody></table></div>`
+    : `<div class="card">${ui.empty("chat", "Aún no hay conversaciones", "Cuando un cliente le escriba a tu WhatsApp, lo verás aquí.", `<a class="btn" href="/panel/conexiones#whatsapp">Conectar WhatsApp</a>`)}</div>`;
+  return layout(ctx, "/panel/conversaciones", "Conversaciones", `<div class="head"><div><h1>Conversaciones</h1><div class="muted">Clientes que hablaron con Matías por WhatsApp.</div></div></div>${body}`);
+}
+
+function recordPage(ctx, sid, x) {
+  const c = x.context || {}, last = x.events[x.events.length - 1];
+  const props = [["Teléfono", phoneOf(sid)], ["Canal", "WhatsApp"], ["Primer contacto", x.events[0] ? when(x.events[0].created_at) : "—"], ["Última actividad", last ? when(last.created_at) : "—"], ["Producto buscado", c.product_type], ["Especie", c.target_species], ["Técnica", c.technique], ["Presupuesto", c.budget_range], ["Marca preferida", c.brand_preference]]
+    .filter(([, v]) => v && v !== "unknown").map(([k, v]) => `<div class="prop"><span>${k}</span><b>${esc(v)}</b></div>`).join("");
+  const tl = x.events.length ? x.events.map((e) => `<div class="ev"><div class="muted small">${esc(when(e.created_at))} · ${esc(ui.intentLabel(e.intent))}</div><div class="bub u">${esc(e.user_message)}</div>${e.bot_response ? `<div class="bub a">${esc(e.bot_response)}</div>` : ""}</div>`).join("") : ui.empty("chat", "Sin mensajes", "Esta conversación no tiene mensajes.");
+  const stage = STAGE({ handoff: x.handoffs.some((h) => h.status === "open"), intent_level: c.purchase_intent_level, turns: x.events.length });
+  const prods = [...new Set(x.events.flatMap((e) => (Array.isArray(e.products) ? e.products : []).map((p) => p && p.name).filter(Boolean)))].slice(0, 6);
+  return layout(ctx, "/panel/conversaciones", "Contacto", `<div class="head"><div><a class="small" href="/panel/conversaciones">← Conversaciones</a><h1 style="margin-top:6px">${esc(phoneOf(sid))}</h1></div><span class="badge ${stage[1]}">${stage[0]}</span></div>
+<div class="rec"><div class="card"><h3>Propiedades</h3>${props}</div><div class="card"><h3>Actividad</h3><div class="tl">${tl}</div></div>
+<div class="grid" style="gap:16px"><div class="card"><h3>Etapa del embudo</h3><span class="badge ${stage[1]}">${stage[0]}</span><div class="muted small" style="margin-top:8px">Intención de compra: ${esc(c.purchase_intent_level && c.purchase_intent_level !== "unknown" ? c.purchase_intent_level : "sin datos")}</div></div>
+<div class="card"><h3>Productos recomendados</h3>${prods.length ? `<div class="list">${prods.map((p) => `<div class="it"><span>${esc(p)}</span></div>`).join("")}</div>` : `<div class="muted small">Aún ninguno.</div>`}</div>
+<div class="card"><h3>Derivaciones</h3>${x.handoffs.length ? `<div class="list">${x.handoffs.map((h) => `<div class="it"><span class="badge ${h.status === "open" ? "b-err" : "b-off"}">${h.status === "open" ? "Abierta" : "Cerrada"}</span><span class="muted small">${esc(when(h.created_at))}</span></div>`).join("")}</div>` : `<div class="muted small">No pidió hablar con una persona.</div>`}</div></div></div>`);
+}
+
+function settingsPage(ctx) {
+  return layout(ctx, "/panel/ajustes", "Ajustes", `<div class="head"><div><h1>Ajustes</h1><div class="muted">Tu cuenta y canales.</div></div></div>
+<div class="grid g2"><div class="card"><h3>Cuenta</h3><div class="prop"><span>Empresa</span><b>${esc(ctx.user.tenant_name)}</b></div><div class="prop"><span>Correo</span><b>${esc(ctx.user.email)}</b></div><div class="prop"><span>Seguridad</span><b>Contraseña cifrada · sesión de 12 h</b></div></div>
+<div class="card" id="web"><h3>Chat web</h3>${badge(webOn(), "No activado")}<p class="muted small">Para mostrar la burbuja de Matías en tu sitio, tu operador agrega tu dominio y pega esta línea en el pie de página de tu web:</p><code>&lt;script src="${esc(baseUrl())}/widget.js" async&gt;&lt;/script&gt;</code></div></div>`);
 }
 
 function embeddedPage(csrf, nonce) {
@@ -242,15 +299,29 @@ function createPanel({ store = createStore(), fetchImpl = fetch } = {}) {
         const p = embeddedPage(csrf, nonce);
         return html(res, 200, p.body, p.csp);
       }
-      if (path !== "/panel") return html(res, 404, page("No encontrado", `<h2>Página no encontrada</h2><p><a class="lnk" href="/panel">← Volver a tu panel</a></p>`));
-
-      const verifyToken = verifyTokenFor(tenantId);
-      await store.ensureVerifyTokenHash(tenantId, box.sha256(verifyToken));
       const notice = req.query?.woo === "return" ? (String(req.query?.success) === "1" ? "woo_ok" : "woo_err") : req.query?.n;
-      return html(res, 200, dashboardPage(user, await store.status(tenantId), csrf, verifyToken, notice));
+      const ctx = { user, csrf, notice };
+      const metrics = async () => (store.metrics ? store.metrics(tenantId).catch(() => ({})) : {});
+      if (path === "/panel") return html(res, 200, homePage(ctx, await store.status(tenantId), await metrics()));
+      if (path === "/panel/conexiones") {
+        const verifyToken = verifyTokenFor(tenantId);
+        await store.ensureVerifyTokenHash(tenantId, box.sha256(verifyToken));
+        return html(res, 200, connectionsPage(ctx, await store.status(tenantId), verifyToken));
+      }
+      if (path === "/panel/conversaciones") {
+        const sid = String(req.query?.s || "").slice(0, 200);
+        if (sid) {
+          const x = store.conversation ? await store.conversation(tenantId, sid) : null;
+          if (!x) return html(res, 404, ui.errorPage("Conversación no encontrada", "Puede que no exista o sea de otra empresa.", "/panel/conversaciones", "Volver a conversaciones"));
+          return html(res, 200, recordPage(ctx, sid, x));
+        }
+        return html(res, 200, conversationsPage(ctx, store.conversations ? await store.conversations(tenantId) : []));
+      }
+      if (path === "/panel/ajustes") return html(res, 200, settingsPage(ctx));
+      return html(res, 404, ui.errorPage("Página no encontrada", "El enlace no existe o cambió.", "/panel", "Volver a tu panel"));
     } catch (error) {
       console.error("[Panel] Error:", safeError(error));
-      return html(res, 500, page("Error", `<h2>Algo salió mal</h2><p>No pudimos procesar la solicitud. Inténtalo de nuevo en unos minutos.</p><p><a class="lnk" href="/panel">← Volver a tu panel</a></p>`));
+      return html(res, 500, ui.errorPage("Algo salió mal", "No pudimos procesar la solicitud. Inténtalo de nuevo en unos minutos.", "/panel", "Volver a tu panel"));
     }
   };
 }
