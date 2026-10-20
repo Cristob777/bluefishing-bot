@@ -3,6 +3,23 @@ const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
 const { claimInboundMessage, releaseInboundMessage, hasPersistentStore } = require("../lib/sessionStore");
 const { pseudonymize, safeError } = require("../lib/logSanitizer");
 const { allowMessage } = require("../lib/rateLimiter");
+const { isConfigured: hasDatabase } = require("../lib/postgres");
+const secretBox = require("../lib/secretBox");
+
+// Dependencias inyectables para tests (routing multi-tenant por phone_number_id).
+const deps = {
+  store: null,
+  fetchImpl: (...args) => fetch(...args),
+  handleMessage,
+  claimInboundMessage,
+  releaseInboundMessage,
+};
+function getStore() {
+  if (deps.store) return deps.store;
+  if (!hasDatabase || !secretBox.isConfigured()) return null;
+  deps.store = require("../lib/tenantStore").createStore();
+  return deps.store;
+}
 
 const VERIFY_TOKEN = process.env.VERIFY_TOKEN;
 const WHATSAPP_TOKEN = process.env.WHATSAPP_TOKEN;
@@ -15,26 +32,40 @@ const META_APP_SECRET = process.env.META_APP_SECRET;
 const MAX_WHATSAPP_MESSAGE = 4096;
 const MAX_MESSAGE_AGE_SECONDS = Number(process.env.MAX_MESSAGE_AGE_SECONDS || 300);
 
-function assertProductionConfig() {
+function assertProductionConfig(target) {
   const missing = [];
-  if (!VERIFY_TOKEN) missing.push("VERIFY_TOKEN");
-  if (!WHATSAPP_TOKEN) missing.push("WHATSAPP_TOKEN");
-  if (!PHONE_NUMBER_ID) missing.push("PHONE_NUMBER_ID");
   if (!process.env.OPENAI_API_KEY) missing.push("OPENAI_API_KEY");
-  if (!META_APP_SECRET) missing.push("META_APP_SECRET");
+  if (!target.accessToken) missing.push(target.tenantId ? "tenant.access_token" : "WHATSAPP_TOKEN");
+  if (!target.phoneNumberId) missing.push("PHONE_NUMBER_ID");
   return missing;
 }
 
-async function sendWhatsAppMessage(to, message) {
+// Resuelve a qué tenant pertenece el mensaje según metadata.phone_number_id.
+// Si no hay tenant, cae al número legado configurado por env (Blue Fishing actual).
+async function resolveTarget(phoneNumberId) {
+  const store = getStore();
+  if (store && phoneNumberId) {
+    const tenant = await store.findWhatsAppByPhoneNumberId(phoneNumberId);
+    if (tenant) {
+      return { tenantId: tenant.tenantId, phoneNumberId: tenant.phoneNumberId, accessToken: tenant.accessToken, appSecret: tenant.appSecret || META_APP_SECRET };
+    }
+  }
+  if (PHONE_NUMBER_ID && (!phoneNumberId || String(phoneNumberId) === String(PHONE_NUMBER_ID))) {
+    return { tenantId: null, phoneNumberId: PHONE_NUMBER_ID, accessToken: WHATSAPP_TOKEN, appSecret: META_APP_SECRET };
+  }
+  return null;
+}
+
+async function sendWhatsAppMessage(to, message, target) {
   const body = message.length > MAX_WHATSAPP_MESSAGE
     ? message.substring(0, MAX_WHATSAPP_MESSAGE - 20) + "\n\n(Respuesta recortada)"
     : message;
 
-  const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${PHONE_NUMBER_ID}/messages`;
-  const response = await fetch(url, {
+  const url = `https://graph.facebook.com/${GRAPH_API_VERSION}/${target.phoneNumberId}/messages`;
+  const response = await deps.fetchImpl(url, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${WHATSAPP_TOKEN}`,
+      Authorization: `Bearer ${target.accessToken}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -48,18 +79,18 @@ async function sendWhatsAppMessage(to, message) {
 
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    console.error("[Webhook] WhatsApp API error:", response.status, data);
+    console.error("[Webhook] WhatsApp API error:", response.status, data?.error?.code || "");
     throw new Error(data?.error?.message || `WhatsApp API HTTP ${response.status}`);
   }
   return data;
 }
 
-function verifyMetaSignature(req) {
-  if (!META_APP_SECRET || !req.rawBody) return false;
+function verifyMetaSignature(req, appSecret) {
+  if (!appSecret || !req.rawBody) return false;
   const signature = String(req.headers?.["x-hub-signature-256"] || "");
   if (!signature.startsWith("sha256=")) return false;
   const expected = "sha256=" + crypto
-    .createHmac("sha256", META_APP_SECRET)
+    .createHmac("sha256", appSecret)
     .update(req.rawBody)
     .digest("hex");
   const a = Buffer.from(signature);
@@ -78,8 +109,14 @@ module.exports = async (req, res) => {
     const token = req.query["hub.verify_token"];
     const challenge = req.query["hub.challenge"];
 
-    if (VERIFY_TOKEN && mode === "subscribe" && token === VERIFY_TOKEN) {
-      return res.status(200).send(challenge);
+    if (mode === "subscribe" && token) {
+      if (VERIFY_TOKEN && token === VERIFY_TOKEN) return res.status(200).send(challenge);
+      const store = getStore();
+      try {
+        if (store && await store.hasVerifyTokenHash(secretBox.sha256(token))) return res.status(200).send(challenge);
+      } catch (error) {
+        console.error("[Webhook] Verify lookup error:", safeError(error));
+      }
     }
     return res.status(403).send("Forbidden");
   }
@@ -88,12 +125,32 @@ module.exports = async (req, res) => {
     return res.status(405).send("Method not allowed");
   }
 
-  if (!verifyMetaSignature(req)) {
+  const body = req.body || {};
+  const value =
+    body.entry?.[0]?.changes?.[0]?.value ||
+    (body.field === "messages" ? body.value : null);
+
+  let target;
+  try {
+    target = await resolveTarget(value?.metadata?.phone_number_id);
+  } catch (error) {
+    console.error("[Webhook] Tenant lookup error:", safeError(error));
+    return res.status(500).json({ error: "internal_error" });
+  }
+
+  if (!target) {
+    // Número desconocido: no podemos validar la firma con ningún secreto conocido.
+    // Se responde 200 sin procesar nada para que Meta no reintente.
+    console.warn("[Webhook] phone_number_id sin tenant, ignorado");
+    return res.status(200).json({ status: "ignored" });
+  }
+
+  if (!verifyMetaSignature(req, target.appSecret)) {
     console.warn("[SEC] Invalid Meta signature");
     return res.status(403).send("Forbidden");
   }
 
-  const missing = assertProductionConfig();
+  const missing = assertProductionConfig(target);
   if (missing.length) {
     console.error("[Webhook] Configuración incompleta:", missing.join(", "));
     return res.status(500).json({ error: "Bot no configurado" });
@@ -103,10 +160,6 @@ module.exports = async (req, res) => {
   let claimed = false;
 
   try {
-    const body = req.body || {};
-    const value =
-      body.entry?.[0]?.changes?.[0]?.value ||
-      (body.field === "messages" ? body.value : null);
     const messages = value?.messages;
 
     // Meta también envía statuses/read/delivery events. Siempre responder 200.
@@ -127,7 +180,7 @@ module.exports = async (req, res) => {
       }
     }
 
-    claimed = await claimInboundMessage(messageId, from);
+    claimed = await deps.claimInboundMessage(messageId, from);
     if (!claimed) {
       console.log("[Webhook] Duplicate ignored:", pseudonymize(messageId));
       return res.status(200).json({ status: "ok" });
@@ -155,13 +208,14 @@ module.exports = async (req, res) => {
       persistentStore: hasPersistentStore,
     });
 
-    const { reply } = await handleMessage({
-      sessionId: `wa:${from}`,
+    const { reply } = await deps.handleMessage({
+      sessionId: target.tenantId ? `wa:${target.tenantId}:${from}` : `wa:${from}`,
+      tenantId: target.tenantId,
       text: sanitizedText,
       phone: from,
     });
 
-    await sendWhatsAppMessage(from, reply);
+    await sendWhatsAppMessage(from, reply, target);
     return res.status(200).json({ status: "ok" });
   } catch (error) {
     console.error("[Webhook] Error:", safeError(error));
@@ -169,9 +223,11 @@ module.exports = async (req, res) => {
     // Si fallamos antes de responder al cliente, liberamos el id para que
     // un retry legítimo de Meta pueda reprocesarse.
     if (claimed && messageId) {
-      await releaseInboundMessage(messageId);
+      await deps.releaseInboundMessage(messageId);
     }
 
     return res.status(500).json({ error: "internal_error" });
   }
 };
+
+module.exports._test = { deps, resolveTarget, verifyMetaSignature };
