@@ -192,7 +192,7 @@ It is a focused sales assistant for BlueFishing whose role is to understand the 
 - **Webhook:** `/webhook` enruta por `metadata.phone_number_id` al tenant correcto, valida la firma con el app secret de ese tenant (o `META_APP_SECRET`) y responde con su token. El número de `PHONE_NUMBER_ID` del `.env` sigue funcionando como antes.
 - **Credenciales:** tabla `tenant_credentials`, una fila por tenant, cifradas con AES-256-GCM (`CREDENTIALS_MASTER_KEY`), con AAD `tenant:campo`. La key de OpenAI sigue siendo global.
 
-Migración: `npm run db:migrate` (`db/migrations/002_tenant_onboarding.sql`, idempotente).
+Migración: `npm run db:migrate` (aplica todas las `db/migrations/*.sql` en orden, idempotentes).
 
 | Variable | Uso |
 |---|---|

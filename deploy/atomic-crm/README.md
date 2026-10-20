@@ -55,7 +55,7 @@ ATOMIC_CRM_SUPABASE_SECRET_KEY=<secret key>   # solo en el VPS
 ```
 Aplicar la migración del mapa de sincronización y levantar el job:
 ```bash
-psql "$DATABASE_URL" -f db/migrations/003_atomic_crm_sync.sql
+psql "$DATABASE_URL" -f db/migrations/004_atomic_crm_sync.sql
 docker compose --profile atomic-crm up -d atomic-crm-sync
 # prueba manual única:  docker compose run --rm atomic-crm-sync node scripts/atomic-crm-sync.js --once
 ```

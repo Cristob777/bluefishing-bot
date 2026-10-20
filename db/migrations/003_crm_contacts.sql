@@ -1,7 +1,7 @@
 -- CRM: contactos. Idempotente; se puede correr varias veces.
 -- Instalaciones nuevas: incluido en db/schema.sql (docker-entrypoint-initdb.d).
 -- Instalaciones existentes: aplicar manualmente:
---   psql "$DATABASE_URL" -f db/migrations/002_crm_contacts.sql
+--   psql "$DATABASE_URL" -f db/migrations/003_crm_contacts.sql
 --
 -- El historial NO se duplica: contacts.session_id ('wa:<telefono>') es la clave
 -- de unión con bot_sessions.session_id, bot_events.session_id y

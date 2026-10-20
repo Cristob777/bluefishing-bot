@@ -44,7 +44,7 @@ test("cleanName bounds length and strips control chars", () => {
 });
 
 test("migration is idempotent and mirrored in schema.sql", () => {
-  const mig = fs.readFileSync(path.join(__dirname, "../db/migrations/002_crm_contacts.sql"), "utf8");
+  const mig = fs.readFileSync(path.join(__dirname, "../db/migrations/003_crm_contacts.sql"), "utf8");
   const schema = fs.readFileSync(path.join(__dirname, "../db/schema.sql"), "utf8");
   for (const stmt of mig.match(/create (table|index)[^\n]*/g)) assert.match(stmt, /if not exists/);
   assert.match(mig, /create or replace view crm_contact_overview/);
