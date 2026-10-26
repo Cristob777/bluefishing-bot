@@ -1,3 +1,5 @@
+# LEGADO: Chatwoot ahora vive en el proyecto Compose "crm-bot" (docker-compose.yml de la raíz,
+# instalado por deploy/hostinger/install.sh). No levantes este archivo junto a crm-bot.
 # Chatwoot self-hosted para BlueFishing — basado en docker-compose.production.yaml oficial
 # (https://github.com/chatwoot/chatwoot/blob/develop/docker-compose.production.yaml).
 # Proyecto Docker SEPARADO del bot: su propio Postgres y Redis, sin compartir red con la DB del bot.

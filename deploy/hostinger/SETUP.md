@@ -9,16 +9,33 @@ Quién hace qué:
 ---
 
 ## 0. Requisitos
-- [ ] VPS con Docker y Docker Compose v2 (`docker compose version`).
-- [ ] Un dominio o subdominio (ej. `bot.bluefishing.cl`) con un registro **A** apuntando a la IP del VPS.
-- [ ] Traefik de Hostinger funcionando (ya entrega HTTPS con Let's Encrypt).
+- [ ] VPS con Docker y Docker Compose v2 (`docker compose version`). KVM4 (4 CPU / 16 GB) alcanza para bot + Chatwoot.
+- [ ] Dos subdominios con registro **A** al VPS: `BOT_DOMAIN` (ej. `bot.bluefishing.cl`) y `CHATWOOT_DOMAIN` (ej. `chat.bluefishing.cl`).
+- [ ] El Traefik existente **running y healthy** (el instalador aborta si no; nunca lo modifica). Anota su red y su certresolver:
+  ```bash
+  docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}' | grep -i traefik
+  docker inspect <traefik> -f '{{json .NetworkSettings.Networks}}'      # -> TRAEFIK_NETWORK
+  docker inspect <traefik> -f '{{json .Config.Cmd}}' | tr , '\n' | grep -i certresolver   # -> TRAEFIK_CERTRESOLVER
+  ```
+  Si Traefik se está reiniciando, arréglalo primero (`docker logs <traefik>`); el preflight detecta el bucle de reinicios.
 - [ ] Opcional: `bash deploy/hostinger/harden-host.sh` para endurecer el host.
 
-## 1. Clonar
+## 1. Clonar (proyecto aislado `crm-bot` en `/opt/crm-bot`)
 ```bash
-git clone -b prod/hostinger-kvm4 https://github.com/Cristob777/bluefishing-bot.git
-cd bluefishing-bot
+sudo git clone -b prod/hostinger-kvm4 https://github.com/Cristob777/bluefishing-bot.git /opt/crm-bot
+cd /opt/crm-bot
 ```
+Todo vive en el proyecto Compose `crm-bot` (`name:` en `docker-compose.yml`): contenedores `crm-bot-*`, volúmenes `crm-bot_*` propios (`postgres_data`, `chatwoot_postgres_data`, `chatwoot_redis_data`, `chatwoot_storage`). No reutiliza ni modifica contenedores de otros proyectos y **no publica puertos al host**.
+
+## Resumen: del clon al login
+```bash
+cd /opt/crm-bot
+cp .env.production.example .env.production && chmod 600 .env.production
+nano .env.production                      # completa todos los CHANGE_ME (paso 2)
+bash deploy/hostinger/install.sh          # instalador idempotente (paso 3)
+sudo cat /root/.crm-bot/chatwoot_admin_password   # password inicial del admin de Chatwoot (no se imprime)
+```
+Luego: `https://CHATWOOT_DOMAIN` → login con `CHATWOOT_ADMIN_EMAIL` + ese password → cámbialo en Perfil. `https://BOT_DOMAIN/admin` con `ADMIN_DASHBOARD_USER`. `/panel` pide primero el basic auth de Traefik.
 
 ## 2. Variables de entorno
 ```bash
@@ -26,7 +43,7 @@ cp .env.production.example .env.production
 chmod 600 .env.production
 nano .env.production
 ```
-**Obligatorias (12).** `deploy.sh` no arranca si falta alguna.
+**Obligatorias (12)** + las de Traefik y Chatwoot (`TRAEFIK_ADMIN_BASICAUTH_USERS`, `CHATWOOT_DOMAIN`, `CHATWOOT_SECRET_KEY_BASE` (`openssl rand -hex 64`), `CHATWOOT_POSTGRES_PASSWORD`, `CHATWOOT_REDIS_PASSWORD`, `CHATWOOT_ADMIN_EMAIL`, `CHATWOOT_WEBHOOK_SECRET`). `install.sh` no arranca si falta alguna o queda `CHANGE_ME`. `CHATWOOT_BOT_TOKEN`, `CHATWOOT_ACCOUNT_ID` y `CHATWOOT_INBOX_ID` los escribe el instalador.
 
 | Variable | Qué poner |
 |---|---|
@@ -55,23 +72,88 @@ nano .env.production
 - `CHATWOOT_*`: paso 8.
 - `ATOMIC_CRM_*`: paso 9.
 
-## 3. Deploy
+## 3. Instalar / actualizar
 ```bash
-bash deploy/hostinger/deploy.sh
-curl -s http://127.0.0.1:18080/health          # debe responder OK
-docker compose --env-file .env.production logs -f app
+bash deploy/hostinger/install.sh      # primera vez y cuando quieras (idempotente)
+bash deploy/hostinger/deploy.sh       # actualizaciones: git pull --ff-only de la rama + install.sh
 ```
-`deploy.sh` valida las variables, construye la imagen, levanta Postgres y la app en `127.0.0.1:18080`, y aplica todas las migraciones `db/migrations/*.sql` (idempotentes).
+`install.sh` (con `set -euo pipefail`), en orden:
+1. Valida variables obligatorias y formato de `CREDENTIALS_MASTER_KEY` / `PANEL_SESSION_SECRET`.
+2. **Preflight** (`preflight.sh`, solo lectura): aborta si la red `TRAEFIK_NETWORK` no existe o si el contenedor de Traefik (`TRAEFIK_CONTAINER` o autodetectado por imagen) no está `running` + `healthy`, o si su `RestartCount` sube durante 15 s. Si tu Traefik no tiene healthcheck y lo verificaste a mano: `TRAEFIK_ALLOW_NO_HEALTHCHECK=1 bash deploy/hostinger/install.sh`.
+3. `compose config`, build del bot, levanta `db`, `chatwoot-postgres` y `chatwoot-redis` y espera sus healthchecks (`pg_isready`, `redis-cli ping`).
+4. Backup previo si ya hay datos (`SKIP_BACKUP=1` para omitir) y migraciones del bot con `migrate.sh`: tabla `schema_migrations`, aplica `db/schema.sql` (`001_schema`) y `db/migrations/*.sql` una vez cada una en transacción; las migraciones también son idempotentes (`IF NOT EXISTS`, `drop view if exists`).
+5. `bundle exec rails db:chatwoot_prepare` (crea o migra la base de Chatwoot).
+6. `compose up -d` y espera a `chatwoot-rails` y `app` healthy.
+7. Con `rails runner` (`deploy/hostinger/chatwoot/bootstrap.rb`), idempotente: cuenta `CHATWOOT_ACCOUNT_NAME`, admin `CHATWOOT_ADMIN_EMAIL` (password generado en `/root/.crm-bot/chatwoot_admin_password`, 0600, **nunca en stdout**; `SECRETS_DIR` para cambiar la carpeta), Agent Bot «Matías» con webhook `https://BOT_DOMAIN/chatwoot/webhook` (o `CHATWOOT_BOT_WEBHOOK_URL`), inbox «Bot API» conectado al bot. La firma HMAC usa `CHATWOOT_WEBHOOK_SECRET` (el endpoint existente `/chatwoot/webhook` ya verifica `X-Chatwoot-Signature`, `sha256=HMAC(secret, "timestamp.body")`).
+8. Guarda `CHATWOOT_BOT_TOKEN`, `CHATWOOT_ACCOUNT_ID`, `CHATWOOT_INBOX_ID` (y el secreto si Chatwoot generó uno) en `.env.production` sin imprimirlos, recrea `app` y corre catálogo y retención.
+
+**Pasos que no se automatizan (manuales):**
+- DNS de `BOT_DOMAIN` y `CHATWOOT_DOMAIN` y que el certresolver de Traefik pueda emitir (HTTP/TLS challenge).
+- Generar los secretos (`openssl rand ...`) y el hash de basic auth, y respaldarlos fuera del VPS.
+- Meta: webhook y tokens de WhatsApp (paso 5); inbox de WhatsApp en Chatwoot si se migra el canal (ver `deploy/chatwoot/README.md`).
+- Cambiar el password del admin de Chatwoot tras el primer login e invitar agentes (Settings → Agents).
+- Si tu versión de Chatwoot no tiene columna `secret` en Agent Bots, la firma HMAC del webhook no se puede fijar desde el instalador: revisa en Settings → Bots que el bot use el secreto, o deja `CHATWOOT_WEBHOOK_SECRET` igual al que muestre Chatwoot.
+- Cron de backups (abajo).
+
+Migraciones a mano: `bash deploy/hostinger/migrate.sh`.
 
 ## 4. Traefik (dominio → bot)
-La app escucha **solo** en `127.0.0.1:18080`. En el Traefik de Hostinger crea un router:
-- Host: `bot.bluefishing.cl` → servicio `http://127.0.0.1:18080` (o la IP del host vista desde el contenedor de Traefik, p. ej. `http://172.17.0.1:18080`).
-- Entrypoint `websecure` con TLS (certresolver Let's Encrypt), más una redirección de http a https.
+**Opción por defecto (recomendada): red externa + labels.** `docker-compose.yml` conecta `app` a la red externa de Traefik y declara los labels (router, servicio, puerto interno 3000, TLS). La app escucha en `0.0.0.0:3000` dentro del contenedor y **no publica ningún puerto al host**. Postgres sigue solo en la red `internal`.
+
+Variables (en `.env.production`):
+| Variable | Default | Qué es |
+|---|---|---|
+| `TRAEFIK_NETWORK` | `traefik` | Red Docker de Traefik. Ver con `docker network ls` / `docker inspect <contenedor-traefik>` |
+| `TRAEFIK_ENTRYPOINT` | `websecure` | Entrypoint HTTPS de Traefik |
+| `TRAEFIK_CERTRESOLVER` | `letsencrypt` | Nombre del certresolver configurado en Traefik |
+| `TRAEFIK_ADMIN_BASICAUTH_USERS` | (obligatoria) | `usuario:hash` bcrypt para `/panel` y `/admin-chat` |
+| `TRAEFIK_ADMIN_IP_ALLOWLIST` | `0.0.0.0/0,::/0` | IPs/CIDR permitidas para `/panel` y `/admin-chat` |
+
+Traefik debe tener el provider Docker activo (`--providers.docker=true`). Si usa `exposedByDefault=false`, el label `traefik.enable=true` ya está puesto.
+
+**Alternativas** (si la opción por defecto no encaja con tu Traefik):
+- **Traefik en el host o con `network_mode: host`:** publica la app en loopback con el override `docker-compose.hostport.yml` (`docker compose -f docker-compose.yml -f docker-compose.hostport.yml --env-file .env.production up -d`) y apunta un router de Traefik (file provider) a `http://127.0.0.1:18080`.
+- **Atar el puerto a la IP del bridge (`172.17.0.1`)**: posible editando el override, pero expone el puerto a cualquier contenedor del host. No recomendado.
+- Nota: `127.0.0.1:18080` **no** es alcanzable desde un Traefik en contenedor sin `network_mode: host`, ni vía `172.17.0.1` si el puerto está atado a loopback.
+
+### Protección de `/panel` y `/admin-chat`
+Un router de mayor prioridad (`bluefishing-protegido`) aplica a esas rutas dos middlewares: `ipallowlist` (`TRAEFIK_ADMIN_IP_ALLOWLIST`) y `basicauth` (`TRAEFIK_ADMIN_BASICAUTH_USERS`). El resto de rutas (webhook de Meta, `/chat`, `/widget.js`, `/health`, `/admin`) va por el router público. Generar el hash (en tu máquina o en el VPS, **nunca lo pegues en chats**):
+```bash
+htpasswd -nB admin                                         # apache2-utils
+# o: docker run --rm httpd:2-alpine htpasswd -nbB admin 'CLAVE_LARGA'
+```
+Pega el resultado en `.env.production` **duplicando cada `$` (`$$`)**, porque compose interpola el archivo. Ejemplo de forma: `TRAEFIK_ADMIN_BASICAUTH_USERS=admin:$$2y$$05$$...`. Si los dueños de las empresas entran a `/panel` desde cualquier lugar, deja la allowlist abierta y compárteles la clave de basic auth (luego cada uno usa su login del panel), o restringe por IP si solo lo usas tú.
 
 Comprobar:
 ```bash
-curl -I https://bot.bluefishing.cl/panel        # 200
+curl -sI https://chat.bluefishing.cl | head -1   # Chatwoot 200/302
+curl -s https://bot.bluefishing.cl/health
+curl -I https://bot.bluefishing.cl/panel        # 401 sin credenciales
+curl -I -u admin https://bot.bluefishing.cl/panel   # 200/302 con credenciales
 ```
+
+### Backups (bot + Chatwoot)
+Scripts en `deploy/hostinger/` (sin secretos: las credenciales se leen dentro de cada contenedor):
+- `backup_bluefishing.sh`: `pg_dump -Fc` de la DB del bot (`bot-TS.dump`) y de Chatwoot (`chatwoot-TS.dump`) + tar del storage de Chatwoot (`chatwoot-storage-TS.tar.gz`) en `BACKUP_DIR` (default `/var/backups/crm-bot`, 700/600). Borra lo de más de `KEEP_DAYS` (14) días.
+- `restore_test.sh TS`: restaura cada dump en una DB temporal `restore_test`, cuenta filas, la borra y valida el tar. **No toca producción.**
+- `restore.sh TS` (destructivo, exige `CONFIRM=yes`): para servicios, restaura ambas bases con `--clean` y el storage, y vuelve a levantar.
+
+```bash
+bash deploy/hostinger/backup_bluefishing.sh
+bash deploy/hostinger/restore_test.sh 2026-11-01_0315
+CONFIRM=yes bash deploy/hostinger/restore.sh 2026-11-01_0315
+```
+Cron diario (03:15), `crontab -e` como root:
+```
+15 3 * * * cd /opt/crm-bot && bash deploy/hostinger/backup_bluefishing.sh >> /var/log/crm-bot-backup.log 2>&1
+```
+Recomendado: copia fuera del VPS (rclone/rsync cifrado de `/var/backups/crm-bot`) y una prueba de restore al mes.
+
+### Respaldo de `CREDENTIALS_MASTER_KEY` (crítico)
+`tenant_credentials` guarda los tokens de cada empresa cifrados con AES-256-GCM usando `CREDENTIALS_MASTER_KEY`. **Si esa clave se pierde, las credenciales cifradas son irrecuperables**, aunque tengas los backups de la base: cada empresa tendría que volver a conectar sus integraciones.
+- Guárdala en un gestor de contraseñas (fuera del VPS), **separada de los dumps** (quien tenga dump + clave puede descifrar).
+- No la rotes sin un plan de re-cifrado: cambiarla deja ilegibles las credenciales existentes.
+- Respáldala junto con `.env.production`, nunca en el repo ni en chats.
 
 ## 5. Webhook de Meta (WhatsApp)
 1. developers.facebook.com → tu app → WhatsApp → **Configuración** → Webhook → Editar.
@@ -100,12 +182,9 @@ Si cada dueño conecta su propio WhatsApp desde `/panel`, el panel le muestra **
    Opcionales: `data-color="#0b3d63"`, `data-position="left"`, `data-greeting="..."`.
 3. Vuelve a ejecutar `bash deploy/hostinger/deploy.sh`.
 
-## 8. Chatwoot (opcional: bandeja y traspaso a humanos)
-Guía completa: `deploy/chatwoot/README.md`.
-1. Levantar Chatwoot en el VPS con `deploy/chatwoot/docker-compose.yml` y crear un router de Traefik para `chat.bluefishing.cl`.
-2. En Chatwoot: crear la cuenta y el inbox. En **Settings → Bots** crear "Matías" con el webhook `https://bot.bluefishing.cl/chatwoot/webhook`.
-3. `.env.production`: `CHATWOOT_ENABLED=true`, `CHATWOOT_BASE_URL=https://chat.bluefishing.cl`, `CHATWOOT_BOT_TOKEN` y `CHATWOOT_WEBHOOK_SECRET`.
-4. Crear la etiqueta `humano` y agregar a los vendedores como agentes. Luego volver a desplegar.
+## 8. Chatwoot (bandeja y traspaso a humanos)
+Chatwoot ya viene en el proyecto `crm-bot` y lo configura `install.sh` (paso 3): cuenta, admin, Agent Bot «Matías», inbox «Bot API», webhook firmado y tokens en `.env.production`. El bot habla con Chatwoot por la red interna (`CHATWOOT_BASE_URL=http://chatwoot-rails:3000`).
+Manual: crear la etiqueta `humano`, invitar a los vendedores como agentes y, si se migra WhatsApp a Chatwoot, seguir `deploy/chatwoot/README.md` (el `deploy/chatwoot/docker-compose.yml` queda como referencia legada; no lo levantes junto a `crm-bot`).
 
 ## 9. Atomic CRM (opcional: embudo de ventas en Supabase)
 Guía completa: `deploy/atomic-crm/README.md`. El `Caddyfile.snippet` sirve solo como referencia: en este VPS el proxy es Traefik.
@@ -148,6 +227,8 @@ Guía completa: `deploy/atomic-crm/README.md`. El `Caddyfile.snippet` sirve solo
 |---|---|
 | `deploy.sh`: "Security preflight failed: X" | falta la variable X o quedó `CHANGE_ME` |
 | `/panel` da 404 | faltan `CREDENTIALS_MASTER_KEY` / `PANEL_SESSION_SECRET`, o `PUBLIC_BASE_URL` no es https |
-| Meta no verifica el webhook | `VERIFY_TOKEN` distinto, o Traefik no enruta a `127.0.0.1:18080` |
+| Meta no verifica el webhook | `VERIFY_TOKEN` distinto, o Traefik no llega a la app (revisa `TRAEFIK_NETWORK` y los logs de Traefik) |
+| `/panel` da 401 siempre | hash de `TRAEFIK_ADMIN_BASICAUTH_USERS` sin `$$` o IP fuera de `TRAEFIK_ADMIN_IP_ALLOWLIST` |
+| `deploy.sh`: "Postgres no quedó healthy" | revisa `docker compose logs db` (contraseña, disco, initdb) |
 | El chat web no responde (403) | el dominio no está en `ALLOWED_ORIGIN` (debe incluir `https://`) |
 | "Meta rechazó los datos" en el panel | token sin permisos `whatsapp_business_*`, IDs cruzados, o App secret mal copiado |

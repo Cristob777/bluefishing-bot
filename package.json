@@ -19,7 +19,7 @@
     "start": "node server.js",
     "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql",
     "security:retention": "node scripts/security-retention.js",
-    "db:migrate": "for f in db/migrations/*.sql; do psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
+    "db:migrate": "for f in db/schema.sql db/migrations/*.sql; do psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
     "crm:sync": "node scripts/atomic-crm-sync.js --once"
   },
   "engines": {
