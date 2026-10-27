@@ -134,6 +134,13 @@ test("duplicate deliveries are processed once", async () => {
   assert.equal(fetch.calls.length, 0);
 });
 
+test("assignee AgentBot (v4.19) no bloquea; assignee User sí", () => {
+  const bot = cw.classifyEvent(payload({ conversation: { meta: { assignee: { id: 1, name: "Matías" }, assignee_type: "AgentBot" } } }));
+  assert.equal(bot.skip, undefined);
+  const human = cw.classifyEvent(payload({ conversation: { meta: { assignee: { id: 5 }, assignee_type: "User" } } }));
+  assert.equal(human.skip, "assigned");
+});
+
 test("sin firma HMAC se rechaza aunque venga ?token= (sin fallback)", () => {
   const base = { method: "POST", headers: {}, rawBody: Buffer.from("{}"), body: {} };
   assert.equal(cw.verifySignature({ ...base, query: { token: "whsec-not-real" } }, "whsec-not-real"), false);

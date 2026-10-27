@@ -68,7 +68,10 @@ function classifyEvent(payload) {
   if (payload.message_type !== "incoming" || payload.private) return { skip: "not_incoming" };
   const conv = payload.conversation || {};
   if (conv.status !== "pending") return { skip: "not_pending" };
-  if (conv.meta?.assignee) return { skip: "assigned" };
+  // v4.19: si el inbox tiene Agent Bot, meta.assignee es el propio bot (assignee_type "AgentBot").
+  // Solo se omite si hay un humano asignado (assignee_type "User"; sin el campo, versiones antiguas).
+  const assigneeType = conv.meta?.assignee_type;
+  if (assigneeType === "User" || (assigneeType === undefined && conv.meta?.assignee)) return { skip: "assigned" };
   const accountId = Number(payload.account?.id ?? conv.account?.id);
   const conversationId = Number(conv.id);
   if (!Number.isInteger(accountId) || !Number.isInteger(conversationId)) return { skip: "ids" };
