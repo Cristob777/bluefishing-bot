@@ -2,17 +2,18 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { hasPersistentStore, persistenceBackend } = require("../lib/sessionStore");
 const { ping } = require("../lib/postgres");
+const { readPath } = require("../lib/catalogPaths");
 
 function countCatalog() {
   try {
-    return fs.readFileSync(path.join(__dirname, "..", "catalogo", "catalogo_para_bot.txt"), "utf8")
+    return fs.readFileSync(readPath("catalogo_para_bot.txt"), "utf8")
       .split("\n").filter((line) => line.trim() && !line.startsWith("#")).length;
   } catch { return 0; }
 }
 
 function countKnowledge() {
   try {
-    return Object.keys(JSON.parse(fs.readFileSync(path.join(__dirname, "..", "catalogo", "product_knowledge.json"), "utf8")) || {}).length;
+    return Object.keys(JSON.parse(fs.readFileSync(readPath("product_knowledge.json"), "utf8")) || {}).length;
   } catch { return 0; }
 }
 
