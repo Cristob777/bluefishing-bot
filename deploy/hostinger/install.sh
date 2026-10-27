@@ -83,12 +83,14 @@ if [[ ! -s "$PASS_FILE" ]]; then
 fi
 chmod 600 "$PASS_FILE"
 BOT_URL="$(envval CHATWOOT_BOT_WEBHOOK_URL)"; BOT_URL="${BOT_URL:-http://app:3000/chatwoot/webhook}"  # interna (red chatwoot), no sale por Traefik
+LABELS_EMAIL="$(envval CHATWOOT_LABELS_EMAIL)"; LABELS_EMAIL="${LABELS_EMAIL:-crmbot-labels@$(envval CHATWOOT_DOMAIN)}"
 RAILS_ID="$("${DC[@]}" ps -q chatwoot-rails)"
 docker cp deploy/hostinger/chatwoot/bootstrap.rb "$RAILS_ID":/tmp/crmbot_bootstrap.rb
 result="$(CW_ADMIN_PASSWORD="$(cat "$PASS_FILE")" CW_WEBHOOK_SECRET="$(envval CHATWOOT_WEBHOOK_SECRET)" \
   CW_ACCOUNT_NAME="$(envval CHATWOOT_ACCOUNT_NAME)" CW_ADMIN_NAME="$(envval CHATWOOT_ADMIN_NAME)" \
   CW_ADMIN_EMAIL="$(envval CHATWOOT_ADMIN_EMAIL)" CW_BOT_URL="$BOT_URL" \
-  "${DC[@]}" exec -T -e CW_ADMIN_PASSWORD -e CW_WEBHOOK_SECRET -e CW_ACCOUNT_NAME -e CW_ADMIN_NAME -e CW_ADMIN_EMAIL -e CW_BOT_URL \
+  CW_LABELS_EMAIL="${LABELS_EMAIL}" \
+  "${DC[@]}" exec -T -e CW_ADMIN_PASSWORD -e CW_WEBHOOK_SECRET -e CW_ACCOUNT_NAME -e CW_ADMIN_NAME -e CW_ADMIN_EMAIL -e CW_BOT_URL -e CW_LABELS_EMAIL \
   chatwoot-rails bundle exec rails runner /tmp/crmbot_bootstrap.rb | grep '^CRMBOT_RESULT ' | tail -n1)"
 [[ -n "$result" ]] || { echo "Bootstrap de Chatwoot no devolvió resultado. Revisa: docker compose logs chatwoot-rails" >&2; exit 1; }
 

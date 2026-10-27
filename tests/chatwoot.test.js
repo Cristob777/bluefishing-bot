@@ -134,15 +134,18 @@ test("duplicate deliveries are processed once", async () => {
   assert.equal(fetch.calls.length, 0);
 });
 
-test("verifyRequest: Chatwoot < v4.14 sin firma acepta ?token= correcto y rechaza el resto", () => {
+test("sin firma HMAC se rechaza aunque venga ?token= (sin fallback)", () => {
   const base = { method: "POST", headers: {}, rawBody: Buffer.from("{}"), body: {} };
-  assert.equal(cw.verifyRequest({ ...base, query: { token: "whsec-not-real" } }, "whsec-not-real"), true);
-  assert.equal(cw.verifyRequest({ ...base, query: { token: "otro" } }, "whsec-not-real"), false);
-  assert.equal(cw.verifyRequest({ ...base, query: {} }, "whsec-not-real"), false);
-  assert.equal(cw.verifyRequest({ ...base, query: { token: "" } }, ""), false);
-  // Si viene cabecera de firma, se exige HMAC aunque el token sea correcto.
-  const bad = { ...base, headers: { "x-chatwoot-signature": "sha256=00", "x-chatwoot-timestamp": String(Math.floor(Date.now() / 1000)) }, query: { token: "whsec-not-real" } };
-  assert.equal(cw.verifyRequest(bad, "whsec-not-real"), false);
-  const good = signedReq({ a: 1 });
-  assert.equal(cw.verifyRequest({ ...good, query: {} }, "whsec-not-real"), true);
+  assert.equal(cw.verifySignature({ ...base, query: { token: "whsec-not-real" } }, "whsec-not-real"), false);
+  assert.equal(cw.verifySignature(signedReq({ a: 1 }), "whsec-not-real"), true);
+  assert.equal(cw.verifyRequest, undefined);
+});
+
+test("labels usan CHATWOOT_LABELS_TOKEN si existe; mensajes siguen con el token del bot", async () => {
+  const fetch = mockFetch();
+  const client = cw.createClient({ baseUrl: "https://x", botToken: "bot-t", labelsToken: "agent-t", timeoutMs: 1000 }, fetch);
+  await client.setLabels(1, 2, ["humano"]);
+  await client.sendMessage(1, 2, "hola");
+  assert.equal(fetch.calls[0].headers.api_access_token, "agent-t");
+  assert.equal(fetch.calls[1].headers.api_access_token, "bot-t");
 });

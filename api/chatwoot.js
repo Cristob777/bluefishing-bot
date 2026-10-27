@@ -2,7 +2,7 @@
 // Verificado contra el código de Chatwoot (lib/webhooks/trigger.rb, app/listeners/agent_bot_listener.rb):
 //  - El bot recibe TODOS los message_created del inbox (entrantes, salientes, privados, conversaciones open),
 //    por eso se filtra: solo message_type "incoming", no privado, conversación "pending" y sin asignar.
-//  - Firma: X-Chatwoot-Signature = "sha256=" + HMAC_SHA256(secret, "<X-Chatwoot-Timestamp>.<raw body>").
+//  - Firma (Chatwoot >= v4.14, agent_bots.secret): X-Chatwoot-Signature = "sha256=" + HMAC_SHA256(secret, "<X-Chatwoot-Timestamp>.<raw body>").
 //  - Si el webhook falla (o hace timeout) Chatwoot pasa la conversación pending a open, y reintenta en 429/500.
 //    Por eso se responde 200 de inmediato y se procesa en segundo plano.
 const crypto = require("node:crypto");
@@ -33,6 +33,8 @@ function config() {
     enabled: process.env.CHATWOOT_ENABLED === "true",
     baseUrl: String(process.env.CHATWOOT_BASE_URL || "").replace(/\/+$/, ""),
     botToken: process.env.CHATWOOT_BOT_TOKEN || "",
+    // Token de un usuario agente dedicado (creado por install): la API de labels no acepta tokens de Agent Bot.
+    labelsToken: process.env.CHATWOOT_LABELS_TOKEN || "",
     secret: process.env.CHATWOOT_WEBHOOK_SECRET || "",
     timeoutMs: Number(process.env.CHATWOOT_TIMEOUT_MS || 10000),
   };
@@ -45,22 +47,6 @@ function missingConfig(cfg) {
   if (!cfg.secret) missing.push("CHATWOOT_WEBHOOK_SECRET");
   if (!process.env.OPENAI_API_KEY) missing.push("OPENAI_API_KEY");
   return missing;
-}
-
-function safeEqual(x, y) {
-  const a = Buffer.from(String(x));
-  const b = Buffer.from(String(y));
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-// Chatwoot < v4.14 no firma los webhooks del Agent Bot (no existe agent_bots.secret ni X-Chatwoot-Signature).
-// Para esas versiones install.sh registra la URL del bot con ?token=<CHATWOOT_WEBHOOK_SECRET> (URL interna,
-// red "chatwoot", sin pasar por Traefik). Si llega cabecera de firma, se exige la firma HMAC.
-function verifyRequest(req, secret, nowSeconds) {
-  if (!secret) return false;
-  if (req.headers["x-chatwoot-signature"]) return verifySignature(req, secret, nowSeconds);
-  const token = req.query && typeof req.query.token === "string" ? req.query.token : "";
-  return token.length > 0 && safeEqual(token, secret);
 }
 
 function verifySignature(req, secret, nowSeconds = Math.floor(Date.now() / 1000)) {
@@ -103,13 +89,13 @@ function classifyEvent(payload) {
 }
 
 function createClient(cfg, fetchImpl = globalThis.fetch) {
-  async function call(method, path, body) {
+  async function call(method, path, body, token = cfg.botToken) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), cfg.timeoutMs);
     try {
       const response = await fetchImpl(`${cfg.baseUrl}${path}`, {
         method,
-        headers: { "Content-Type": "application/json", api_access_token: cfg.botToken },
+        headers: { "Content-Type": "application/json", api_access_token: token },
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
       });
@@ -124,7 +110,7 @@ function createClient(cfg, fetchImpl = globalThis.fetch) {
     sendMessage: (a, c, content) => call("POST", `${base(a, c)}/messages`, { content, message_type: "outgoing", private: false }),
     setStatus: (a, c, status) => call("POST", `${base(a, c)}/toggle_status`, { status }),
     // La API de labels REEMPLAZA la lista completa: se envían las existentes + la nueva.
-    setLabels: (a, c, labels) => call("POST", `${base(a, c)}/labels`, { labels }),
+    setLabels: (a, c, labels) => call("POST", `${base(a, c)}/labels`, { labels }, cfg.labelsToken || cfg.botToken),
   };
 }
 
@@ -203,7 +189,7 @@ function makeHandler(deps = {}) {
       console.error("[Chatwoot] Configuración incompleta:", missing.join(", "));
       return res.status(503).json({ error: "chatwoot_not_configured" });
     }
-    if (!verifyRequest(req, cfg.secret)) {
+    if (!verifySignature(req, cfg.secret)) {
       console.warn("[SEC] Invalid Chatwoot signature");
       return res.status(401).json({ error: "invalid_signature" });
     }
@@ -223,7 +209,6 @@ function makeHandler(deps = {}) {
 module.exports = makeHandler();
 module.exports.makeHandler = makeHandler;
 module.exports.verifySignature = verifySignature;
-module.exports.verifyRequest = verifyRequest;
 module.exports.classifyEvent = classifyEvent;
 module.exports.createClient = createClient;
 module.exports.processEvent = processEvent;
