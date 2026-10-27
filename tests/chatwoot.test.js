@@ -133,3 +133,16 @@ test("duplicate deliveries are processed once", async () => {
   assert.equal(result, "duplicate");
   assert.equal(fetch.calls.length, 0);
 });
+
+test("verifyRequest: Chatwoot < v4.14 sin firma acepta ?token= correcto y rechaza el resto", () => {
+  const base = { method: "POST", headers: {}, rawBody: Buffer.from("{}"), body: {} };
+  assert.equal(cw.verifyRequest({ ...base, query: { token: "whsec-not-real" } }, "whsec-not-real"), true);
+  assert.equal(cw.verifyRequest({ ...base, query: { token: "otro" } }, "whsec-not-real"), false);
+  assert.equal(cw.verifyRequest({ ...base, query: {} }, "whsec-not-real"), false);
+  assert.equal(cw.verifyRequest({ ...base, query: { token: "" } }, ""), false);
+  // Si viene cabecera de firma, se exige HMAC aunque el token sea correcto.
+  const bad = { ...base, headers: { "x-chatwoot-signature": "sha256=00", "x-chatwoot-timestamp": String(Math.floor(Date.now() / 1000)) }, query: { token: "whsec-not-real" } };
+  assert.equal(cw.verifyRequest(bad, "whsec-not-real"), false);
+  const good = signedReq({ a: 1 });
+  assert.equal(cw.verifyRequest({ ...good, query: {} }, "whsec-not-real"), true);
+});

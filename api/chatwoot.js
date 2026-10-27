@@ -47,6 +47,22 @@ function missingConfig(cfg) {
   return missing;
 }
 
+function safeEqual(x, y) {
+  const a = Buffer.from(String(x));
+  const b = Buffer.from(String(y));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+// Chatwoot < v4.14 no firma los webhooks del Agent Bot (no existe agent_bots.secret ni X-Chatwoot-Signature).
+// Para esas versiones install.sh registra la URL del bot con ?token=<CHATWOOT_WEBHOOK_SECRET> (URL interna,
+// red "chatwoot", sin pasar por Traefik). Si llega cabecera de firma, se exige la firma HMAC.
+function verifyRequest(req, secret, nowSeconds) {
+  if (!secret) return false;
+  if (req.headers["x-chatwoot-signature"]) return verifySignature(req, secret, nowSeconds);
+  const token = req.query && typeof req.query.token === "string" ? req.query.token : "";
+  return token.length > 0 && safeEqual(token, secret);
+}
+
 function verifySignature(req, secret, nowSeconds = Math.floor(Date.now() / 1000)) {
   const signature = String(req.headers["x-chatwoot-signature"] || "");
   const timestamp = String(req.headers["x-chatwoot-timestamp"] || "");
@@ -187,7 +203,7 @@ function makeHandler(deps = {}) {
       console.error("[Chatwoot] Configuración incompleta:", missing.join(", "));
       return res.status(503).json({ error: "chatwoot_not_configured" });
     }
-    if (!verifySignature(req, cfg.secret)) {
+    if (!verifyRequest(req, cfg.secret)) {
       console.warn("[SEC] Invalid Chatwoot signature");
       return res.status(401).json({ error: "invalid_signature" });
     }
@@ -207,6 +223,7 @@ function makeHandler(deps = {}) {
 module.exports = makeHandler();
 module.exports.makeHandler = makeHandler;
 module.exports.verifySignature = verifySignature;
+module.exports.verifyRequest = verifyRequest;
 module.exports.classifyEvent = classifyEvent;
 module.exports.createClient = createClient;
 module.exports.processEvent = processEvent;

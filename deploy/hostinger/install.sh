@@ -82,7 +82,7 @@ if [[ ! -s "$PASS_FILE" ]]; then
   ( umask 077; openssl rand -base64 24 | tr -d '\n' > "$PASS_FILE"; printf 'Aa1!' >> "$PASS_FILE" )
 fi
 chmod 600 "$PASS_FILE"
-BOT_URL="$(envval CHATWOOT_BOT_WEBHOOK_URL)"; BOT_URL="${BOT_URL:-https://$(envval BOT_DOMAIN)/chatwoot/webhook}"
+BOT_URL="$(envval CHATWOOT_BOT_WEBHOOK_URL)"; BOT_URL="${BOT_URL:-http://app:3000/chatwoot/webhook}"  # interna (red chatwoot), no sale por Traefik
 RAILS_ID="$("${DC[@]}" ps -q chatwoot-rails)"
 docker cp deploy/hostinger/chatwoot/bootstrap.rb "$RAILS_ID":/tmp/crmbot_bootstrap.rb
 result="$(CW_ADMIN_PASSWORD="$(cat "$PASS_FILE")" CW_WEBHOOK_SECRET="$(envval CHATWOOT_WEBHOOK_SECRET)" \

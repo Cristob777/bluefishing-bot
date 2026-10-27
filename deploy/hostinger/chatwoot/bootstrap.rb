@@ -16,10 +16,15 @@ ActiveRecord::Base.transaction do
   user.update!(type: "SuperAdmin") if user.respond_to?(:type) && user.type.blank?
 
   bot = AgentBot.find_or_initialize_by(account_id: account.id, name: "Matías")
-  bot.outgoing_url = ENV.fetch("CW_BOT_URL")
+  secret = ENV["CW_WEBHOOK_SECRET"].to_s
+  url = ENV.fetch("CW_BOT_URL")
+  # Chatwoot < v4.14 no firma webhooks del Agent Bot: se autentica con ?token= en la URL interna.
+  unless bot.has_attribute?(:secret) || secret.empty?
+    url = "#{url}#{url.include?('?') ? '&' : '?'}token=#{ERB::Util.url_encode(secret)}"
+  end
+  bot.outgoing_url = url
   bot.description = "Bot de ventas (crm-bot)" if bot.respond_to?(:description=)
   bot.save!
-  secret = ENV["CW_WEBHOOK_SECRET"].to_s
   if bot.has_attribute?(:secret)
     secret.empty? ? (secret = bot.secret.to_s) : bot.update_column(:secret, secret)
   end
