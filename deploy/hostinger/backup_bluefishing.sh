@@ -20,7 +20,13 @@ dump() { # dump servicio archivo
 dump db "$DEST/bot-$TS.dump"
 if [[ -n "$("${DC[@]}" ps -q chatwoot-postgres)" ]]; then
   dump chatwoot-postgres "$DEST/chatwoot-$TS.dump"
-  "${DC[@]}" exec -T chatwoot-rails tar -C /app/storage -czf - . > "$DEST/chatwoot-storage-$TS.tar.gz"
+  # chatwoot-rails puede no estar arriba (p. ej. backup previo en install.sh): se usa un contenedor efímero.
+  if [[ -n "$("${DC[@]}" ps -q --status running chatwoot-rails)" ]]; then
+    "${DC[@]}" exec -T chatwoot-rails tar -C /app/storage -czf - . > "$DEST/chatwoot-storage-$TS.tar.gz"
+  else
+    "${DC[@]}" run --rm --no-deps -T -l traefik.enable=false --entrypoint tar chatwoot-rails \
+      -C /app/storage -czf - . > "$DEST/chatwoot-storage-$TS.tar.gz"
+  fi
 fi
 chmod 600 "$DEST"/*-"$TS".* 
 find "$DEST" -type f \( -name '*.dump' -o -name '*.tar.gz' \) -mtime +"$KEEP_DAYS" -delete
