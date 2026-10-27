@@ -8,7 +8,9 @@ const WC_CONSUMER_KEY = process.env.WC_CONSUMER_KEY || "";
 const WC_CONSUMER_SECRET = process.env.WC_CONSUMER_SECRET || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const OUT_PATH = path.join(__dirname, "..", "catalogo", "catalogo_para_bot.txt");
+const { readPath, writePath } = require("../lib/catalogPaths");
+const OUT_PATH = writePath("catalogo_para_bot.txt");
+const LAST_GOOD_PATH = readPath("catalogo_para_bot.txt");
 const PER_PAGE = 100;
 const ALLOWED_TYPES = new Set(["caña", "carrete", "línea", "señuelo", "anzuelo", "combo"]);
 
@@ -223,7 +225,7 @@ async function main() {
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 
   if (!unique.length) {
-    if (fs.existsSync(OUT_PATH) && fs.readFileSync(OUT_PATH, "utf8").trim()) {
+    if (fs.existsSync(LAST_GOOD_PATH) && fs.readFileSync(LAST_GOOD_PATH, "utf8").trim()) {
       console.warn("[Catalog] El refresh remoto produjo 0 productos. Se conserva el último catálogo válido.");
       console.log(JSON.stringify({ source: "preserved_last_known_good", products: 0, output: OUT_PATH }));
       return;

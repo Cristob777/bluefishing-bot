@@ -2,7 +2,7 @@
 // Verificado contra el código de Chatwoot (lib/webhooks/trigger.rb, app/listeners/agent_bot_listener.rb):
 //  - El bot recibe TODOS los message_created del inbox (entrantes, salientes, privados, conversaciones open),
 //    por eso se filtra: solo message_type "incoming", no privado, conversación "pending" y sin asignar.
-//  - Firma: X-Chatwoot-Signature = "sha256=" + HMAC_SHA256(secret, "<X-Chatwoot-Timestamp>.<raw body>").
+//  - Firma (Chatwoot >= v4.14, agent_bots.secret): X-Chatwoot-Signature = "sha256=" + HMAC_SHA256(secret, "<X-Chatwoot-Timestamp>.<raw body>").
 //  - Si el webhook falla (o hace timeout) Chatwoot pasa la conversación pending a open, y reintenta en 429/500.
 //    Por eso se responde 200 de inmediato y se procesa en segundo plano.
 const crypto = require("node:crypto");
@@ -33,6 +33,8 @@ function config() {
     enabled: process.env.CHATWOOT_ENABLED === "true",
     baseUrl: String(process.env.CHATWOOT_BASE_URL || "").replace(/\/+$/, ""),
     botToken: process.env.CHATWOOT_BOT_TOKEN || "",
+    // Token de un usuario agente dedicado (creado por install): la API de labels no acepta tokens de Agent Bot.
+    labelsToken: process.env.CHATWOOT_LABELS_TOKEN || "",
     secret: process.env.CHATWOOT_WEBHOOK_SECRET || "",
     timeoutMs: Number(process.env.CHATWOOT_TIMEOUT_MS || 10000),
   };
@@ -66,7 +68,10 @@ function classifyEvent(payload) {
   if (payload.message_type !== "incoming" || payload.private) return { skip: "not_incoming" };
   const conv = payload.conversation || {};
   if (conv.status !== "pending") return { skip: "not_pending" };
-  if (conv.meta?.assignee) return { skip: "assigned" };
+  // v4.19: si el inbox tiene Agent Bot, meta.assignee es el propio bot (assignee_type "AgentBot").
+  // Solo se omite si hay un humano asignado (assignee_type "User"; sin el campo, versiones antiguas).
+  const assigneeType = conv.meta?.assignee_type;
+  if (assigneeType === "User" || (assigneeType === undefined && conv.meta?.assignee)) return { skip: "assigned" };
   const accountId = Number(payload.account?.id ?? conv.account?.id);
   const conversationId = Number(conv.id);
   if (!Number.isInteger(accountId) || !Number.isInteger(conversationId)) return { skip: "ids" };
@@ -87,13 +92,13 @@ function classifyEvent(payload) {
 }
 
 function createClient(cfg, fetchImpl = globalThis.fetch) {
-  async function call(method, path, body) {
+  async function call(method, path, body, token = cfg.botToken) {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), cfg.timeoutMs);
     try {
       const response = await fetchImpl(`${cfg.baseUrl}${path}`, {
         method,
-        headers: { "Content-Type": "application/json", api_access_token: cfg.botToken },
+        headers: { "Content-Type": "application/json", api_access_token: token },
         body: body ? JSON.stringify(body) : undefined,
         signal: controller.signal,
       });
@@ -108,7 +113,7 @@ function createClient(cfg, fetchImpl = globalThis.fetch) {
     sendMessage: (a, c, content) => call("POST", `${base(a, c)}/messages`, { content, message_type: "outgoing", private: false }),
     setStatus: (a, c, status) => call("POST", `${base(a, c)}/toggle_status`, { status }),
     // La API de labels REEMPLAZA la lista completa: se envían las existentes + la nueva.
-    setLabels: (a, c, labels) => call("POST", `${base(a, c)}/labels`, { labels }),
+    setLabels: (a, c, labels) => call("POST", `${base(a, c)}/labels`, { labels }, cfg.labelsToken || cfg.botToken),
   };
 }
 

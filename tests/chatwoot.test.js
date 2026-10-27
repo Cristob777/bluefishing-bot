@@ -133,3 +133,26 @@ test("duplicate deliveries are processed once", async () => {
   assert.equal(result, "duplicate");
   assert.equal(fetch.calls.length, 0);
 });
+
+test("assignee AgentBot (v4.19) no bloquea; assignee User sí", () => {
+  const bot = cw.classifyEvent(payload({ conversation: { meta: { assignee: { id: 1, name: "Matías" }, assignee_type: "AgentBot" } } }));
+  assert.equal(bot.skip, undefined);
+  const human = cw.classifyEvent(payload({ conversation: { meta: { assignee: { id: 5 }, assignee_type: "User" } } }));
+  assert.equal(human.skip, "assigned");
+});
+
+test("sin firma HMAC se rechaza aunque venga ?token= (sin fallback)", () => {
+  const base = { method: "POST", headers: {}, rawBody: Buffer.from("{}"), body: {} };
+  assert.equal(cw.verifySignature({ ...base, query: { token: "whsec-not-real" } }, "whsec-not-real"), false);
+  assert.equal(cw.verifySignature(signedReq({ a: 1 }), "whsec-not-real"), true);
+  assert.equal(cw.verifyRequest, undefined);
+});
+
+test("labels usan CHATWOOT_LABELS_TOKEN si existe; mensajes siguen con el token del bot", async () => {
+  const fetch = mockFetch();
+  const client = cw.createClient({ baseUrl: "https://x", botToken: "bot-t", labelsToken: "agent-t", timeoutMs: 1000 }, fetch);
+  await client.setLabels(1, 2, ["humano"]);
+  await client.sendMessage(1, 2, "hola");
+  assert.equal(fetch.calls[0].headers.api_access_token, "agent-t");
+  assert.equal(fetch.calls[1].headers.api_access_token, "bot-t");
+});

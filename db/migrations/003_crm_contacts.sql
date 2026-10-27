@@ -33,7 +33,10 @@ create index if not exists contacts_stage_idx on contacts(stage, last_seen_at de
 create index if not exists handoff_requests_session_id_idx on handoff_requests(session_id);
 
 -- Vista de lectura para el panel del dueño: contacto + actividad + handoff abierto.
-create or replace view crm_contact_overview as
+-- drop + create: Postgres no permite cambiar columnas de una vista con OR REPLACE
+-- (005 agrega columnas a contacts y c.* cambia). Re-ejecutable.
+drop view if exists crm_contact_overview;
+create view crm_contact_overview as
 select
   c.*,
   (select count(*)::int from bot_events e where e.session_id = c.session_id) as turns,

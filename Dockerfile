@@ -9,6 +9,7 @@ ENV NODE_ENV=production
 RUN apk add --no-cache curl tini
 COPY --from=deps --chown=node:node /app/node_modules ./node_modules
 COPY --chown=node:node . .
+RUN mkdir -p /app/data/catalogo && chown -R node:node /app/data
 USER node
 EXPOSE 3000
 ENTRYPOINT ["/sbin/tini","--"]

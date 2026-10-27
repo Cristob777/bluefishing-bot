@@ -47,7 +47,7 @@ test("migration is idempotent and mirrored in schema.sql", () => {
   const mig = fs.readFileSync(path.join(__dirname, "../db/migrations/003_crm_contacts.sql"), "utf8");
   const schema = fs.readFileSync(path.join(__dirname, "../db/schema.sql"), "utf8");
   for (const stmt of mig.match(/create (table|index)[^\n]*/g)) assert.match(stmt, /if not exists/);
-  assert.match(mig, /create or replace view crm_contact_overview/);
+  assert.match(mig, /drop view if exists crm_contact_overview;\s*create view crm_contact_overview/);
   assert.match(schema, /create table if not exists contacts/);
   assert.match(mig, /stage text not null default 'nuevo'/);
 });
