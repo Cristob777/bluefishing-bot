@@ -62,9 +62,16 @@ wait_healthy() { # wait_healthy servicio [timeout]
 "${DC[@]}" up -d db chatwoot-postgres chatwoot-redis
 wait_healthy db; wait_healthy chatwoot-postgres; wait_healthy chatwoot-redis
 
-# 3) Backup previo (si ya había datos) y migraciones del bot con schema_migrations.
-if [[ "${SKIP_BACKUP:-0}" != "1" ]] && [[ "$("${DC[@]}" exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select to_regclass('"'"'public.contacts'"'"') is not null"')" == "t" ]]; then
+# 3) Backup previo (solo si ya había datos) y migraciones del bot con schema_migrations.
+# Una base nueva ya trae las tablas (initdb), así que "hay tabla contacts" no basta: se mira si migrate.sh
+# ya corrió alguna vez (schema_migrations) o si hay filas reales.
+HAS_DATA="$("${DC[@]}" exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Atc "select (to_regclass('"'"'public.schema_migrations'"'"') is not null) or exists(select 1 from contacts) or exists(select 1 from tenants)"' 2>/dev/null || echo f)"
+if [[ "${SKIP_BACKUP:-0}" == "1" ]]; then
+  echo "Backup previo: omitido (SKIP_BACKUP=1)."
+elif [[ "$HAS_DATA" == "t" ]]; then
   bash deploy/hostinger/backup_bluefishing.sh
+else
+  echo "Backup previo: omitido, instalación nueva sin datos (no hay nada que respaldar)."
 fi
 bash deploy/hostinger/migrate.sh
 
@@ -87,12 +94,34 @@ LABELS_EMAIL="$(envval CHATWOOT_LABELS_EMAIL)"; LABELS_EMAIL="${LABELS_EMAIL:-cr
 RAILS_ID="$("${DC[@]}" ps -q chatwoot-rails)"
 docker cp deploy/hostinger/chatwoot/bootstrap.rb "$RAILS_ID":/tmp/crmbot_bootstrap.rb
 result="$(CW_ADMIN_PASSWORD="$(cat "$PASS_FILE")" CW_WEBHOOK_SECRET="$(envval CHATWOOT_WEBHOOK_SECRET)" \
-  CW_ACCOUNT_NAME="$(envval CHATWOOT_ACCOUNT_NAME)" CW_ADMIN_NAME="$(envval CHATWOOT_ADMIN_NAME)" \
+  CW_ACCOUNT_NAME="$(envval CHATWOOT_ACCOUNT_NAME)" CW_ADMIN_NAME="$(envval CHATWOOT_ADMIN_NAME)" CW_ADMIN_NAME_DEFAULT="Equipo Blue Fishing" \
   CW_ADMIN_EMAIL="$(envval CHATWOOT_ADMIN_EMAIL)" CW_BOT_URL="$BOT_URL" \
   CW_LABELS_EMAIL="${LABELS_EMAIL}" \
-  "${DC[@]}" exec -T -e CW_ADMIN_PASSWORD -e CW_WEBHOOK_SECRET -e CW_ACCOUNT_NAME -e CW_ADMIN_NAME -e CW_ADMIN_EMAIL -e CW_BOT_URL -e CW_LABELS_EMAIL \
+  "${DC[@]}" exec -T -e CW_ADMIN_PASSWORD -e CW_WEBHOOK_SECRET -e CW_ACCOUNT_NAME -e CW_ADMIN_NAME -e CW_ADMIN_NAME_DEFAULT -e CW_ADMIN_EMAIL -e CW_BOT_URL -e CW_LABELS_EMAIL \
   chatwoot-rails bundle exec rails runner /tmp/crmbot_bootstrap.rb | grep '^CRMBOT_RESULT ' | tail -n1)"
 [[ -n "$result" ]] || { echo "Bootstrap de Chatwoot no devolvió resultado. Revisa: docker compose logs chatwoot-rails" >&2; exit 1; }
+
+# 6b) Onboarding de Chatwoot ("Howdy, Welcome to Chatwoot"): bootstrap.rb lo cierra tras crear el admin.
+# Se verifica por HTTP: si sigue abierto, cualquiera podría crear la cuenta admin. Falla ruidosamente.
+onboarding_open() { # imprime el motivo y devuelve 0 si está abierto o no se pudo verificar (falla cerrado)
+  "${DC[@]}" exec -T chatwoot-rails ruby -rnet/http -e '
+    begin
+      root = Net::HTTP.get_response(URI("http://127.0.0.1:3000/"))
+      onb  = Net::HTTP.get_response(URI("http://127.0.0.1:3000/installation/onboarding"))
+    rescue => e
+      puts "no se pudo verificar: #{e.class}"; exit 0
+    end
+    if root["location"].to_s.include?("installation/onboarding") || onb.code == "200"
+      puts "GET / -> #{root.code} #{root["location"]}; GET /installation/onboarding -> #{onb.code}"; exit 0
+    end
+    exit 1'
+}
+if why="$(onboarding_open)"; then
+  echo "ERROR CRÍTICO: el onboarding de Chatwoot sigue abierto ($why). Cualquiera podría crear el admin." >&2
+  echo "Ciérralo: docker compose exec chatwoot-rails bundle exec rails runner 'Redis::Alfred.delete(Redis::Alfred::CHATWOOT_INSTALLATION_ONBOARDING)'" >&2
+  exit 1
+fi
+echo "Onboarding de Chatwoot cerrado (verificado por HTTP)."
 
 # 7) Guardar tokens en .env.production (idempotente, sin imprimirlos).
 for kv in ${result#CRMBOT_RESULT }; do

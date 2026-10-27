@@ -11,7 +11,17 @@ DEST="${BACKUP_DIR:-/var/backups/crm-bot}"
 KEEP_DAYS="${KEEP_DAYS:-14}"
 DC=(docker compose --env-file "$ENV_FILE")
 umask 077
-mkdir -p "$DEST"; chmod 700 "$DEST"
+# Directorio de backups: se crea ya con 0700 y dueño = usuario actual (sin chmod posterior que pueda fallar).
+# Si ya existe y es de otro usuario, no se intenta chmod: solo se exige que sea escribible.
+if [[ ! -d "$DEST" ]]; then
+  install -d -m 700 "$DEST" || { echo "ERROR: no se pudo crear $DEST (ejecuta como root o define BACKUP_DIR)." >&2; exit 1; }
+elif [[ -O "$DEST" ]]; then
+  [[ "$(stat -c %a "$DEST")" == 700 ]] || chmod 700 "$DEST"
+elif [[ ! -w "$DEST" ]]; then
+  echo "ERROR: $DEST existe pero no es escribible por $(id -un) (ejecuta como root o define BACKUP_DIR)." >&2; exit 1
+else
+  echo "Aviso: $DEST pertenece a otro usuario; se usa sin cambiar permisos." >&2
+fi
 TS="$(date +%F_%H%M)"
 dump() { # dump servicio archivo
   "${DC[@]}" exec -T "$1" sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$2"

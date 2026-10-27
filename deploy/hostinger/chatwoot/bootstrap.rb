@@ -1,24 +1,37 @@
 # Idempotente. Se ejecuta con: bundle exec rails runner /tmp/crmbot_bootstrap.rb
-# Entradas por ENV (nunca por argumentos): CW_ACCOUNT_NAME, CW_ADMIN_NAME, CW_ADMIN_EMAIL,
+# Entradas por ENV (nunca por argumentos): CW_ACCOUNT_NAME, CW_ADMIN_NAME (vacío = CW_ADMIN_NAME_DEFAULT), CW_ADMIN_EMAIL,
 # CW_ADMIN_PASSWORD (solo si el usuario no existe), CW_BOT_URL, CW_WEBHOOK_SECRET, CW_LABELS_EMAIL.
 # Salida: una única línea "CRMBOT_RESULT k=v ..." que install.sh guarda en .env.production.
+BOT_NAME = "Matías"
+admin_name = ENV["CW_ADMIN_NAME"].to_s.strip
+admin_name = ENV["CW_ADMIN_NAME_DEFAULT"].to_s.strip if admin_name.empty?
+admin_name = "Equipo Blue Fishing" if admin_name.empty?
+# El humano no puede llamarse igual que el bot: en Chatwoot no se distinguiría quién responde.
+admin_name = "Equipo Blue Fishing" if admin_name.casecmp?(BOT_NAME) || admin_name.casecmp?("Matias")
 ActiveRecord::Base.transaction do
   email = ENV.fetch("CW_ADMIN_EMAIL").downcase
   user = User.find_by(email: email)
   account = user&.accounts&.first || Account.find_by(name: ENV.fetch("CW_ACCOUNT_NAME")) ||
             Account.create!(name: ENV.fetch("CW_ACCOUNT_NAME"), locale: "es")
   unless user
-    user = User.new(name: ENV.fetch("CW_ADMIN_NAME"), email: email, password: ENV.fetch("CW_ADMIN_PASSWORD"))
+    user = User.new(name: admin_name, email: email, password: ENV.fetch("CW_ADMIN_PASSWORD"))
     user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
     user.save!
   end
   AccountUser.find_or_create_by!(account_id: account.id, user_id: user.id) { |au| au.role = :administrator }
+  # Instalaciones previas donde el humano quedó como "Matías" (igual que el bot): se renombra.
+  if [BOT_NAME, "Matias"].any? { |n| user.name.to_s.casecmp?(n) } ||
+     (user.respond_to?(:display_name) && [BOT_NAME, "Matias"].any? { |n| user.display_name.to_s.casecmp?(n) })
+    attrs = { name: admin_name }
+    attrs[:display_name] = admin_name if user.respond_to?(:display_name=)
+    user.update!(attrs)
+  end
   user.update!(type: "SuperAdmin") if user.respond_to?(:type) && user.type.blank?
 
   # Chatwoot >= v4.14: AgentBot incluye WebhookSecretable (agent_bots.secret, has_secure_token) y firma cada
   # webhook con X-Chatwoot-Signature = "sha256=" + HMAC_SHA256(secret, "<timestamp>.<body>").
   raise "Chatwoot sin agent_bots.secret: se requiere >= v4.14 (CHATWOOT_IMAGE_TAG)" unless AgentBot.column_names.include?("secret")
-  bot = AgentBot.find_or_initialize_by(account_id: account.id, name: "Matías")
+  bot = AgentBot.find_or_initialize_by(account_id: account.id, name: BOT_NAME)
   bot.outgoing_url = ENV.fetch("CW_BOT_URL")
   bot.description = "Bot de ventas (crm-bot)" if bot.respond_to?(:description=)
   secret = ENV["CW_WEBHOOK_SECRET"].to_s
@@ -52,6 +65,11 @@ ActiveRecord::Base.transaction do
   InboxMember.find_or_create_by!(inbox_id: inbox.id, user_id: label_user.id)
   Label.find_or_create_by!(account_id: account.id, title: "humano")
   labels_token = (label_user.access_token || label_user.create_access_token!).token
+
+  # Cerrar el onboarding público ("Howdy, Welcome to Chatwoot") recién ahora que existe el admin.
+  # Idempotente: borrar una clave inexistente no hace nada.
+  Redis::Alfred.delete(Redis::Alfred::CHATWOOT_INSTALLATION_ONBOARDING)
+  raise "No se pudo cerrar el onboarding de Chatwoot" if Redis::Alfred.get(Redis::Alfred::CHATWOOT_INSTALLATION_ONBOARDING).present?
 
   puts "CRMBOT_RESULT CHATWOOT_ACCOUNT_ID=#{account.id} CHATWOOT_INBOX_ID=#{inbox.id} CHATWOOT_BOT_TOKEN=#{token} CHATWOOT_WEBHOOK_SECRET=#{secret} CHATWOOT_LABELS_TOKEN=#{labels_token}"
 end
