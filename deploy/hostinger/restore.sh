@@ -6,7 +6,8 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 ENV_FILE="${ENV_FILE:-.env.production}"; DEST="${BACKUP_DIR:-/var/backups/crm-bot}"; TS="${1:?uso: restore.sh <timestamp>}"
 [[ "${CONFIRM:-}" == "yes" ]] || { echo "Destructivo: reemplaza las bases actuales. Repite con CONFIRM=yes." >&2; exit 1; }
-DC=(docker compose --env-file "$ENV_FILE")
+# shellcheck source=deploy/hostinger/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"; set_dc  # respeta PROXY_MODE
 "${DC[@]}" stop app maintenance chatwoot-rails chatwoot-sidekiq
 restore_db() {
   "${DC[@]}" exec -T "$1" sh -c 'pg_restore -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --exit-on-error' < "$2"

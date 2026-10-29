@@ -1,0 +1,22 @@
+# Override para PROXY_MODE=nginx (Nginx del host es el único proxy público; Traefik no se usa).
+# - Quita los labels de Traefik y la red externa ${TRAEFIK_NETWORK}.
+# - Publica el bot y Chatwoot SOLO en 127.0.0.1 (no accesibles desde fuera del VPS).
+# No se usa a mano: los scripts de deploy/hostinger lo agregan solos cuando PROXY_MODE=nginx.
+# Equivalente manual:
+#   docker compose -f docker-compose.yml -f docker-compose.nginx.yml --env-file .env.production up -d
+# Requiere Docker Compose >= 2.24 (etiquetas !reset / !override).
+services:
+  app:
+    labels: !reset {}
+    networks: !override
+      - internal
+      - chatwoot
+    ports:
+      - "127.0.0.1:${BOT_LOCAL_PORT:-18080}:3000"
+
+  chatwoot-rails:
+    labels: !reset {}
+    networks: !override
+      - chatwoot
+    ports:
+      - "127.0.0.1:${CHATWOOT_LOCAL_PORT:-18081}:3000"

@@ -5,7 +5,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 ENV_FILE="${ENV_FILE:-.env.production}"; DEST="${BACKUP_DIR:-/var/backups/crm-bot}"; TS="${1:?uso: restore_test.sh <timestamp>}"
-DC=(docker compose --env-file "$ENV_FILE")
+# shellcheck source=deploy/hostinger/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"; set_dc  # respeta PROXY_MODE
 try() { # try servicio dump consulta
   local svc="$1" f="$2" q="$3"
   [[ -f "$f" ]] || { echo "skip $f (no existe)"; return; }

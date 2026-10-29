@@ -6,7 +6,8 @@
 # Uso (desde la raíz del repo): deploy/hostinger/migrate.sh
 set -euo pipefail
 ENV_FILE="${ENV_FILE:-.env.production}"
-DC=(docker compose --env-file "$ENV_FILE")
+# shellcheck source=deploy/hostinger/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"; set_dc  # respeta PROXY_MODE
 psql_db() { "${DC[@]}" exec -T db sh -c 'psql -X -q -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" '"$*"; }
 
 psql_db <<'SQL'
