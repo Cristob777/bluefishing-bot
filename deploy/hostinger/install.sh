@@ -137,9 +137,9 @@ set_env CHATWOOT_ENABLED true
 wait_healthy app 240
 
 # 8) Catálogo y retención (no bloquean).
-"${DC[@]}" exec -T app npm run sync-catalogo || true
-"${DC[@]}" exec -T app npm run enrich-catalogo || true
-"${DC[@]}" exec -T app npm run security:retention || true
+"${DC[@]}" exec -T app node scripts/sync-catalogo.js || true
+"${DC[@]}" exec -T app node scripts/enrich-catalogo.js || true
+"${DC[@]}" exec -T app node scripts/security-retention.js || true
 
 "${DC[@]}" ps
 if [[ "$MODE" == "nginx" ]]; then

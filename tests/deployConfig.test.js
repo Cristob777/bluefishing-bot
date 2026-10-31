@@ -44,6 +44,6 @@ test("proyecto aislado crm-bot con Chatwoot y sin puertos al host", () => {
   assert.match(compose, /^name: \$\{COMPOSE_PROJECT_NAME:-crm-bot\}/m);
   assert.doesNotMatch(compose, /^\s+ports:/m);
   for (const s of ["chatwoot-rails", "chatwoot-sidekiq", "chatwoot-postgres", "chatwoot-redis"]) assert.match(compose, new RegExp(`\n  ${s}:`));
-  assert.match(compose, /pgvector\/pgvector:pg16/);
+  assert.match(compose, /pgvector\/pgvector:[0-9.]*-?pg16/);
   assert.match(compose, /Host\(`\$\{CHATWOOT_DOMAIN/);
 });
