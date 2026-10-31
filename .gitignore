@@ -2,3 +2,9 @@ node_modules/
 .env
 .vercel
 catalogo/wc-product-export*.csv
+.env.production
+deploy/chatwoot/.env
+deploy/atomic-crm/.env
+
+# Catálogo generado en runtime (sync/enrich con CATALOG_RUNTIME_DIR)
+/data/

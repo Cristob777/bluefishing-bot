@@ -1,0 +1,259 @@
+# Proyecto Compose aislado "crm-bot" (pensado para /opt/crm-bot): bot + Postgres del bot + Chatwoot.
+# No publica puertos al host; Traefik (existente, externo) enruta por labels. Ver deploy/hostinger/SETUP.md
+name: ${COMPOSE_PROJECT_NAME:-crm-bot}
+
+x-chatwoot: &chatwoot
+  image: chatwoot/chatwoot:${CHATWOOT_IMAGE_TAG:-v4.19.1}
+  restart: unless-stopped
+  # Endurecimiento de bajo riesgo: impide escalar privilegios vía setuid dentro del contenedor.
+  security_opt:
+    - no-new-privileges:true
+  environment: &chatwoot-env
+    NODE_ENV: production
+    RAILS_ENV: production
+    INSTALLATION_ENV: docker
+    RAILS_LOG_TO_STDOUT: "true"
+    SECRET_KEY_BASE: ${CHATWOOT_SECRET_KEY_BASE:?CHATWOOT_SECRET_KEY_BASE requerido}
+    FRONTEND_URL: ${CHATWOOT_FRONTEND_URL:-https://${CHATWOOT_DOMAIN:?CHATWOOT_DOMAIN requerido}}
+    DEFAULT_LOCALE: ${CHATWOOT_DEFAULT_LOCALE:-es}
+    ENABLE_ACCOUNT_SIGNUP: "false"
+    FORCE_SSL: "false"
+    ACTIVE_STORAGE_SERVICE: local
+    POSTGRES_HOST: chatwoot-postgres
+    POSTGRES_DATABASE: ${CHATWOOT_POSTGRES_DB:-chatwoot}
+    POSTGRES_USERNAME: ${CHATWOOT_POSTGRES_USER:-chatwoot}
+    POSTGRES_PASSWORD: ${CHATWOOT_POSTGRES_PASSWORD:?CHATWOOT_POSTGRES_PASSWORD requerido}
+    REDIS_URL: redis://chatwoot-redis:6379
+    REDIS_PASSWORD: ${CHATWOOT_REDIS_PASSWORD:?CHATWOOT_REDIS_PASSWORD requerido}
+    MAILER_SENDER_EMAIL: ${CHATWOOT_MAILER_SENDER_EMAIL:-}
+    SMTP_ADDRESS: ${SMTP_ADDRESS:-}
+    SMTP_PORT: ${SMTP_PORT:-587}
+    SMTP_USERNAME: ${SMTP_USERNAME:-}
+    SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    SMTP_DOMAIN: ${SMTP_DOMAIN:-}
+    SMTP_AUTHENTICATION: ${SMTP_AUTHENTICATION:-login}
+    SMTP_ENABLE_STARTTLS_AUTO: ${SMTP_ENABLE_STARTTLS_AUTO:-true}
+    # El webhook del Agent Bot va a la URL interna http://app:3000 (red "chatwoot"); SafeFetch (>= v4.14)
+    # bloquea IPs privadas salvo con este flag. Ver deploy/hostinger/SETUP.md (riesgo SSRF acotado a admins).
+    SAFE_FETCH_ALLOW_PRIVATE_NETWORK: ${CHATWOOT_SAFE_FETCH_ALLOW_PRIVATE_NETWORK:-true}
+  volumes:
+    - chatwoot_storage:/app/storage
+  depends_on:
+    chatwoot-postgres:
+      condition: service_healthy
+    chatwoot-redis:
+      condition: service_healthy
+  networks:
+    - chatwoot
+
+services:
+  db:
+    image: postgres:17.11-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-bluefishing}
+      POSTGRES_USER: ${POSTGRES_USER:-bluefishing}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/schema.sql:/docker-entrypoint-initdb.d/001-schema.sql:ro
+      - ./db/migrations/002_tenant_onboarding.sql:/docker-entrypoint-initdb.d/002-tenant-onboarding.sql:ro
+      - ./db/migrations/003_crm_contacts.sql:/docker-entrypoint-initdb.d/003-crm-contacts.sql:ro
+      - ./db/migrations/004_atomic_crm_sync.sql:/docker-entrypoint-initdb.d/004-atomic-crm-sync.sql:ro
+      - ./db/migrations/005_crm_multiempresa.sql:/docker-entrypoint-initdb.d/005-crm-multiempresa.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-bluefishing} -d ${POSTGRES_DB:-bluefishing}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - internal
+
+  app:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=64m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.production
+    environment:
+      PORT: 3000
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
+      APP_COMMIT_SHA: ${APP_COMMIT_SHA:-local}
+      # sync/enrich escriben aquí (volumen), no en catalogo/ trackeado; el bot lee de aquí con fallback.
+      CATALOG_RUNTIME_DIR: /app/data/catalogo
+    # Sin puertos publicados al host: Traefik llega por la red externa ${TRAEFIK_NETWORK}.
+    # Alternativa con puerto en loopback: docker-compose.hostport.yml (ver deploy/hostinger/SETUP.md).
+    expose:
+      - "3000"
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      # Router público (webhook, /chat, /widget.js, /health, /admin, etc.)
+      traefik.http.routers.crmbot.rule: Host(`${BOT_DOMAIN:?BOT_DOMAIN requerido}`)
+      traefik.http.routers.crmbot.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.crmbot.tls: "true"
+      traefik.http.routers.crmbot.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.crmbot.service: crmbot
+      # Router protegido: /panel y /admin-chat con IP allowlist + basic auth (prioridad mayor).
+      traefik.http.routers.crmbot-protegido.rule: Host(`${BOT_DOMAIN:?BOT_DOMAIN requerido}`) && (PathPrefix(`/panel`) || PathPrefix(`/admin-chat`))
+      traefik.http.routers.crmbot-protegido.priority: "100"
+      traefik.http.routers.crmbot-protegido.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.crmbot-protegido.tls: "true"
+      traefik.http.routers.crmbot-protegido.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.crmbot-protegido.service: crmbot
+      traefik.http.routers.crmbot-protegido.middlewares: crmbot-ipallow,crmbot-auth
+      traefik.http.middlewares.crmbot-ipallow.ipallowlist.sourcerange: ${TRAEFIK_ADMIN_IP_ALLOWLIST:-0.0.0.0/0,::/0}
+      traefik.http.middlewares.crmbot-auth.basicauth.users: ${TRAEFIK_ADMIN_BASICAUTH_USERS:?TRAEFIK_ADMIN_BASICAUTH_USERS requerido (htpasswd -nB usuario)}
+      traefik.http.middlewares.crmbot-auth.basicauth.removeheader: "true"
+      traefik.http.services.crmbot.loadbalancer.server.port: "3000"
+    volumes:
+      - ./catalogo:/app/catalogo:ro
+      - catalogo_runtime:/app/data/catalogo
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    networks:
+      - internal
+      - traefik
+      - chatwoot
+
+  maintenance:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
+    command: ["sh","-c","while true; do node scripts/security-retention.js; sleep 86400; done"]
+    healthcheck:
+      disable: true   # el HEALTHCHECK del Dockerfile es para el servidor HTTP (app)
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  # Sync bot -> Atomic CRM (Supabase). Solo corre con: docker compose --profile atomic-crm up -d
+  # y ATOMIC_CRM_ENABLED=true en .env.production. Ver deploy/atomic-crm/README.md
+  atomic-crm-sync:
+    build: .
+    profiles: ["atomic-crm"]
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
+    command: ["node", "scripts/atomic-crm-sync.js"]
+    healthcheck:
+      disable: true   # el HEALTHCHECK del Dockerfile es para el servidor HTTP (app)
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
+  chatwoot-rails:
+    <<: *chatwoot
+    entrypoint: docker/entrypoints/rails.sh
+    command: ["bundle", "exec", "rails", "s", "-p", "3000", "-b", "0.0.0.0"]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api >/dev/null 2>&1 || curl -fsS http://127.0.0.1:3000/api >/dev/null"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+      start_period: 90s
+    networks:
+      - chatwoot
+      - traefik
+    labels:
+      traefik.enable: "true"
+      traefik.docker.network: ${TRAEFIK_NETWORK:-traefik}
+      traefik.http.routers.crmbot-chatwoot.rule: Host(`${CHATWOOT_DOMAIN:?CHATWOOT_DOMAIN requerido}`)
+      traefik.http.routers.crmbot-chatwoot.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.crmbot-chatwoot.tls: "true"
+      traefik.http.routers.crmbot-chatwoot.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.crmbot-chatwoot.service: crmbot-chatwoot
+      traefik.http.services.crmbot-chatwoot.loadbalancer.server.port: "3000"
+
+  chatwoot-sidekiq:
+    <<: *chatwoot
+    command: ["bundle", "exec", "sidekiq", "-C", "config/sidekiq.yml"]
+
+  chatwoot-postgres:
+    image: pgvector/pgvector:0.8.7-pg16-bookworm@sha256:0dd3149a06e4579a0d70d8fef9945636cd514005e7237deb27f9b67886f8dc4f
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      POSTGRES_DB: ${CHATWOOT_POSTGRES_DB:-chatwoot}
+      POSTGRES_USER: ${CHATWOOT_POSTGRES_USER:-chatwoot}
+      POSTGRES_PASSWORD: ${CHATWOOT_POSTGRES_PASSWORD:?CHATWOOT_POSTGRES_PASSWORD requerido}
+    volumes:
+      - chatwoot_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - chatwoot
+
+  chatwoot-redis:
+    image: redis:7-alpine@sha256:8da19c7399dca900c6822a1cf30f9d2285585e2c4b457ff4095b0f4500054d3f
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      REDIS_PASSWORD: ${CHATWOOT_REDIS_PASSWORD:?CHATWOOT_REDIS_PASSWORD requerido}
+    command: ["sh", "-c", "exec redis-server --appendonly yes --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - chatwoot_redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - chatwoot
+
+networks:
+  internal:
+  chatwoot:
+  traefik:
+    external: true
+    name: ${TRAEFIK_NETWORK:-traefik}
+
+volumes:
+  postgres_data:
+  chatwoot_storage:
+  chatwoot_postgres_data:
+  chatwoot_redis_data:
+  catalogo_runtime:
