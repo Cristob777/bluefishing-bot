@@ -1,0 +1,7 @@
+{
+  "id": "bluefishing.recommendation.v1",
+  "recommendation_gate": {"product_must_exist_in_retrieval":true,"url_must_match_catalog":true,"price_must_match_catalog_when_quoted":true,"known_incompatibility_blocks_recommendation":true,"technical_claim_requires_product_evidence":true},
+  "evidence_sources": ["catalog_record","product_page","structured_product_knowledge","human_verified_correction"],
+  "compatibility_dimensions": ["product_type","brand","target_species","water_type","fishing_position","technique","weight_range","budget","requested_attribute"],
+  "no_match_policy": {"invent_alternative":false,"state_no_safe_match":true,"offer_general_store_url":true}
+}
