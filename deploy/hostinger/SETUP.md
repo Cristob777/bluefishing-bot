@@ -222,6 +222,22 @@ Si cada dueño conecta su propio WhatsApp desde `/panel`, el panel le muestra **
 Chatwoot ya viene en el proyecto `crm-bot` y lo configura `install.sh` (paso 3): cuenta, admin, Agent Bot «Matías», inbox «Bot API», webhook firmado y tokens en `.env.production`. El bot habla con Chatwoot por la red interna (`CHATWOOT_BASE_URL=http://chatwoot-rails:3000`).
 Manual: crear la etiqueta `humano`, invitar a los vendedores como agentes y, si se migra WhatsApp a Chatwoot, seguir `deploy/chatwoot/README.md` (el `deploy/chatwoot/docker-compose.yml` queda como referencia legada; no lo levantes junto a `crm-bot`).
 
+## 8b. Seguridad de imágenes (Trivy) y riesgos aceptados
+
+Auditoría Trivy del 2026-10-31 (antes/después en el PR `fix/trivy-hardening`).
+
+- **Imagen del bot:** la etapa final no trae npm, npx, corepack ni yarn. El runtime solo ejecuta `node server.js`, y los scripts se corren con `docker compose exec app node scripts/<script>.js`, no con `npm run`. La base `node:22-alpine` está fijada por digest y se le aplica `apk upgrade`. Corre como el usuario `node` (no root) y tiene `HEALTHCHECK` contra `/health`.
+- **Imágenes de terceros fijadas por digest:** `postgres:17.11-alpine` (bot), `pgvector/pgvector:0.8.7-pg16-bookworm` (Chatwoot; se mantiene en PG16 y en Debian bookworm, la misma base que `pg16`, así que no cambia la collation) y `redis:7-alpine`. Para actualizarlas: `docker pull <imagen>:<tag>`, reemplaza el digest en `docker-compose.yml`, re-escanea con `trivy image`, haz un backup y corre `install.sh`.
+- **Chatwoot `v4.19.1` (la última v4.x al 2026-10-31):** tiene 2 CRITICAL sin parche publicado por Chatwoot:
+  - `net-imap` CVE-2026-42257 (además de 3 HIGH del mismo paquete);
+  - la gema `zlib` CVE-2026-27820.
+
+  **Mitigación obligatoria:** **no configures un inbox de Email por IMAP** en Chatwoot. Usa solo los canales de WhatsApp, chat web y API. Esto es un riesgo aceptado hasta que salga una v4.x que actualice `net-imap` (≥ 0.5.14) y `zlib` (≥ 3.2.3). Cuando salga, cambia `CHATWOOT_IMAGE_TAG`, haz un backup y corre `install.sh`. Las migraciones se aplican solas.
+- Los contenedores de Chatwoot, Postgres y Redis corren con `no-new-privileges`.
+- **Riesgos aceptados (sin fix upstream, red interna, no expuestos):**
+  - el `gosu` (Go stdlib) de las imágenes de Postgres, que solo se usa en el entrypoint;
+  - los paquetes Debian sin parche de pgvector, como util-linux, libxml2, libsqlite3 y perl.
+
 ## 9. Atomic CRM (opcional: embudo de ventas en Supabase)
 Guía completa: `deploy/atomic-crm/README.md`. El `Caddyfile.snippet` sirve solo como referencia: en este VPS el proxy es Traefik.
 1. Crear un proyecto en Supabase (plan Free), configurar SMTP y correr `deploy/atomic-crm/supabase-setup.sh` y `stages.sql`.
