@@ -146,6 +146,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
     command: ["sh","-c","while true; do node scripts/security-retention.js; sleep 86400; done"]
+    healthcheck:
+      disable: true   # el HEALTHCHECK del Dockerfile es para el servidor HTTP (app)
     depends_on:
       db:
         condition: service_healthy
@@ -170,6 +172,8 @@ services:
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
     command: ["node", "scripts/atomic-crm-sync.js"]
+    healthcheck:
+      disable: true   # el HEALTHCHECK del Dockerfile es para el servidor HTTP (app)
     depends_on:
       db:
         condition: service_healthy
