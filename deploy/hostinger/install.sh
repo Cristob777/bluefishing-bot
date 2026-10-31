@@ -7,11 +7,14 @@ set -euo pipefail
 cd "$(dirname "$0")/../.."
 export ENV_FILE="${ENV_FILE:-.env.production}"
 SECRETS_DIR="${SECRETS_DIR:-/root/.crm-bot}"
-DC=(docker compose --env-file "$ENV_FILE")
+# shellcheck source=deploy/hostinger/lib.sh
+source deploy/hostinger/lib.sh
+MODE="$(proxy_mode)" || exit 1
+set_dc   # PROXY_MODE=nginx agrega docker-compose.nginx.yml (sin Traefik, puertos solo en 127.0.0.1)
+echo "PROXY_MODE=$MODE"
 
 [[ -f "$ENV_FILE" ]] || { echo "Falta $ENV_FILE: cp .env.production.example $ENV_FILE y completa." >&2; exit 1; }
 chmod 600 "$ENV_FILE"
-envval() { grep -E "^$1=" "$ENV_FILE" | head -n1 | cut -d= -f2- || true; }
 set_env() { # set_env KEY VALUE  (reemplaza o agrega, sin imprimir el valor)
   local key="$1" val="$2" tmp
   tmp="$(mktemp "${ENV_FILE}.XXXX")"
@@ -38,7 +41,7 @@ if [[ -n "$CMK" || -n "$PSS" ]]; then
   [[ ${#PSS} -ge 32 ]] || { echo "Preflight: PANEL_SESSION_SECRET debe tener 32+ caracteres." >&2; exit 1; }
 fi
 
-# 1) Preflight de Traefik (solo lectura).
+# 1) Preflight (solo lectura): Traefik en modo traefik; puertos locales libres en modo nginx.
 bash deploy/hostinger/preflight.sh
 
 export APP_COMMIT_SHA="${APP_COMMIT_SHA:-$(git rev-parse HEAD 2>/dev/null || echo local)}"
@@ -139,6 +142,15 @@ wait_healthy app 240
 "${DC[@]}" exec -T app npm run security:retention || true
 
 "${DC[@]}" ps
+if [[ "$MODE" == "nginx" ]]; then
+  cat <<MSG
+
+PROXY_MODE=nginx: el bot escucha en 127.0.0.1:$(envval BOT_LOCAL_PORT | grep . || echo 18080) y Chatwoot en 127.0.0.1:$(envval CHATWOOT_LOCAL_PORT | grep . || echo 18081).
+Publicar los dominios (una vez; crea solo conf.d/crm-bot.conf, nginx -t antes de recargar):
+  sudo bash deploy/hostinger/nginx-site.sh install
+  sudo certbot --nginx -d $(envval BOT_DOMAIN) -d $(envval CHATWOOT_DOMAIN)
+MSG
+fi
 cat <<MSG
 
 Instalación completa.

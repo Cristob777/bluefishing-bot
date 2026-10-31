@@ -9,7 +9,8 @@ cd "$(dirname "$0")/../.."
 ENV_FILE="${ENV_FILE:-.env.production}"
 DEST="${BACKUP_DIR:-/var/backups/crm-bot}"
 KEEP_DAYS="${KEEP_DAYS:-14}"
-DC=(docker compose --env-file "$ENV_FILE")
+# shellcheck source=deploy/hostinger/lib.sh
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"; set_dc  # respeta PROXY_MODE
 umask 077
 # Directorio de backups: se crea ya con 0700 y dueño = usuario actual (sin chmod posterior que pueda fallar).
 # Si ya existe y es de otro usuario, no se intenta chmod: solo se exige que sea escribible.

@@ -11,6 +11,7 @@ Quién hace qué:
 ## 0. Requisitos
 - [ ] VPS con Docker y Docker Compose v2 (`docker compose version`). KVM4 (4 CPU / 16 GB) alcanza para bot + Chatwoot.
 - [ ] Dos subdominios con registro **A** al VPS: `BOT_DOMAIN` (ej. `bot.bluefishing.cl`) y `CHATWOOT_DOMAIN` (ej. `chat.bluefishing.cl`).
+- [ ] Elige el proxy con `PROXY_MODE` (ver §4): **`nginx` recomendado en el VPS de Blue Fishing** (Nginx ya ocupa 80/443). Con `traefik` (valor por defecto, compatible con lo anterior):
 - [ ] El Traefik existente **running y healthy** (el instalador aborta si no; nunca lo modifica). Anota su red y su certresolver:
   ```bash
   docker ps --format '{{.Names}}\t{{.Image}}\t{{.Status}}' | grep -i traefik
@@ -97,7 +98,42 @@ bash deploy/hostinger/deploy.sh       # actualizaciones: git pull --ff-only de l
 
 Migraciones a mano: `bash deploy/hostinger/migrate.sh`.
 
-## 4. Traefik (dominio → bot)
+## 4. Proxy público: `PROXY_MODE`
+| `PROXY_MODE` | Cuándo | Qué hace |
+|---|---|---|
+| `traefik` (**por defecto**, si la variable falta o está vacía) | Traefik existente sano en Docker | Red externa + labels (ver §4b). Igual que antes de esta opción. |
+| `nginx` (**recomendado para este VPS**) | Nginx del host ya ocupa 80/443 (Traefik en bucle de reinicios) | Sin labels ni red de Traefik; bot en `127.0.0.1:BOT_LOCAL_PORT` (18080) y Chatwoot en `127.0.0.1:CHATWOOT_LOCAL_PORT` (18081) vía `docker-compose.nginx.yml`. Nginx publica los dominios. |
+
+Todos los scripts (`install.sh`, `deploy.sh`, `migrate.sh`, `backup_bluefishing.sh`, `restore*.sh`, `preflight.sh`) leen `PROXY_MODE` de `.env.production` (o del entorno) y usan los archivos Compose correctos. A mano, en modo nginx: `docker compose -f docker-compose.yml -f docker-compose.nginx.yml --env-file .env.production ps`. Requiere Docker Compose ≥ 2.24.
+
+### 4a. Instalación en modo nginx (paso a paso, como root en `/opt/crm-bot`)
+1. **Backup previo** si ya había una instalación: `bash deploy/hostinger/backup_bluefishing.sh`. Anota el commit actual: `git rev-parse HEAD > /root/crm-bot-commit-anterior`.
+2. En `.env.production`: `PROXY_MODE=nginx`, y si 18080/18081 están ocupados, otros `BOT_LOCAL_PORT` / `CHATWOOT_LOCAL_PORT` libres (`ss -ltnp`). `TRAEFIK_ADMIN_BASICAUTH_USERS` (hash bcrypt con `$$`) y `TRAEFIK_ADMIN_IP_ALLOWLIST` se reutilizan para `/panel` y `/admin-chat` en Nginx.
+3. Si el Traefik que está en bucle es de un proyecto viejo que ya no se usa, detenerlo es decisión aparte (este instalador **no lo toca**).
+4. `bash deploy/hostinger/install.sh` — el preflight **no exige Traefik**; verifica Compose ≥ 2.24 y que los dos puertos locales estén libres (o ya publicados por el propio `crm-bot`, para re-ejecutar). Aborta si otro proceso los ocupa.
+5. Comprobar en el host: `curl -s http://127.0.0.1:18080/health` y `curl -sI http://127.0.0.1:18081/ | head -1`.
+6. **Nginx, fase HTTP**: `bash deploy/hostinger/nginx-site.sh render` (solo muestra la config) y luego `bash deploy/hostinger/nginx-site.sh install`. Crea **solo** `/etc/nginx/conf.d/crm-bot.conf` y `/etc/nginx/crm-bot.htpasswd` (no edita ningún archivo existente), corre `nginx -t` y **solo si pasa** recarga Nginx; si falla, borra el archivo nuevo y no recarga. Incluye: `server_name` para `BOT_DOMAIN` y `CHATWOOT_DOMAIN`, `client_max_body_size` (2m bot / 40m Chatwoot; `NGINX_BOT_MAX_BODY`, `NGINX_CHATWOOT_MAX_BODY`), cabeceras `Host`, `X-Real-IP`, `X-Forwarded-For/Proto/Host/Port`, websocket de Chatwoot en `/cable` (`Upgrade`/`Connection`) y `/panel`, `/admin-chat` con allowlist + basic auth.
+   - Si tu Nginx no incluye `conf.d/*.conf` (p. ej. solo `sites-enabled`), revisa `nginx -T | grep include` y usa `NGINX_CONF_DIR=/etc/nginx/sites-enabled` (archivo nuevo igualmente).
+7. Probar por HTTP: `curl -sI http://BOT_DOMAIN/health`, `curl -sI http://CHATWOOT_DOMAIN/`.
+8. **Certificados**: `certbot --nginx -d BOT_DOMAIN -d CHATWOOT_DOMAIN` (agrega `listen 443 ssl` y el redirect dentro de `crm-bot.conf`). Después, `nginx-site.sh install` detecta «managed by Certbot» y no sobrescribe el archivo.
+9. Verificación final (§11) por `https://`.
+
+Nunca: `nginx -s reload` / `systemctl reload nginx` sin un `nginx -t` exitoso antes.
+
+### 4a-bis. Rollback del modo nginx
+```bash
+cd /opt/crm-bot
+bash deploy/hostinger/nginx-site.sh uninstall   # borra conf.d/crm-bot.conf + htpasswd, nginx -t y, solo si pasa, reload
+# (equivalente manual: rm /etc/nginx/conf.d/crm-bot.conf /etc/nginx/crm-bot.htpasswd && nginx -t && systemctl reload nginx)
+docker compose -f docker-compose.yml -f docker-compose.nginx.yml --env-file .env.production down   # sin -v: conserva datos
+git checkout "$(cat /root/crm-bot-commit-anterior)"   # versión anterior
+# volver a PROXY_MODE=traefik (o quitar la línea) y reinstalar la versión anterior:
+bash deploy/hostinger/install.sh
+# si hubo daño de datos: CONFIRM=yes bash deploy/hostinger/restore.sh <timestamp del backup del paso 1>
+```
+Los certificados emitidos por certbot quedan en `/etc/letsencrypt` (inofensivos); `certbot delete --cert-name <nombre>` si se quieren borrar.
+
+## 4b. Traefik (dominio → bot) — `PROXY_MODE=traefik`
 **Opción por defecto (recomendada): red externa + labels.** `docker-compose.yml` conecta `app` a la red externa de Traefik y declara los labels (router, servicio, puerto interno 3000, TLS). La app escucha en `0.0.0.0:3000` dentro del contenedor y **no publica ningún puerto al host**. Postgres sigue solo en la red `internal`.
 
 Variables (en `.env.production`):
