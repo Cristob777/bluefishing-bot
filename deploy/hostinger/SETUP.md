@@ -257,10 +257,7 @@ Guía completa: `deploy/atomic-crm/README.md`. El `Caddyfile.snippet` sirve solo
   <script src="https://bot.bluefishing.cl/widget.js" data-key="CLAVE-DE-LA-EMPRESA" async></script>
   ```
   Sin `data-key`, el widget usa la cuenta del operador y `ALLOWED_ORIGIN`.
-- **Pedidos y ventas atribuidas** (solo lectura): el dueño aprieta «Sincronizar pedidos ahora» en Resultados, y tú puedes agendar un cron diario:
-  ```bash
-  0 6 * * * cd /ruta/bluefishing-bot && docker compose --env-file .env.production exec -T app node scripts/woo-orders-sync.js
-  ```
+- **Pedidos y ventas atribuidas** (solo lectura): el servicio `catalog-sync` los sincroniza cada `CATALOG_SYNC_INTERVAL_SECONDS` (6 h) junto con el catálogo; no hace falta cron. Para forzarlo: «Sincronizar pedidos ahora» en `/admin` → Resultados. La tienda del operador puede venir de `WC_*` o de «Conectar tienda» (ver [CONECTAR-TIENDA.md](CONECTAR-TIENDA.md)); en ambos casos sus pedidos se cruzan con los contactos del WhatsApp del operador.
   Un pedido se atribuye al bot cuando su teléfono (últimos 9 dígitos) o su correo coincide con un contacto de la misma empresa que habló con Matías como máximo `ATTRIBUTION_WINDOW_DAYS` (por defecto 30) antes del pedido. Solo cuentan los pedidos `completed` y `processing`, y el contacto pasa solo a «Compró».
 - **Chatwoot y Atomic CRM** siguen siendo de la **cuenta del operador**: Atomic sincroniza solo los contactos sin empresa (un proyecto Supabase corresponde a una empresa). Para darle Chatwoot o Atomic a otra empresa hay que crearle su propia instancia; eso todavía no se automatiza.
 

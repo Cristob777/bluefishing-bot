@@ -182,12 +182,9 @@ module.exports = async function(req,res){
       const okm=await crm.moveStage(query,{tenantId:undefined,contactId:f.contact_id,stage:f.stage,actor:"admin:"+process.env.ADMIN_DASHBOARD_USER}).catch(()=>false);
       const back=crm.safeBack(f.back,"/admin");return redirect(res,back+(back.includes("?")?"&":"?")+"n="+(okm?"stage_ok":"stage_err"));
     }
-    const W=require("../lib/wooOrders");let any=false,okAll=true;
-    const op=W.operatorCreds();if(op){any=true;okAll=(await W.syncOrders(query,{tenantId:null,creds:op})).ok&&okAll;}
-    const store=require("../lib/tenantStore").createStore();
-    const t=await query("select tenant_id from tenant_credentials where woo_connected_at is not null").catch(()=>({rows:[]}));
-    for(const {tenant_id} of t.rows){const c=await store.getWooCredentials(tenant_id).catch(()=>null);if(c){any=true;okAll=(await W.syncOrders(query,{tenantId:tenant_id,creds:c})).ok&&okAll;}}
-    return redirect(res,"/admin?view=resultados&n="+(any&&okAll?"sync_ok":"sync_err"));
+    const W=require("../lib/wooOrders");
+    const rs=await W.syncAllStores(query,{store:require("../lib/tenantStore").createStore(),resolveOperator:()=>require("../lib/catalogCredentials").resolveFromRuntime()}).catch(()=>[]);
+    return redirect(res,"/admin?view=resultados&n="+(rs.length&&rs.every(r=>r.ok!==false)?"sync_ok":"sync_err"));
   }
   if(path==="/admin/logout"&&req.method==="POST")return redirect(res,"/admin",COOKIE+"=; Max-Age=0; Path=/admin; HttpOnly; Secure; SameSite=Strict");
   if(req.method!=="GET"||path!=="/admin")return send(res,404,ui.errorPage("Página no encontrada","El enlace no existe o cambió.","/admin","Volver al panel de ventas"));

@@ -30,6 +30,7 @@ test("compose declares a recurring catalog-sync service on the runtime volume", 
   assert.match(svc, /scripts\/enrich-catalogo\.js/);
   assert.match(svc, /catalogo_runtime:\/app\/data\/catalogo/);
   assert.match(svc, /CATALOG_RUNTIME_DIR: \/app\/data\/catalogo/);
+  assert.match(svc, /scripts\/woo-orders-sync\.js/);
   assert.match(svc, /sleep/);
 });
 

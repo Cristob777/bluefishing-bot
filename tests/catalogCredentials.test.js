@@ -61,14 +61,14 @@ test("several connected stores without a choice abort instead of mixing catalogs
   const d = fakeDeps([T1, T2], { [T1]: PANEL_CREDS, [T2]: PANEL_CREDS });
   await assert.rejects(
     resolveCatalogCredentials({ env: {}, query: d.query, store: d.store, boxConfigured: true }),
-    /WOO_CATALOG_TENANT_ID/
+    /WOO_OPERATOR_TENANT_ID/
   );
 });
 
-test("WOO_CATALOG_TENANT_ID selects the store explicitly", async () => {
+test("WOO_OPERATOR_TENANT_ID selects the store explicitly", async () => {
   const other = { storeUrl: "https://otra.cl", consumerKey: "ck_2", consumerSecret: "cs_2" };
   const d = fakeDeps([T1, T2], { [T1]: PANEL_CREDS, [T2]: other });
-  const c = await resolveCatalogCredentials({ env: { WOO_CATALOG_TENANT_ID: T2 }, query: d.query, store: d.store, boxConfigured: true });
+  const c = await resolveCatalogCredentials({ env: { WOO_OPERATOR_TENANT_ID: T2 }, query: d.query, store: d.store, boxConfigured: true });
   assert.equal(c.tenantId, T2);
   assert.equal(c.storeUrl, "https://otra.cl");
   assert.equal(d.calls.length, 0);
@@ -77,7 +77,7 @@ test("WOO_CATALOG_TENANT_ID selects the store explicitly", async () => {
 test("selected tenant without a connected store is an explicit error", async () => {
   const d = fakeDeps([]);
   await assert.rejects(
-    resolveCatalogCredentials({ env: { WOO_CATALOG_TENANT_ID: T1 }, query: d.query, store: d.store, boxConfigured: true }),
+    resolveCatalogCredentials({ env: { WOO_OPERATOR_TENANT_ID: T1 }, query: d.query, store: d.store, boxConfigured: true }),
     /no tiene tienda WooCommerce conectada/
   );
 });

@@ -182,7 +182,9 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
       CATALOG_RUNTIME_DIR: /app/data/catalogo
       CATALOG_SYNC_INTERVAL_SECONDS: ${CATALOG_SYNC_INTERVAL_SECONDS:-21600}
-    command: ["sh","-c","while true; do node scripts/sync-catalogo.js && node scripts/enrich-catalogo.js || echo \"[catalog-sync] fallo; se conserva el último catálogo válido\"; sleep \"$$CATALOG_SYNC_INTERVAL_SECONDS\"; done"]
+    # Pedidos (woo-orders-sync) en el mismo ciclo: alimenta la etapa «Compró» y las ventas
+    # atribuidas del CRM. Sin tienda conectada termina sin hacer nada.
+    command: ["sh","-c","while true; do node scripts/sync-catalogo.js && node scripts/enrich-catalogo.js || echo \"[catalog-sync] fallo; se conserva el último catálogo válido\"; node scripts/woo-orders-sync.js || echo \"[catalog-sync] fallo en pedidos\"; sleep \"$$CATALOG_SYNC_INTERVAL_SECONDS\"; done"]
     volumes:
       - ./catalogo:/app/catalogo:ro
       - catalogo_runtime:/app/data/catalogo

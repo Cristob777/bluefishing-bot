@@ -1,17 +1,13 @@
 #!/usr/bin/env node
-// Sincroniza pedidos de todas las empresas con tienda conectada + la tienda del operador (WC_*).
-// Uso (cron diario): docker compose --env-file .env.production exec -T app node scripts/woo-orders-sync.js
+// Sincroniza pedidos de la tienda del operador (WC_* del .env o tienda conectada en /panel)
+// y de las demás empresas con tienda conectada. Lo ejecuta catalog-sync cada 6 h.
+// Manual: docker compose --env-file .env.production exec -T app node scripts/woo-orders-sync.js
 const { query } = require("../lib/postgres");
-const { syncOrders, operatorCreds } = require("../lib/wooOrders");
+const { syncAllStores } = require("../lib/wooOrders");
 const { createStore } = require("../lib/tenantStore");
+const { resolveFromRuntime } = require("../lib/catalogCredentials");
 (async () => {
-  const store = createStore();
-  const op = operatorCreds();
-  if (op) console.log("[Woo] operador:", await syncOrders(query, { tenantId: null, creds: op }));
-  const t = await query("select tenant_id from tenant_credentials where woo_connected_at is not null");
-  for (const { tenant_id } of t.rows) {
-    const creds = await store.getWooCredentials(tenant_id);
-    if (creds) console.log("[Woo] empresa", tenant_id.slice(0, 8), await syncOrders(query, { tenantId: tenant_id, creds }));
-  }
-  process.exit(0);
-})().catch((e) => { console.error(e.message); process.exit(1); });
+  const results = await syncAllStores(query, { store: createStore(), resolveOperator: () => resolveFromRuntime(), log: console.log });
+  if (!results.length) console.log("[Woo] sin tiendas conectadas: nada que sincronizar");
+  process.exit(results.some((r) => r.ok === false) ? 1 : 0);
+})().catch((e) => { console.error("[Woo]", e.message); process.exit(1); });
