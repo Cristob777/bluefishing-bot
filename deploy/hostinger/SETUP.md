@@ -31,9 +31,10 @@ Todo vive en el proyecto Compose `crm-bot` (`name:` en `docker-compose.yml`): co
 ## Resumen: del clon al login
 ```bash
 cd /opt/crm-bot
-cp .env.production.example .env.production && chmod 600 .env.production
-nano .env.production                      # completa todos los CHANGE_ME (paso 2)
+bash deploy/hostinger/init-env.sh        # crea .env.production: genera todos los secretos y pregunta
+                                          # solo dominios, email, OpenAI y Meta (sin eco). Idempotente.
 bash deploy/hostinger/install.sh          # instalador idempotente (paso 3)
+sudo cat /root/.crm-bot/credenciales-iniciales    # accesos /admin y /panel generados (no se imprimen)
 sudo cat /root/.crm-bot/chatwoot_admin_password   # password inicial del admin de Chatwoot (no se imprime)
 ```
 Luego: `https://CHATWOOT_DOMAIN` → login con `CHATWOOT_ADMIN_EMAIL` + ese password → cámbialo en Perfil. `https://BOT_DOMAIN/admin` con `ADMIN_DASHBOARD_USER`. `/panel` pide primero el basic auth de Traefik.
