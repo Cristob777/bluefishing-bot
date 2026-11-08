@@ -104,6 +104,69 @@ async function fetchWooCatalog(creds) {
   return rows;
 }
 
+// Store API pública de WooCommerce (/wp-json/wc/store/v1): la misma que usa el carrito/bloques
+// del sitio. No requiere claves; trae 100 productos por request con precio, stock y categorías.
+// Si la tienda no la expone (WooCommerce antiguo o bloqueada), se cae al scraping.
+async function storeApiFetchAllPages(baseUrl, endpoint, params, fetchImpl) {
+  const results = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const url = new URL(baseUrl + "/wp-json/wc/store/v1/" + endpoint);
+    for (const [key, value] of Object.entries(params || {})) url.searchParams.set(key, value);
+    url.searchParams.set("per_page", String(PER_PAGE));
+    url.searchParams.set("page", String(page));
+    const response = await fetchImpl(url, {
+      headers: { Accept: "application/json", "User-Agent": "BlueFishingCatalogBot/1.0 (+https://bluefishing.cl)" }
+    });
+    if (!response.ok) throw new Error("Store API " + endpoint + ": HTTP " + response.status);
+    const batch = await response.json();
+    if (!Array.isArray(batch)) throw new Error("Store API " + endpoint + ": respuesta no es una lista");
+    if (!batch.length) break;
+    results.push(...batch);
+    const totalPages = Number(response.headers?.get?.("x-wp-totalpages") || 0);
+    if (batch.length < PER_PAGE || (totalPages && page >= totalPages)) break;
+  }
+  return results;
+}
+
+// Precios de la Store API vienen en unidades menores (CLP suele tener minor_unit 0).
+function storeApiPrice(prices) {
+  if (!prices) return "";
+  const raw = Number(prices.price || prices.regular_price || 0);
+  const minor = Number.isInteger(prices.currency_minor_unit) ? prices.currency_minor_unit : 0;
+  return formatPrice(raw / Math.pow(10, minor));
+}
+
+async function fetchStoreApiCatalog({ baseUrl = WC_URL, fetchImpl = fetch } = {}) {
+  const [categories, products] = await Promise.all([
+    storeApiFetchAllPages(baseUrl, "products/categories", {}, fetchImpl),
+    storeApiFetchAllPages(baseUrl, "products", {}, fetchImpl)
+  ]);
+  const resolveCategoryPath = buildCategoryPathResolver(categories);
+  const rows = [];
+  for (const product of products) {
+    if (product.is_in_stock === false) continue;
+    const name = decodeEntities(String(product.name || "")).trim().replace(/\|/g, "-");
+    const category = chooseRelevantCategory(product, resolveCategoryPath);
+    const productType = detectProductType(name, category);
+    if (!name || !ALLOWED_TYPES.has(productType)) continue;
+    const price = storeApiPrice(product.prices);
+    const url = product.permalink || "";
+    if (!price || !url) continue;
+    rows.push({ url, name, price, category, product_type: productType, brand: detectBrand(name), updated_at: new Date().toISOString() });
+  }
+  if (products.length && !rows.length) throw new Error("Store API devolvió productos pero ninguno utilizable");
+  return rows;
+}
+
+// La Store API devuelve nombres con entidades HTML (&#8211;, &amp;...).
+function decodeEntities(text) {
+  return text
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ");
+}
+
 function extractProductLinks(html) {
   const urls = new Set();
   const re = /href=["']([^"']*\/producto\/[^"'?#]+\/?)(?:[?#][^"']*)?["']/gi;
@@ -218,8 +281,14 @@ async function main() {
     source = creds.source === "panel" ? "woocommerce_api_panel" : "woocommerce_api";
   } catch (error) {
     console.warn("[Catalog] WooCommerce API no disponible: " + error.message);
-    rows = await fetchPublicCatalog();
-    source = "public_store";
+    try {
+      rows = await fetchStoreApiCatalog();
+      source = "woocommerce_store_api";
+    } catch (storeError) {
+      console.warn("[Catalog] Store API pública no disponible: " + storeError.message);
+      rows = await fetchPublicCatalog();
+      source = "public_store";
+    }
   }
 
   const unique = [...new Map(rows.map((row) => [row.url, row])).values()]
@@ -262,4 +331,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { formatPrice, extractProductLinks, fetchWooCatalog, fetchPublicCatalog };
+module.exports = { formatPrice, extractProductLinks, fetchWooCatalog, fetchPublicCatalog, fetchStoreApiCatalog, storeApiPrice, decodeEntities };
