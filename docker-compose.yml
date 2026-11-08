@@ -110,6 +110,14 @@ services:
       traefik.http.routers.crmbot-protegido.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
       traefik.http.routers.crmbot-protegido.service: crmbot
       traefik.http.routers.crmbot-protegido.middlewares: crmbot-ipallow,crmbot-auth
+      # Callback de WooCommerce ("Conectar tienda"): lo llama la tienda (servidor), sin basic auth.
+      # Lo protege el state de un solo uso que valida el bot. Prioridad mayor que crmbot-protegido.
+      traefik.http.routers.crmbot-woo-callback.rule: Host(`${BOT_DOMAIN:?BOT_DOMAIN requerido}`) && Path(`/panel/woo/callback`) && Method(`POST`)
+      traefik.http.routers.crmbot-woo-callback.priority: "200"
+      traefik.http.routers.crmbot-woo-callback.entrypoints: ${TRAEFIK_ENTRYPOINT:-websecure}
+      traefik.http.routers.crmbot-woo-callback.tls: "true"
+      traefik.http.routers.crmbot-woo-callback.tls.certresolver: ${TRAEFIK_CERTRESOLVER:-letsencrypt}
+      traefik.http.routers.crmbot-woo-callback.service: crmbot
       traefik.http.middlewares.crmbot-ipallow.ipallowlist.sourcerange: ${TRAEFIK_ADMIN_IP_ALLOWLIST:-0.0.0.0/0,::/0}
       traefik.http.middlewares.crmbot-auth.basicauth.users: ${TRAEFIK_ADMIN_BASICAUTH_USERS:?TRAEFIK_ADMIN_BASICAUTH_USERS requerido (htpasswd -nB usuario)}
       traefik.http.middlewares.crmbot-auth.basicauth.removeheader: "true"

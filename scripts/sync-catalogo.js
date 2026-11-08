@@ -3,9 +3,9 @@ const path = require("node:path");
 const { detectBrand, detectProductType } = require("../lib/product-taxonomy");
 const { fetchProductPage } = require("../lib/productPage");
 
+const { resolveFromRuntime } = require("../lib/catalogCredentials");
+
 const WC_URL = (process.env.WC_URL || "https://bluefishing.cl").replace(/\/+$/, "");
-const WC_CONSUMER_KEY = process.env.WC_CONSUMER_KEY || "";
-const WC_CONSUMER_SECRET = process.env.WC_CONSUMER_SECRET || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const { readPath, writePath } = require("../lib/catalogPaths");
@@ -23,22 +23,22 @@ const PUBLIC_CATEGORIES = [
   ["Combos de Pesca", "/categoria-producto/todos-los-productos/combos-de-pesca/"]
 ];
 
-function authHeader() {
-  return "Basic " + Buffer.from(WC_CONSUMER_KEY + ":" + WC_CONSUMER_SECRET).toString("base64");
+function authHeader(creds) {
+  return "Basic " + Buffer.from(creds.consumerKey + ":" + creds.consumerSecret).toString("base64");
 }
 
-async function wcFetch(endpoint, params) {
-  const url = new URL(WC_URL + "/wp-json/wc/v3/" + endpoint);
+async function wcFetch(creds, endpoint, params) {
+  const url = new URL(creds.storeUrl + "/wp-json/wc/v3/" + endpoint);
   for (const [key, value] of Object.entries(params || {})) url.searchParams.set(key, value);
-  const response = await fetch(url, { headers: { Authorization: authHeader() } });
+  const response = await fetch(url, { headers: { Authorization: authHeader(creds) } });
   if (!response.ok) throw new Error("WooCommerce API " + endpoint + ": HTTP " + response.status);
   return response.json();
 }
 
-async function fetchAllPages(endpoint, params) {
+async function fetchAllPages(creds, endpoint, params) {
   const results = [];
   for (let page = 1; page <= 100; page += 1) {
-    const batch = await wcFetch(endpoint, { ...(params || {}), per_page: PER_PAGE, page });
+    const batch = await wcFetch(creds, endpoint, { ...(params || {}), per_page: PER_PAGE, page });
     if (!Array.isArray(batch) || !batch.length) break;
     results.push(...batch);
     if (batch.length < PER_PAGE) break;
@@ -74,11 +74,11 @@ function chooseRelevantCategory(product, resolveCategoryPath) {
   return paths[0] || "";
 }
 
-async function fetchWooCatalog() {
-  if (!WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) throw new Error("credenciales WooCommerce no configuradas");
+async function fetchWooCatalog(creds) {
+  if (!creds) throw new Error("credenciales WooCommerce no configuradas (ni .env ni tienda conectada en /panel)");
   const [categories, products] = await Promise.all([
-    fetchAllPages("products/categories"),
-    fetchAllPages("products", { status: "publish" })
+    fetchAllPages(creds, "products/categories"),
+    fetchAllPages(creds, "products", { status: "publish" })
   ]);
   const resolveCategoryPath = buildCategoryPathResolver(categories);
   const rows = [];
@@ -213,8 +213,9 @@ async function main() {
   let rows;
   let source;
   try {
-    rows = await fetchWooCatalog();
-    source = "woocommerce_api";
+    const creds = await resolveFromRuntime();
+    rows = await fetchWooCatalog(creds);
+    source = creds.source === "panel" ? "woocommerce_api_panel" : "woocommerce_api";
   } catch (error) {
     console.warn("[Catalog] WooCommerce API no disponible: " + error.message);
     rows = await fetchPublicCatalog();
@@ -254,7 +255,8 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch((error) => {
+  // exit explícito: el pool de Postgres (si se usó para credenciales) mantendría vivo el proceso.
+  main().then(() => process.exit(0)).catch((error) => {
     console.error("[Catalog] Fatal:", error.message);
     process.exit(1);
   });
