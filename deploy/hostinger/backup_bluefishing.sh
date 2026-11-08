@@ -39,7 +39,15 @@ if [[ -n "$("${DC[@]}" ps -q chatwoot-postgres)" ]]; then
       -C /app/storage -czf - . > "$DEST/chatwoot-storage-$TS.tar.gz"
   fi
 fi
-chmod 600 "$DEST"/*-"$TS".* 
+# Catálogo runtime (volumen catalogo_runtime): catálogo sincronizado + fichas enriquecidas por IA.
+# Regenerable, pero product_knowledge.json cuesta llamadas de IA rehacerlo. No fatal si app no corre.
+if [[ -n "$("${DC[@]}" ps -q --status running app)" ]]; then
+  "${DC[@]}" exec -T app tar -C /app/data/catalogo -czf - . > "$DEST/catalogo-runtime-$TS.tar.gz" \
+    || { echo "Aviso: no se pudo respaldar catalogo_runtime" >&2; rm -f "$DEST/catalogo-runtime-$TS.tar.gz"; }
+else
+  echo "Aviso: app no está corriendo; se omite el backup de catalogo_runtime" >&2
+fi
+chmod 600 "$DEST"/*-"$TS".*
 find "$DEST" -type f \( -name '*.dump' -o -name '*.tar.gz' \) -mtime +"$KEEP_DAYS" -delete
 echo "$(date -Is) OK $TS -> $DEST"
 # Recomendado: copia fuera del VPS (rclone/rsync cifrado de $DEST).

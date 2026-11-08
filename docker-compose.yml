@@ -154,6 +154,38 @@ services:
     networks:
       - internal
 
+  # Refresco recurrente del catálogo (precios/stock). Sin esto el catálogo solo se
+  # regenera en install.sh y el bot cotiza precios y productos agotados viejos.
+  # sync: WooCommerce API (fallback: tienda pública). enrich: salta fichas sin cambios
+  # (source_hash), así que el costo de IA recurrente es solo por productos nuevos/modificados.
+  catalog-sync:
+    build: .
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    env_file:
+      - .env.production
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-bluefishing}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-bluefishing}
+      CATALOG_RUNTIME_DIR: /app/data/catalogo
+      CATALOG_SYNC_INTERVAL_SECONDS: ${CATALOG_SYNC_INTERVAL_SECONDS:-21600}
+    command: ["sh","-c","while true; do node scripts/sync-catalogo.js && node scripts/enrich-catalogo.js || echo \"[catalog-sync] fallo; se conserva el último catálogo válido\"; sleep \"$$CATALOG_SYNC_INTERVAL_SECONDS\"; done"]
+    volumes:
+      - ./catalogo:/app/catalogo:ro
+      - catalogo_runtime:/app/data/catalogo
+    healthcheck:
+      disable: true   # el HEALTHCHECK del Dockerfile es para el servidor HTTP (app)
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - internal
+
   # Sync bot -> Atomic CRM (Supabase). Solo corre con: docker compose --profile atomic-crm up -d
   # y ATOMIC_CRM_ENABLED=true en .env.production. Ver deploy/atomic-crm/README.md
   atomic-crm-sync:

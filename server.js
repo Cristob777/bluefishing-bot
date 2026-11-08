@@ -8,6 +8,7 @@ const chatHandler = require("./api/chat");
 const widgetHandler = require("./api/widget");
 const chatwootHandler = require("./api/chatwoot");
 const { safeError } = require("./lib/logSanitizer");
+const { panelEnabled } = require("./lib/featureFlags");
 
 const PORT = Number(process.env.PORT || 3000);
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 1024 * 1024);
@@ -86,7 +87,11 @@ const server = http.createServer(async (req, res) => {
     } else if (url.pathname === "/health") {
       await healthHandler(req, response);
     } else if (url.pathname === "/panel" || url.pathname.startsWith("/panel/")) {
-      await panelHandler(req, res);
+      if (!panelEnabled()) {
+        response.status(404).json({ error: "not_found" });
+      } else {
+        await panelHandler(req, res);
+      }
     } else if (url.pathname === "/admin" || url.pathname.startsWith("/admin/")) {
       await adminHandler(req, res);
     } else {
