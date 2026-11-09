@@ -189,7 +189,7 @@ document.getElementById('b').addEventListener('click',go);`;
 
 const attempts = new Map();
 function limited(req) {
-  const ip = String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
+  const ip = require("../lib/clientIp").cloudflareClientIp(req) || String(req.headers["x-forwarded-for"] || req.socket?.remoteAddress || "unknown").split(",")[0].trim();
   const a = attempts.get(ip) || { n: 0, t: Date.now() };
   if (Date.now() - a.t > 15 * 60 * 1000) { a.n = 0; a.t = Date.now(); }
   a.n++; attempts.set(ip, a);

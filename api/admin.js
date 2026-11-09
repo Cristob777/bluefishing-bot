@@ -162,7 +162,7 @@ module.exports = async function(req,res){
   const path=req.path||"/admin", ck=cookies(req), ok=verify(ck[COOKIE]);
 
   if(path==="/admin/login"&&req.method==="POST"){
-    const ip=String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
+    const ip=require("../lib/clientIp").cloudflareClientIp(req)||String(req.headers["x-forwarded-for"]||req.socket?.remoteAddress||"unknown").split(",")[0];
     const a=attempts.get(ip)||{n:0,t:Date.now()};
     if(Date.now()-a.t>15*60*1000){a.n=0;a.t=Date.now();}
     if(a.n>=5)return send(res,429,login("Demasiados intentos."));

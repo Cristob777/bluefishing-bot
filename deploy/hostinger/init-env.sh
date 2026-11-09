@@ -57,9 +57,16 @@ ask BOT_DOMAIN "Dominio del bot (sin https)" "bot.bluefishing.cl"
 ask CHATWOOT_DOMAIN "Dominio de Chatwoot (sin https)" "chat.bluefishing.cl"
 ask CHATWOOT_ADMIN_EMAIL "Email del admin de Chatwoot"
 ask ADMIN_DASHBOARD_USER "Usuario para /admin" "admin"
-if [[ "$(current PROXY_MODE)" != "nginx" ]]; then
-  read -r -p "¿Nginx del host ocupa 80/443 (recomendado para este VPS)? usar PROXY_MODE=nginx [S/n]: " pm
-  [[ "${pm:-S}" =~ ^[SsYy]$ ]] && set_kv PROXY_MODE nginx && echo "  PROXY_MODE=nginx"
+if [[ "$(current PROXY_MODE)" != "tunnel" && "$(current PROXY_MODE)" != "nginx" ]]; then
+  echo "Cómo se publica el bot en internet:"
+  echo "  1) tunnel — Cloudflare Tunnel: independiente del Nginx de otros sitios del VPS (recomendado)"
+  echo "  2) nginx  — usa el Nginx del host + certbot"
+  read -r -p "Elige 1 o 2 [1]: " pm
+  case "${pm:-1}" in 2) set_kv PROXY_MODE nginx ;; *) set_kv PROXY_MODE tunnel ;; esac
+  echo "  PROXY_MODE=$(current PROXY_MODE)"
+fi
+if [[ "$(current PROXY_MODE)" == "tunnel" ]]; then
+  ask_secret CLOUDFLARE_TUNNEL_TOKEN "CLOUDFLARE_TUNNEL_TOKEN (Cloudflare → Zero Trust → Networks → Tunnels → tu túnel)"
 fi
 ask_secret OPENAI_API_KEY "OPENAI_API_KEY"
 ask_secret META_APP_SECRET "META_APP_SECRET (Meta → app → Configuración → Básica)"
@@ -97,7 +104,9 @@ else echo "  ya estaba TRAEFIK_ADMIN_BASICAUTH_USERS"; fi
 echo
 echo "== Pendientes =="
 pending=0
-for k in BOT_DOMAIN CHATWOOT_DOMAIN CHATWOOT_ADMIN_EMAIL OPENAI_API_KEY META_APP_SECRET WHATSAPP_TOKEN PHONE_NUMBER_ID; do
+needed=(BOT_DOMAIN CHATWOOT_DOMAIN CHATWOOT_ADMIN_EMAIL OPENAI_API_KEY META_APP_SECRET WHATSAPP_TOKEN PHONE_NUMBER_ID)
+[[ "$(current PROXY_MODE)" == "tunnel" ]] && needed+=(CLOUDFLARE_TUNNEL_TOKEN)
+for k in "${needed[@]}"; do
   missing "$k" && { echo "  falta $k"; pending=1; }
 done
 echo

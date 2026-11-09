@@ -1,6 +1,7 @@
 // POST /chat — chat web del widget. Usa el mismo motor que WhatsApp
 // (salesEngine: securityGuard, bot_sessions, bot_events, handoff, OpenAI).
 const { sanitizeInput, handleMessage } = require("../lib/salesEngine");
+const { cloudflareClientIp } = require("../lib/clientIp");
 const { pseudonymize, safeError } = require("../lib/logSanitizer");
 const { allowMessage } = require("../lib/rateLimiter");
 const { trackContact } = require("../lib/contactStore");
@@ -47,6 +48,8 @@ function applyCors(req, res, tenant = null) {
 
 // IP del cliente: el proxy (Caddy/Traefik) agrega la IP real al final de X-Forwarded-For.
 function clientIp(req) {
+  const cf = cloudflareClientIp(req);
+  if (cf) return cf;
   const xff = String(req.headers["x-forwarded-for"] || "").split(",").map((s) => s.trim()).filter(Boolean);
   return xff[xff.length - 1] || req.socket?.remoteAddress || "unknown";
 }

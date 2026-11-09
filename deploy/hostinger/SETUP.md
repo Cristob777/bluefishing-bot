@@ -103,6 +103,7 @@ Migraciones a mano: `bash deploy/hostinger/migrate.sh`.
 | `PROXY_MODE` | Cuándo | Qué hace |
 |---|---|---|
 | `traefik` (**por defecto**, si la variable falta o está vacía) | Traefik existente sano en Docker | Red externa + labels (ver §4b). Igual que antes de esta opción. |
+| `tunnel` (**recomendado si el VPS lo comparten otros sitios**) | El bot debe quedar independiente del proxy de las tiendas | Contenedor `cloudflared` (Cloudflare Tunnel): no usa el Nginx ni los puertos 80/443 del host, sin certbot. Requiere el dominio en Cloudflare. Guía: [TUNEL-CLOUDFLARE.md](TUNEL-CLOUDFLARE.md). |
 | `nginx` (**recomendado para este VPS**) | Nginx del host ya ocupa 80/443 (Traefik en bucle de reinicios) | Sin labels ni red de Traefik; bot en `127.0.0.1:BOT_LOCAL_PORT` (18080) y Chatwoot en `127.0.0.1:CHATWOOT_LOCAL_PORT` (18081) vía `docker-compose.nginx.yml`. Nginx publica los dominios. |
 
 Todos los scripts (`install.sh`, `deploy.sh`, `migrate.sh`, `backup_bluefishing.sh`, `restore*.sh`, `preflight.sh`) leen `PROXY_MODE` de `.env.production` (o del entorno) y usan los archivos Compose correctos. A mano, en modo nginx: `docker compose -f docker-compose.yml -f docker-compose.nginx.yml --env-file .env.production ps`. Requiere Docker Compose ≥ 2.24.

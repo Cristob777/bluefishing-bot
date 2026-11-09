@@ -12,11 +12,15 @@ MODE="$(proxy_mode)"
 command -v docker >/dev/null || { echo "Preflight: falta docker." >&2; exit 1; }
 docker compose version >/dev/null || { echo "Preflight: falta docker compose v2." >&2; exit 1; }
 
-if [[ "$MODE" == "nginx" ]]; then
+if [[ "$MODE" == "nginx" || "$MODE" == "tunnel" ]]; then
+  if [[ "$MODE" == "tunnel" ]]; then
+    tok="$(envval CLOUDFLARE_TUNNEL_TOKEN)"
+    [[ -n "$tok" && "$tok" != CHANGE_ME* ]] || { echo "Preflight: PROXY_MODE=tunnel requiere CLOUDFLARE_TUNNEL_TOKEN (Cloudflare → Zero Trust → Networks → Tunnels)." >&2; exit 1; }
+  fi
   # docker-compose.nginx.yml usa !reset/!override (Compose >= 2.24).
   ver="$(docker compose version --short 2>/dev/null | sed 's/^v//')"
   if [[ "$(printf '%s\n2.24.0\n' "$ver" | sort -V | head -n1)" != "2.24.0" ]]; then
-    echo "Preflight: PROXY_MODE=nginx requiere Docker Compose >= 2.24 (tienes $ver)." >&2; exit 1
+    echo "Preflight: PROXY_MODE=$MODE requiere Docker Compose >= 2.24 (tienes $ver)." >&2; exit 1
   fi
   PROJECT="$(envval COMPOSE_PROJECT_NAME)"; PROJECT="${COMPOSE_PROJECT_NAME:-${PROJECT:-crm-bot}}"
   BP="$(envval BOT_LOCAL_PORT)"; BP="${BP:-18080}"
@@ -46,6 +50,10 @@ if [[ "$MODE" == "nginx" ]]; then
       fi
     fi
   done
+  if [[ "$MODE" == "tunnel" ]]; then
+    echo "Preflight OK (PROXY_MODE=tunnel): no usa Traefik ni el Nginx del host; el tráfico entra por cloudflared."
+    exit 0
+  fi
   if command -v nginx >/dev/null; then
     echo "Preflight: nginx encontrado ($(nginx -v 2>&1 | sed 's/^nginx version: //'))."
   else

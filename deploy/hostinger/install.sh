@@ -33,6 +33,10 @@ for key in "${required[@]}"; do
     echo "Preflight: $key falta o sigue con placeholder." >&2; exit 1
   fi
 done
+if [[ "$MODE" == "tunnel" ]]; then
+  v="$(envval CLOUDFLARE_TUNNEL_TOKEN)"
+  [[ -n "$v" && "$v" != CHANGE_ME* ]] || { echo "Preflight: CLOUDFLARE_TUNNEL_TOKEN falta (PROXY_MODE=tunnel)." >&2; exit 1; }
+fi
 CMK="$(envval CREDENTIALS_MASTER_KEY)"; PSS="$(envval PANEL_SESSION_SECRET)"
 if [[ -n "$CMK" || -n "$PSS" ]]; then
   if ! [[ "$CMK" =~ ^[0-9a-fA-F]{64}$ ]] && [[ "$(printf '%s' "$CMK" | base64 -d 2>/dev/null | wc -c)" -ne 32 ]]; then
@@ -142,7 +146,15 @@ wait_healthy app 240
 "${DC[@]}" exec -T app node scripts/security-retention.js || true
 
 "${DC[@]}" ps
-if [[ "$MODE" == "nginx" ]]; then
+if [[ "$MODE" == "tunnel" ]]; then
+  cat <<EOF2
+PROXY_MODE=tunnel: el tráfico público entra por el contenedor cloudflared (no se toca el Nginx ni los puertos 80/443 del host).
+En Cloudflare → Zero Trust → Networks → Tunnels → tu túnel → Public hostnames:
+  $(envval BOT_DOMAIN)  ->  http://app:3000
+  $(envval CHATWOOT_DOMAIN)  ->  http://chatwoot-rails:3000
+Ver: deploy/hostinger/TUNEL-CLOUDFLARE.md
+EOF2
+elif [[ "$MODE" == "nginx" ]]; then
   cat <<MSG
 
 PROXY_MODE=nginx: el bot escucha en 127.0.0.1:$(envval BOT_LOCAL_PORT | grep . || echo 18080) y Chatwoot en 127.0.0.1:$(envval CHATWOOT_LOCAL_PORT | grep . || echo 18081).

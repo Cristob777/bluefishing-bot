@@ -23,7 +23,7 @@ test("init-env.sh fills every variable install.sh requires, without overwriting"
   // htpasswd -nbB USER PASS
   fs.writeFileSync(path.join(bin, "htpasswd"), '#!/bin/sh\necho "$2:\\$2y\\$05\\$testhashtesthashtesthashtesthashtesthashtesthashtes"\n', { mode: 0o755 });
   const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, ENV_FILE: path.join(dir, ".env"), SECRETS_DIR: path.join(dir, "secrets") };
-  const answers = "\n\nops@example.cl\n\nS\nsk-x\nsecret-x\ntoken-x\n123456789\n";
+  const answers = "\n\nops@example.cl\n\n2\nsk-x\nsecret-x\ntoken-x\n123456789\n";
   const out = execFileSync("bash", ["deploy/hostinger/init-env.sh"], { cwd: ROOT, env, input: answers }).toString();
   assert.doesNotMatch(out, /sk-x|secret-x|token-x/, "external secrets must never be echoed");
 
@@ -40,4 +40,21 @@ test("init-env.sh fills every variable install.sh requires, without overwriting"
 
   execFileSync("bash", ["deploy/hostinger/init-env.sh"], { cwd: ROOT, env, input: "" });
   assert.deepEqual(readEnv(env.ENV_FILE), first, "second run must not change anything");
+});
+
+test("init-env.sh defaults to Cloudflare tunnel and asks for its token without echo", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "initenv-tunnel-"));
+  const bin = path.join(dir, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "htpasswd"), '#!/bin/sh\necho "$2:\\$2y\\$05\\$testhashtesthashtesthashtesthashtesthashtesthashtes"\n', { mode: 0o755 });
+  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, ENV_FILE: path.join(dir, ".env"), SECRETS_DIR: path.join(dir, "secrets") };
+  // Enter en el modo => tunnel; luego el token del túnel, y el resto.
+  const answers = "\n\nops@example.cl\n\n\ncf-tunnel-token-x\nsk-x\nsecret-x\ntoken-x\n123456789\n";
+  const out = execFileSync("bash", ["deploy/hostinger/init-env.sh"], { cwd: ROOT, env, input: answers }).toString();
+  assert.doesNotMatch(out, /cf-tunnel-token-x/);
+  const e = readEnv(env.ENV_FILE);
+  assert.equal(e.PROXY_MODE, "tunnel");
+  assert.equal(e.CLOUDFLARE_TUNNEL_TOKEN, "cf-tunnel-token-x");
+  assert.equal(e.OPENAI_API_KEY, "sk-x");
+  assert.match(out, /Listo\. Siguiente/);
 });
