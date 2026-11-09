@@ -1,211 +1,319 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
-
-TSURINOYA Carrete de pesca Jaguar 4000 | $109.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-jaguar-4000/
-TSURINOYA Caña PROFLEX 632UL Spinning | $64.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-proflex-632ul-spinning/
-TSURINOYA Caña DRAGON S602UL Spinning | $79.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-dragon-s602ul-spinning/
-BADFISH caña Chacao Popping Rods 30-80g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-chacao-popping-rods-30-80g/
-BADFISH caña Graphite ELITE 10-32 g | $109.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-elite-10-32-g/
-TSURINOYA Caña Seriola Jigging, 250 gr | $99.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-seriola-jigging-250-gr/
-TSURINOYA Caña Struggle S912M Spinning | $149.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-struggle-s912m-spinning/
-Yamaga Blanks Early for surf 105MH Limited | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-105mh-limited/
-YAMAGA BLANKS Caña Early for Surf 105MH ,Spinning | $369.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-105mh-spinning/
-Yamaga Blancks Caña Early For SeaBass 97MMH | $369.990 | Cañas | https://bluefishing.cl/producto/yamaga-blancks-cana-early-for-seabass-97mmh/
-Yamaga Blanks Early For Surf 109MMH | $469.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-109mmh/
-YAMAGA BLANKS Caña Early for Surf 103M Limited | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-103m-limited/
-BKK Jockey TUNA TRUCKER HAT Blue | $24.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-jockey-tuna-trucker-hat-blue/
-TSURINOYA Carrete de pesca DARK WOLF DF-50L | $99.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-dark-wolf-df-50l/
-YAMAGA BLANKS Ballistick 102MH TZ NANO | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-102mh-tz-nano/
-Yamaga Blanks Early for Mobile 96MMH | $449.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-mobile-96mmh/
-TSURINOYA Carrete de pesca FS | $73.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-fs/
-TSURINOYA Caña MYSTERY 802M | $89.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-mystery-802m/
-YAMAGA BLANKS Ballistick 96MMH TZ NANO | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-96mmh-tz-nano/
-BKK-Guante de pesca Medio Dedo M | $19.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-guante-de-pesca-medio-dedo-m/
-TSURINOYA Carrete de pesca NA 2000 | $49.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-na-2000/
-BKK Jockey LOGO FIVE-PANEL HAT | $24.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-jockey-logo-five-panel-hat/
-TSURINOYA Caña MYSTERY 902MHS | $89.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-mystery-902mhs/
-TSURINOYA Carrete de Pesca Brown Bear 4000 | $129.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-brown-bear-4000/
-TSURINOYA Caña Struggle S972Ml | $129.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-struggle-s972ml/
-TSURINOYACaña Struggle S1062M | $139.990 | Cañas | https://bluefishing.cl/producto/tsurinoyacana-struggle-s1062m/
-BKK- Caja de pesca OCD | $19.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-caja-de-pesca-ocd/
-TSURINOYA Caña de pescar Dragon 532ULS SPINNING | $79.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-de-pescar-dragon-532uls-spinning/
-YAMAGA BLANKS Caña Early for Surf 103M | $379.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-103m/
-YAMAGA BLANKS Early for Rock 104H | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-rock-104h/
-YAMAGA BLANKS Caña Early SeaWalk Taijigging 63M, Jigging | $489.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-seawalk-taijigging-63m-jigging/
-YAMAGA BLANKS Caña Early 105MMH/B- Casting | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-105mmhb-casting/
-BADFISH caña Graphite Slow S562 30-300g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-slow-s562-30-300g/
-TSURINOYA Carrete de pesca Jaguar 1000 | $89.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-jaguar-1000/
-YAMAGA BLANKS Blue Sniper 100M | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-blue-sniper-100m/
-YAMAGA BLANKS Blue Sniper 100MH NANO | $549.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-blue-sniper-100mh-nano/
-BADFISH Chaqueta de pesca Floating | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-chaqueta-de-pesca-floating/
-DAIWA Carrete Laguna LT 2000 | $60.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-laguna-lt-2000/
-DAIWA Carrete Crossfire lt 4000-C | $60.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-crossfire-lt-4000-c/
-DAIWA Carrete Revros lt 5000 | $99.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-5000/
-DAIWA Carrete BG 3000 | $199.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-3000/
-DAIWA Carrete BG 5000 | $230.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-5000/
-DAIWA BALLISTIC MQ LT 4000 | $359.990 | Carretes | https://bluefishing.cl/producto/daiwa-ballistic-mq-lt-4000/
-DAIWA CARRETE FUEGO LT 4000D -C | $149.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-4000d-c/
-DAIWA BG MQ4000D-XH | $279.990 | Carretes | https://bluefishing.cl/producto/daiwa-bg-mq4000d-xh/
-TSURINOYA Caña Dragon S662L Spinning | $79.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-dragon-s662l-spinning/
-TSURINOYA Caña MYSTERY 962MHS | $99.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-mystery-962mhs/
-DAIWA Certate LT 4000 | $799.990 | Carretes | https://bluefishing.cl/producto/daiwa-certate-lt-4000/
-DAIWA BALLISTIC MQ LT 3000 | $309.990 | Carretes | https://bluefishing.cl/producto/daiwa-ballistic-mq-lt-3000/
-Carrete Daiwa Gekkabijin X LT 1000S-P | $129.990 | Carretes | https://bluefishing.cl/producto/carrete-daiwa-gekkabijin-x-lt-1000s-p/
-Carrete Daiwa CALDIA LT 4000-CXH | $219.990 | Carretes | https://bluefishing.cl/producto/carrete-daiwa-caldia-lt-4000-cxh/
-BADFISH caña Graphite SEABass 10-32 g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-seabass-10-32-g/
-BADFISH caña Shore MASTER 20-80 g | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-master-20-80-g/
-BADFISH caña Shore MASTER ELITE 20-80 g | $139.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-master-elite-20-80-g/
-BADFISH caña POWER Surf MASTER ELITE 90-180 gr | $199.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-power-surf-master-elite-90-180-gr/
-BADFISH caña GRAPHITE JIGGING LITE PRO | 150g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-lite-pro-150g/
-BADFISH caña GRAPHITE JIGGING LITE | 150 g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-lite-150-g/
-BADFISH caña GRAPHITE JIGGING Elite | 200g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-elite-200g/
-BADFISH caña GRAPHITE JIGGING | 200g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-200g/
-DAIWA Carrete de pesca COASTAL TW200SHL Casting | $319.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-de-pesca-coastal-tw200shl-casting/
-DAIWA Carrete de pesca DAIWA LEXA DH 300HSL-P | $319.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-de-pesca-daiwa-lexa-dh-300hsl-p/
-TSURINOYA Caña Legend S802ML | $69.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-legend-s802ml/
-Daiwa Seabass Hunter 96M-R | $199.990 | Cañas | https://bluefishing.cl/producto/daiwa-seabass-hunter-96m-r/
-Daiwa Seabass Hunter 100M-R | $209.990 | Cañas | https://bluefishing.cl/producto/daiwa-seabass-hunter-100m-r/
-Daiwa Seabass Hunter 100MH-R | $209.990 | Cañas | https://bluefishing.cl/producto/daiwa-seabass-hunter-100mh-r/
-DAIWA Caña Lateo 100M | 10-50g | $359.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-lateo-100m-10-50g/
-Gomexus Titanium Reel Power Knob 38mm TA38 | $42.990 | Carretes | https://bluefishing.cl/producto/gomexus-titanium-reel-power-knob-38mm-ta38/
-Gomexus Titanium Reel Power Knob 45mm TB45 | $42.990 | Carretes | https://bluefishing.cl/producto/gomexus-titanium-reel-power-knob-45mm-tb45/
-Gomexus Fishing Reel Custom Part Titanium Power Knob TA41 | $42.990 | Carretes | https://bluefishing.cl/producto/gomexus-fishing-reel-custom-part-titanium-power-knob-ta41/
-Gomexus EVA Reel Power Knob 38mm EA38 | $19.990 | Carretes | https://bluefishing.cl/producto/gomexus-eva-reel-power-knob-38mm-ea38/
-Gomexus Carbon Reel Power Knob 38mm FA38 | $42.990 | Carretes | https://bluefishing.cl/producto/gomexus-carbon-reel-power-knob-38mm-fa38/
-Ballistick HIRA 11MH TZ NANO | $649.990 | Cañas | https://bluefishing.cl/producto/ballistick-hira-11mh-tz-nano/
-Cartucho Gas Butano Atom 227g | $2.690 | Marcas > ATOM | https://bluefishing.cl/producto/cartucho-gas-butano-atom-227g/
-Set de cocina para 3-4 personas Atom | $29.990 | Marcas > ATOM | https://bluefishing.cl/producto/set-de-cocina-para-3-4-personas-atom/
-Set de cocina para 2-3 personas Atom | $21.990 | Marcas > ATOM | https://bluefishing.cl/producto/set-de-cocina-para-2-3-personas-atom/
-Set de viaje Atom 3 piezas | $21.990 | Marcas > ATOM | https://bluefishing.cl/producto/set-de-viaje-atom-3-piezas/
+# Fuente automática: woocommerce_store_api
+# Actualizado: 2026-11-09T17:37:12.183Z
+APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
+BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
+BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
+BADFISH BIG COMBAT 40, 50gr | $2.690 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-40-50gr/
 BADFISH Caña BAD AJING BAJS 18UL 2-10g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-2-10g/
 BADFISH Caña BAD AJING BAJS 18UL 3-12 | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-3-12/
 BADFISH Caña BAD AJING BAJS 19UL 3-12 g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-3-12-g/
-BADFISH Caña SHORE CAST 3mts, 15-50 | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-3mts-15-50/
-BADFISH Caña SHORE CAST  3mts 15-60 | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-3mts-15-60/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES 3,06mt,  15-50 | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-306mt-15-50/
-Carrete Daiwa Legalis LT5000D | $119.990 | Carretes | https://bluefishing.cl/producto/carrete-daiwa-legalis-lt5000d/
-Carrete Daiwa Legalis LT4000D-C Spinning Reel | $119.990 | Carretes | https://bluefishing.cl/producto/carrete-daiwa-legalis-lt4000d-c-spinning-reel/
-ATOM Lámpara Led 400 lumens | $19.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-lampara-led-400-lumens/
-ATOM Set 6 Estacas Fluorecentes | $4.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-set-6-estacas-fluorecentes/
-ATOM Kit de Estacas, Martillo y Vientos | $8.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-kit-de-estacas-martillo-y-vientos/
-ATOM Party Cooler 45 lts | $39.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-party-cooler-45-lts/
-FISHBITES Carnada FLEA Longer Lasting E-Z Pulga - Naranjo/Blanco | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-flea-longer-lasting-e-z-pulga-naranjoblanco/
-FISHBITES Carnada E-Z Clam Pink | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-clam-pink/
-FISHBITES Carnada CLAM Longer Lasting E-Z Almeja - Blanco | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-clam-longer-lasting-e-z-almeja-blanco/
-FISHBITES Carnada CLAM Longer Lasting E-Z Almeja - Naranjo | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-clam-longer-lasting-e-z-almeja-naranjo/
-FISHBITES Carnada E-Z Clam Coquina | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-clam-coquina/
-FISHBITES Carnada BAG O´WORMS Large 01054 | $14.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-large-01054/
-FISHBITES Carnada BAG O´WORMS Gusano - Regular | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-gusano-regular/
-DAIWA Polera LONG SLEEVE - D-VEC | $29.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-polera-long-sleeve-d-vec/
-DAIWA CARRETE FUEGO LT 5000D -C | $189.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-5000d-c/
-DAIWA Carrete PROCYON MQ LT4000D-CXH | $269.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-procyon-mq-lt4000d-cxh/
-DAIWA Carrete PROCYON MQ LT1000D | $269.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-procyon-mq-lt1000d/
-TSURINOYA Caña ELF AJING S752UL | $109.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-elf-ajing-s752ul/
-YAMAGA BLANKS Caña BlueCurrent Ⅲ 69 | $349.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-bluecurrent-69/
-YAMAGA BLANKS Caña BlueCurrent Ⅲ 74 | $349.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-bluecurrent-74/
-BKK Jockey LOGO PERFORMANCE HAT CAMO | $29.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-jockey-logo-performance-hat-camo/
-BKK Jockey LOGO PERFORMANCE HAT BLACK | $29.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-jockey-logo-performance-hat-black/
-BKK Jockey LOGO PERFORMANCE HAT LEGACY | $29.990 | Marcas > BKK | https://bluefishing.cl/producto/bkk-jockey-logo-performance-hat-legacy/
-XESTA Caña BLACK STAR EXTRA TUNED S58LX-S | $399.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-extra-tuned-s58lx-s/
-XESTA Caña BLACK STAR EXTRA TUNED S66M-T | $569.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-extra-tuned-s66m-t/
-XESTA Caña BLACK STAR EXTRA TUNED S55UL/L-S | $399.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-extra-tuned-s55ull-s/
-XESTA Caña BLACK STAR SOLID 2nd Generation S610-S | $429.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-solid-2nd-generation-s610-s/
-ATOM Cocinilla MAGMA - Gas Butano | $24.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-cocinilla-magma-gas-butano/
-ATOM Linterna LED 300 L | $19.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-linterna-led-300-l/
-ATOM Linterna Frontal 3W Angulable | $4.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-linterna-frontal-3w-angulable/
-ATOM Set PEDERNAL DE SUPERVIVENCIA | $4.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-set-pedernal-de-supervivencia/
-ATOM LAMPARA TELESCÓPICA DE CAMPING | $5.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-lampara-telescopica-de-camping/
-ATOM LINTERNA FRONTAL 120 Lúmenes | $12.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-linterna-frontal-120-lumenes/
-ATOM LINTERNA FRONTAL 300 Lúmenes | $15.990 | Marcas > ATOM | https://bluefishing.cl/producto/atom-linterna-frontal-300-lumenes/
-DAIWA Carrete CROSSFIRE LT 5000 | $60.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-crossfire-lt-5000/
-DAIWA Carrete SWEEPFIRE 2000 | $30.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-sweepfire-2000/
-DAIWA Carrete SWEEPFIRE 4000 | $37.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-sweepfire-4000/
-DAIWA Carrete SWEEPFIRE 5000 | $49.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-sweepfire-5000/
-DAIWA Carrete CROSSFIRE LT 1000 | $49.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-crossfire-lt-1000/
-DAIWA Carrete SALTIST MQ 8000D | $525.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-8000d/
-DAIWA Carrete SALTIST MQ 6000D | $481.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-6000d/
-DAIWA Carrete Revros lt 4000 | $99.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-4000/
-DAIWA Carrete Revros lt 2000 | $83.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-2000/
-DAIWA Carrete Laguna LT 1000 | $60.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-laguna-lt-1000/
-DAIWA Carrete Laguna LT 4000 | $73.620 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-laguna-lt-4000/
-FISHBITES Carnada E-Z Squid Flesh Pink | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-squid-flesh-pink/
-FISHBITES Carnada CRAB Longer Lasting E-Z Cangrejo - Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-crab-longer-lasting-e-z-cangrejo-rosado/
-DAIWA Carrete SEAGATE 50H | $237.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-seagate-50h/
-DAIWA Carrete SEALINE SL40 LC3BL | $221.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-sealine-sl40-lc3bl/
-DAIWA Carrete SEALINE SL50 LC3BL | $237.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-sealine-sl50-lc3bl/
-DAIWA Carrete SALTIST LWLC 40H | $425.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-saltist-lwlc-40h/
-DAIWA Carrete SALTIST LWLC 50H | $443.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/daiwa-carrete-saltist-lwlc-50h/
-FISHBITES Carnada SHRIMP Longer Lasting E-Z Camarón - Naranjo | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-longer-lasting-e-z-camaron-naranjo/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,06 mt,  8-40gr | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-306-mt-8-40gr/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,30mt,  40-100gr | $139.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-330mt-40-100gr/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,60mt, 40-120gr | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-360mt-40-120gr/
-BADFISH Caña SHORE CAST 3mts,  10-42gr | $49.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-3mts-10-42gr/
-BADFISH Caña SHORE CAST 3mts, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-3mts-20-80gr/
-BADFISH Caña SHORE CAST 2,4m 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-24m-15-50gr/
-BADFISH Caña SHORE CAST 2,7m, 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-15-50gr/
-BADFISH Caña SHORE CAST 2,7m,  15-60gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-15-60gr/
-BADFISH Caña SHORE CAST 2,1m,  10-30gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-21m-10-30gr/
-BADFISH Caña SHORE CAST 2.1m 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-21m-15-50gr/
-BADFISH Caña SHORE CAST 2.1m,  25-70gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-21m-25-70gr/
-BADFISH Caña BAD AJING BAJS 19UL 2-10g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-2-10g/
-BADFISH Caña BAD AJING BAJS 18UL 1-7 | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-1-7/
-Yamaga Blanks Early for surf 109MMH Limited | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-109mmh-limited/
-Carrete Daiwa Legalis LT6000D | $129.990 | Carretes | https://bluefishing.cl/producto/carrete-daiwa-legalis-lt6000d/
-DAIWA Carrete BG 8000 | $245.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-8000/
-DAIWA Carrete BG 4000 | $214.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-4000/
-DAIWA Carrete REVROS LT 6000 | $104.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/
-DAIWA carrete SALTIGA G 6000XH | $999.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltiga-g-6000xh/
-DAIWA carrete BG MQ 6000D-H | $335.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-mq-6000d-h/
-DAIWA carrete BG MQ 8000D-H | $379.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-mq-8000d-h/
-DAIWA carrete BG MQ 10000D-H | $379.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-mq-10000d-h/
-DAIWA carrete SALTIGA G 4000XH | $999.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltiga-g-4000xh/
-DAIWA carrete SALTIGA G 14000XH | $1.099.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltiga-g-14000xh/
-DAIWA carrete CERTATE SW G 5000XH | $999.999 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-certate-sw-g-5000xh/
-FISHBITES Carnada SHRIMP Fast Acting E-Z Camarón - Pink | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-fast-acting-e-z-camaron-pink/
-FISHBITES Carnada E-Z Shrimp FAST ACTING Orange | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-shrimp-fast-acting-orange/
-XESTA Caña SLOW EMOTION Summit edition B636 | $299.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-slow-emotion-summit-edition-b636/
-XESTA Caña POWER PITCH STYLE S54-PPJ | $409.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-power-pitch-style-s54-ppj/
-XESTA Caña RUNWAY XR 106MH | $369.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-runway-xr-106mh/
-ZENAQ Caña TOBIZO TC84 | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-tobizo-tc84/
-ZENAQ Caña MUTHOS ACCURA 95H Ocean | $799.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-95h-ocean/
-ZENAQ Caña MUTHOS ACCURA 100HHH | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-100hhh/
-ZENAQ Caña MUTHOS ACCURA 100HH Type R | $1.100.000 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-100hh-type-r/
-ZENAQ Caña SINPAA SC81-80G Hiramasa | $999.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-sinpaa-sc81-80g-hiramasa/
-DAIWA Carrete SOL MQ LT4000D-XH | $399.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-sol-mq-lt4000d-xh/
-XESTA Caña RUNWAY 24 11MH | $299.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-runway-24-11mh/
-XESTA Caña RUNWAY SRF 10.3M | $359.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-runway-srf-103m/
-FISHBITES Carnada SQUID Longer Lasting E-Z Calamar - Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-squid-longer-lasting-e-z-calamar-rosado/
-FISHBITES Carnada SHRIMP Longer Lasting E-Z Camarón - Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-longer-lasting-e-z-camaron-rosado/
-FISHBITES Carnada SHRIMP Longer Lasting E-Z Nape - Blanco | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-longer-lasting-e-z-nape-blanco/
-TSURINOYA Carrete METIS 1000 | $39.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-metis-1000/
-TSURINOYA Carrete METIS 4000 | $44.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-metis-4000/
-DAIWA Carrete EXCELER LT1000D | $139.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exceler-lt1000d/
-DAIWA Carrete EXCELER LT4000D-C | $139.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exceler-lt4000d-c/
-DAIWA Carrete EXCELER LT5000D-C | $149.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exceler-lt5000d-c/
-DAIWA Carrete EXIST LT4000D | $999.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exist-lt4000d/
-COMBO Corvinero Lenguadero 1 | $79.990 | Combos de Pesca | https://bluefishing.cl/producto/combo-corvinero-lenguadero-1/
-COMBO Corvinero Lenguadero 2 | $79.990 | Combos de Pesca | https://bluefishing.cl/producto/combo-corvinero-lenguadero-2/
-YAMAGA BLANKS Caña BLUE SNIPER 100M-MH | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-blue-sniper-100m-mh/
-YAMAGA BLANKS Caña BLUE SNIPER 96H | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-blue-sniper-96h/
-YAMAGA BLANKS Caña BLUE SNIPER PL106H | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-blue-sniper-pl106h/
-DAIWA Caña LATEO 96 MH-K | $399.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-lateo-96-mh-k/
-DAIWA Caña LATEO 110 MH-K | $399.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-lateo-110-mh-k/
-DAIWA Caña SKYHIGH 100MH | $319.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-skyhigh-100mh/
-DAIWA Caña HARRIER X JIGGING HRX66MHS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx66mhs/
-DAIWA Caña HARRIER X JIGGING HRX66MS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx66ms/
-DAIWA Caña HARRIER X JIGGING HRX70MHS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx70mhs/
-DAIWA Caña HARRIER X JIGGING HRX70HS | $169.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx70hs/
-BADFISH Caña SHORE CAST 2,7m, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-20-80gr/
 BADFISH Caña BAD AJING BAJS 19UL 5-15 g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-5-15-g/
-BADFISH Caña SHORE CAST 3.M, 50-100gr | $49.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-3m-50-100gr/
-BADFISH Caña SHORE CAST 3.30 m , 50-100gr | $49.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-330-m-50-100gr/
+BADFISH caña Chacao Popping Rods 30-80g | $69.000 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-chacao-popping-rods-30-80g/
+BADFISH caña Graphite ELITE 10-32 g | $109.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-elite-10-32-g/
+BADFISH caña GRAPHITE JIGGING - 200g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-200g/
+BADFISH caña GRAPHITE JIGGING LITE - 150 g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-lite-150-g/
+BADFISH caña Graphite Slow S562 30-300g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-slow-s562-30-300g/
+BADFISH Caña NIMBUS profesional series 3.30 - 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-3-30-50-120g/
+BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,06 mt,  8-40gr | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/
+BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,30mt,  40-100gr | $139.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-110mh-330mt-40-100gr/
+BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,60mt, 40-120gr | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-120mh-360mt-40-120gr/
+BADFISH Caña NIMBUS PROFESSIONAL SERIES 3,06mt,  15-50 | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/
+BADFISH Caña NIMBUS PROFESSIONAL SINGATURE 3.60 - 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-3-60-50-120g/
+BADFISH Caña NIMBUS SHORE JIGGING 3.30 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-3-30-50-120/
+BADFISH Caña NIMBUS SHORE JIGGING 3.60 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-3-60-50-120/
+BADFISH Caña SHORE CAST 2,1m,  10-30gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-70ml-10-30gr/
 BADFISH Caña SHORE CAST 2,1m, 5-15gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-21m-5-15gr/
 BADFISH Caña SHORE CAST 2,1m, 5-20gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-21m-5-20gr/
-BADFISH Caña NIMBUS PROFESSIONAL SINGATURE 3.30 | 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-330-50-120g/
-BADFISH Caña NIMBUS PROFESSIONAL SINGATURE 3.60 | 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-360-50-120g/
-BADFISH Caña NIMBUS SHORE JIGGING 3.30 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-330-50-120/
-BADFISH Caña NIMBUS SHORE JIGGING 3.60 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-360-50-120/
+BADFISH Caña SHORE CAST 2,4m 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-80mh-15-50gr/
+BADFISH Caña SHORE CAST 2,7m, 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-90m-15-50gr/
+BADFISH Caña SHORE CAST 2,7m, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-20-80gr/
+BADFISH Caña SHORE CAST 2.1m 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-70mh-15-50gr/
+BADFISH Caña SHORE CAST 3mts,  10-42gr | $49.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100m-10-42gr/
+BADFISH Caña SHORE CAST 3mts, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100mh-20-80gr/
+BADFISH caña Shore MASTER 20-80 g | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-master-20-80-g/
+BADFISH Chucao ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-chucao-assassin-5-9-gr/
+BADFISH Crank Assassin 3.5gr, Floating | $5.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-crank-assassin-3-5gr-floating/
+BADFISH Crank Assassin 3.5gr, Sinking | $5.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-crank-assassin-3-5gr-sinking/
+BADFISH Crank Assassin 8.2g | $5.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-crank-assassin-8-2g/
+BADFISH CRAZY COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-crazy-combat-20-30gr/
+BADFISH CRAZY COMBAT 40, 50gr | $2.690 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-crazy-combat-40-50gr/
+BADFISH FLUOROCARBONO-25m | $3.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-fluorocarbono-25m/
+BADFISH FLUOROCARBONO-50m | $7.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-fluorocarbono-50m/
+BADFISH Jig LITTLE COMBAT 10gr | $2.590 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-jig-little-combat-10gr/
+BADFISH Jig LITTLE COMBAT 12gr | $2.590 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-jig-little-combat-12gr/
+BADFISH Jig LITTLE COMBAT 5gr | $2.590 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-jig-little-combat-5gr/
+BADFISH Jig LITTLE COMBAT 7gr | $2.590 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-jig-little-combat-7gr/
+BADFISH Jig SARDINE 20 y 30 gr | $2.990 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-jig-sardine-20-y-30-gr/
+BADFISH Linea ENDURANCE 150mts pink | $13.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-linea-endurance-150mts-pink/
+BADFISH Linea ENDURANCE 300mts muticolor | $15.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-linea-endurance-300mts-muticolor/
+BADFISH Linea ENDURANCE 300mts pink | $15.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-linea-endurance-300mts-pink/
+BADFISH Multifilamento PE Line X4 - 150mts Verde | $6.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-pe-line-x4-150mts-verde/
+BADFISH Multifilamento PE Line X8 - 150mts Verde | $9.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-pe-line-x8-150mts-verde/
+BADFISH Multifilamento PE Line X8 - 300mts multicolor | $14.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-peline-x8-300-m/
+BADFISH Multifilamento PE Line X8 - 300mts Verde | $14.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-pe-line-x8-300mts-verde/
+BADFISH Multifilamento PEline X4 - 150 m | $7.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-peline-x4-150-m/
+BADFISH Multifilamento PEline X8 - 150 m | $8.990 | Lineas | https://bluefishing.cl/producto/badfish-multifilamento-peline-x8-150-m/
+BADFISH SARDINE 40 gr | $3.490 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-sardine-40-gr/
+BADFISH SARDINE 50 gr | $3.490 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-sardine-50-gr/
+BADFISH SARDINE 60 gr | $3.490 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-sardine-60-gr/
+BADFISH Señuelo DARK RIVER- 4,7g | $3.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-dark-river-47g/
+BADFISH Señuelo DARK RIVER- 8,2g | $3.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-dark-river-82g/
+BADFISH Señuelo Hirame Assassin 23g | $8.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-hirame-assassin-23g/
+BADFISH Señuelo NAKATSU 24,7g Floating | $9.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-nakatsu-247g-floating/
+BADFISH Señuelo PELAGIC 125F | $8.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-pelagic-125f/
+BADFISH Señuelo Trout Assassin 5 g | $5.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-trout-assassin-5-g/
+BADFISH Señuelo Trout Assassin 6.1g | $4.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-senuelo-trout-assassin-6-1g/
+BKK Anzuelo BKK Harpax Stinger | $5.990 | Anzuelos | https://bluefishing.cl/producto/bkk-anzuelo-bkk-harpax-stinger/
+BKK Anzuelo Inline Lone Diablo | $7.990 | Anzuelos | https://bluefishing.cl/producto/bkk-anzuelo-inline-lone-diablo/
+BKK Anzuelos IMP | $2.990 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/bkk-anzuelos-imp/
+BKK BASILISK Anzuelo Para Vinilos | $3.990 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/bkk-basilisk-anzuelo-para-vinilos/
+BKK Jighead SILENT CHASER Harpax Darting LRF | $5.990 | Anzuelos | https://bluefishing.cl/producto/bkk-jighead-silent-chaser-harpax-darting-lrf/
+BKK Solid Core Assist Cord | $7.990 | Anzuelos | https://bluefishing.cl/producto/bkk-solid-core-assist-cord/
+BKK Triples Fangs-63 UA | $7.990 | Anzuelos | https://bluefishing.cl/producto/bkk-triples-fangs-63-ua/
+DAIWA Caña HARRIER X JIGGING HRX66MHS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx66mhs/
+DAIWA Caña HARRIER X JIGGING HRX66MS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx66ms/
+DAIWA Caña HARRIER X JIGGING HRX70HS | $169.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx70hs/
+DAIWA Caña HARRIER X JIGGING HRX70MHS | $159.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-harrier-x-jigging-hrx70mhs/
+DAIWA Caña LATEO 110 MH-K | $399.990 | Cañas | https://bluefishing.cl/producto/daiwa-cana-lateo-110-mh-k/
+DAIWA carrete BG MQ 6000D-H | $335.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-mq-6000d-h/
+DAIWA carrete BG MQ 8000D-H | $379.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-bg-mq-8000d-h/
+DAIWA Carrete EXCELER LT1000D | $139.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exceler-lt1000d/
+DAIWA Carrete EXCELER LT4000D-C | $139.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exceler-lt4000d-c/
+DAIWA Carrete EXIST LT4000D | $999.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-exist-lt4000d/
+DAIWA CARRETE FUEGO LT 3000 | $129.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-3000/
+DAIWA CARRETE FUEGO LT 5000D -C | $189.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-5000d-c/
+DAIWA Carrete Revros lt 4000 | $99.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-4000/
+DAIWA Carrete REVROS LT 6000 | $104.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/
+DAIWA Carrete SALTIST MQ 6000D | $481.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-6000d/
+DAIWA Carrete SALTIST MQ 8000H | $525.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-8000d/
+DAIWA FUEGO LT4000D-C | $149.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-4000d-c/
+DAIWA Señuelo OVER DRIVE 120S | $23.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-over-drive-120s/
+DAIWA Señuelo SLZ-VERTICE R 125S SINKING | $24.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-slz-vertice-r-125s-sinking/
+Daiwa Señuelo VERTICE R125S , 23g | $21.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-vertice-r125s-23g/
+Daiwa Vertice R 140S Sinking 28.5g | $24.990 | Señuelos | https://bluefishing.cl/producto/daiwa-vertice-r-140s-sinking-28-5g/
+DECOY Jighead SV-51 DELTA MAGIC HEAVY | $4.990 | Anzuelos | https://bluefishing.cl/producto/decoy-jighead-sv-51-delta-magic-heavy/
+FISHBITES Carnada BAG O´WORMS Bloodworm 2 Tiras | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-bloodworm-2-tiras/
+FISHBITES Carnada BAG O´WORMS Bloodworm 3 Tiras | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-bloodworm-3-tiras/
+FISHBITES Carnada BAG O´WORMS Lugworm 2 Tiras | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-lugworm-2-tiras/
+FISHBITES Carnada BAG O´WORMS Lugworm 3 Tiras | $12.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-bag-oworms-lugworm-3-tiras/
+FISHBITES Carnada CLAM Longer Lasting E-Z Almeja – Naranjo | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-clam-orange/
+FISHBITES Carnada CRAB Longer Lasting E-Z Cangrejo – Naranjo | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-crab-longer-lasting-e-z-cangrejo-naranjo/
+FISHBITES Carnada CRAB Longer Lasting E-Z Cangrejo – Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-longer-lasting-e-z-shrimp-pink-00880/
+FISHBITES Carnada E-Z Clam Pink | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-clam-pink/
+FISHBITES Carnada E-Z Squid Flesh Pink | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-squid-flesh-pink/
+FISHBITES Carnada FLEA Longer Lasting E-Z Pulga – Naranjo/Blanco | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-e-z-flea-orange-01009/
 FISHBITES Carnada SHRIMP flesh | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-flesh/
-YAMAGA BLANKS Ballistick 1010MH | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-1010mh/
-YAMAGA BLANKS Ballistick 106MMH | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-106mmh/
+FISHBITES Carnada SHRIMP Longer Lasting E-Z Camarón – Naranjo | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-longer-lasting-e-z-shrimp-orange/
+FISHBITES Carnada SHRIMP Longer Lasting E-Z Camarón – Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-longer-lasting-e-z-camaron-rosado/
+FISHBITES Carnada SHRIMP Longer Lasting E-Z Nape – Blanco | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-shrimp-longer-lasting-e-z-nape-blanco/
+FISHBITES Carnada SQUID Longer Lasting E-Z Calamar – Rosado | $11.990 | Señuelos > Carnada Artificial | https://bluefishing.cl/producto/fishbites-carnada-squid-longer-lasting-e-z-calamar/
+GILLIES Señuelo CLASSIC 120 BARRA 5mts | $13.990 | Marcas > GILLIES | https://bluefishing.cl/producto/gillies-senuelo-classic-120-barra-5mts/
+GILLIES Señuelo CLASSIC 120 BARRA 7mts | $13.990 | Marcas > GILLIES | https://bluefishing.cl/producto/gillies-senuelo-classic-120-barra-7mts/
+GOMEXUS Pomo DOUBLE HANDLE – BLACK GOLD 98mm Daiwa | $67.218 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-double-handle-black-gold-98mm-daiwa/
+GOMEXUS Pomo DOUBLE HANDLE – BLACK GOLD 98mm Shimano | $67.218 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-double-handle-black-gold-98mm-shimano/
+GOMEXUS Pomo DOUBLE HANDLE – BLACK RED 98mm Daiwa | $67.218 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-double-handle-black-red-98mm-daiwa/
+GOMEXUS Pomo DOUBLE HANDLE – BLACK RED 98mm Shimano | $67.218 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-double-handle-black-red-98mm/
+GOMEXUS Pomo DOUBLE HANDLE – SILVER 98mm Daiwa | $67.218 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-double-handle-silver-98mm-daiwa/
+GOMEXUS Pomo TITANIUM BLACK GOLD 38mm | $36.126 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-titanium-black-gold-38mm/
+GOMEXUS Pomo TITANIUM FLAME BLACK 30mm | $36.126 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-titanium-flame-black-30mm/
+GOMEXUS Pomo TITANIUM FLAME GOLD 22mm | $36.126 | Carretes | https://bluefishing.cl/producto/gomexus-pomo-titanium-flame-gold-22mm/
+GOMEXUS REEL STAND R6 48mm Black | $13.436 | Carretes | https://bluefishing.cl/producto/gomexsus-reel-stand-r6-48mm-black/
+GOMEXUS REEL STAND R6 48mm Silver | $13.436 | Carretes | https://bluefishing.cl/producto/gomexsus-reel-stand-r6-48mm-silver/
+GOMEXUS REEL STAND R6 48mm Smoke | $13.436 | Carretes | https://bluefishing.cl/producto/gomexsus-reel-stand-r6-48mm-smoke/
+Jighead  Chebraska,Cabeza de plomo 22, 24, 26 y 28g | $1.600 | Anzuelos | https://bluefishing.cl/producto/jighead-chebraskacabeza-de-plomo-22-24-26-y-28g/
+Jighead DECOY SV-45 SLIDE BOMB | $4.990 | Anzuelos | https://bluefishing.cl/producto/jighead-decoy-sv-45-slide-bomb/
+JOF Multifilamento JOF X8 | $12.990 | Lineas | https://bluefishing.cl/producto/jof-multifilamento-jof-x8/
+MAGBITE Vinilo BOOTY SHAKE 2.5″ | $4.990 | Marcas > MAGBITE | https://bluefishing.cl/producto/magbite-vinilo-booty-shake-2-5/
+MAGBITE Vinilo SNATCH BITE SHAD 4 | $5.990 | Marcas > MAGBITE | https://bluefishing.cl/producto/magbite-vinilo-snatch-bite-shad-4/
+MAGBITE Vinilo STAN  2 | $4.990 | Marcas > MAGBITE | https://bluefishing.cl/producto/magbite-vinilo-stan-2/
+MAGBITE Vinilo TAKOASHI IPPON Mini  2.8″ | $5.990 | Marcas > MAGBITE | https://bluefishing.cl/producto/magbite-vinilo-takoashi-ippon-mini-2-8/
+MAGBITE Vinilo VACUUM RING 2.5 | $4.990 | Marcas > MAGBITE | https://bluefishing.cl/producto/magbite-vinilo-vacuum-ring-2-5/
+MARIA Popper DUCK DIVE F190 | $32.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-popper-duck-dive-f190/
+MARIA Popper DUCK DIVE F230 | $34.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-popper-duck-dive-f230/
+MARIA Popper POP QUEEN F160 | $28.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-popper-pop-queen-f160/
+MARIA Popper POP QUEEN F200 | $34.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-popper-pop-queen-f200/
+MARIA Stickbait LEGATO F190 | $33.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-legato-f190/
+MARIA Stickbait LEGATO F230 | $34.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-legato-f230/
+MARIA Stickbait LOADED F180 | $31.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-loaded-f180/
+MARIA Stickbait RAPIDO F160 | $29.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-rapido-f160/
+MARIA Stickbait RAPIDO F190 | $32.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-rapido-f190/
+MARIA Stickbait RAPIDO F230 | $34.990 | Marcas > MARIA | https://bluefishing.cl/producto/maria-stickbait-rapido-f230/
+MEIHO Caja de Señuelo BOUSUI CASE WG-1 RED | $19.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelo-bousui-case-wg-1-red/
+MEIHO Caja de Señuelo LURE GAME CASE J | $5.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelo-lure-game-case-j/
+MEIHO Caja de Señuelo QUATRO CASE J | $5.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelo-quatro-case-j/
+MEIHO Caja de Señuelo REVERSIBLE 165 | $9.990 | Cajas | https://bluefishing.cl/producto/caja-de-senuelo-reversible-165/
+MEIHO Caja de Señuelo REVERSIBLE D-86 BLACK | $5.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelo-reversible-d-86-black/
+MEIHO Caja de Señuelo RUNGUN CASE 1010W-1 RED | $10.990 | Cajas | https://bluefishing.cl/producto/caja-de-senuelo-rungun-case-1010w-1-red/
+MEIHO Caja de Señuelo SLIT FORM CASE J | $6.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelo-slit-form-case-j/
+MEIHO Caja de señuelos REVERSIBLE 180V | $9.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelos-reversible-180v/
+MEIHO Caja de señuelos VW 2010ND MType | $8.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelos-vw-2010nd-mtype/
+MEIHO Caja de señuelos VW-2010NDDM | $8.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-senuelos-vw-2010nddm/
+SAKANA Anzuelo HIRAME HOOK | $4.990 | Anzuelos | https://bluefishing.cl/producto/sakana-anzuelo-hirame-hook/
+SAKANA BEACH RUNNER 100gr y 120gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-beach-runner-100gr-y-120gr/
+SAKANA BEACH RUNNER 60gr y 80gr | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-beach-runner-60gr-y-80gr/
+SAKANA Caja de pesca LURE CASE L | $2.990 | Cajas | https://bluefishing.cl/producto/meiho-caja-de-pesca-lure-case-l/
+SAKANA Caja de pesca LURE CASE M | $2.490 | Accesorios de Pesca | https://bluefishing.cl/producto/meiho-caja-de-pesca-lure-case-m/
+SAKANA FLASH DIVE 125S - SINKING | $13.990 | Señuelos | https://bluefishing.cl/producto/sakana-flash-dive-125s-sinking/
+SAKANA FLASH Z  135F, Floating | $13.990 | Señuelos | https://bluefishing.cl/producto/sakana-flash-z-135f-floating/
+SAKANA FLASH Z  135S, SINKING | $13.990 | Señuelos | https://bluefishing.cl/producto/sakana-flash-z-135s/
+SAKANA Hirame Minnow, 125S 30 gr | $10.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-hirame-minnow-125s-30-gr/
+SAKANA JIG SANADA 30 y 40 gr | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-sanada-30-y-40-gr/
+SAKANA JIG SANADA 50 y 60 gr | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-sanada-50-y-60-gr/
+SAKANA Jig SHINKAI OFFENDER 100grs | $5.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-shinkai-offender-100grs-2/
+SAKANA Jig SHINKAI OFFENDER 120grs | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-shinkai-offender-100grs/
+SAKANA Jig SHINKAI OFFENDER 150grs | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-shinkai-offender-150grs/
+SAKANA Jig SHINKAI OFFENDER 60grs | $4.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-shinkai-offender-60grs/
+SAKANA Jig SHINKAI OFFENDER 80grs | $5.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-shinkai-offender-80grs/
+SAKANA JIG TAKAMURA 30 Y 40 gr | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-takamura-30-y-40-gr/
+SAKANA JIG TAKAMURA 50 Y 60 gr | $8.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-takamura-50-y-60-gr/
+SAKANA JIG YUKIMURA 30 Y 40gr | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-yukimura-30-y-40gr/
+SAKANA JIG YUKIMURA 50 Y60gr | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jig-yukimura-50-y60gr/
+SAKANA Jighead BALL SNAKE | $2.490 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-ball-snake/
+SAKANA Jighead BALL SNAKE 30,40 y 80gr | $2.990 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-ball-snake-3040-y-50gr/
+SAKANA Jighead LITTLE FIGHTER | $3.490 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-little-fighter/
+SAKANA Jighead Prisma 30 y 40gr | $3.990 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-prisma-30-y-40gr/
+SAKANA Jighead Snake 2.5 y 3.5g | $2.490 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-snake/
+SAKANA Jighead Snake 30 y 40g | $4.990 | Anzuelos | https://bluefishing.cl/producto/sakana-jighead-snake-30-y-40g/
+SAKANA JIGU SHORE 30 y 40 | $4.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-shore-30-y-40/
+SAKANA JIGU SHORE 50 Y 60gr | $4.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-shore-50-y-60gr-copia/
+SAKANA JIGU SLOW   80g | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-slow-80g/
+SAKANA JIGU Tournament 30 y 40 gr | $4.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-tournament-30by-40/
+SAKANA JIGU Tournament 50 y 60g | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-tournament-50-y-60g/
+SAKANA MetalVib GUNBA 30g -74mm | $8.990 | Señuelos > Señuelos Mar > METAL VIB | https://bluefishing.cl/producto/sakana-metalvib-gunba-30g-74mm/
+SAKANA Multi YUKIMURA X12 multicolor | $27.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x12-multicolor/
+SAKANA Multi YUKIMURA X8 | $22.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8/
+SAKANA Multi YUKIMURA X8 150m | $15.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-150m/
+SAKANA Multi YUKIMURA X8 PINK | $22.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-pink/
+SAKANA Porta Cañas para Auto | $139.990 | Herramientas > Portacañas | https://bluefishing.cl/producto/sakana-porta-canas-para-auto/
+SAKANA Señuelo KOSEN 125S | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-kosen-125s/
+SAKANA Señuelo Namba Sinking 140mm 26g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-namba-sinking-140mm-26g/
+SAKANA Señuelo Narita Sinking 129mm 24g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-narita-sinking-129mm-24g/
+SAKANA Señuelo PATRICIA  140S - 31gr | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-patricia-140s-31gr/
+SAKANA Señuelo Sakai Sinking 125mm 28g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-sakai-sinking-125mm-278g/
+SAKANA Señuelo Sendai Floating 140mm 23g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-sendai-floating-140mm-23g/
+SAKANA Señuelo Shizuoka Floating 140mm 27g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-shizuoka-floating-140mm-27g/
+SAKANA Señuelo Shizuoka140S  SINKING  31g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-shizuoka140s-sinking-31g/
+SAKANA Señuelo SPITFIRE RAIMBOW  125S - 28 g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-spitfire-raimbow-125s-28-g/
+SAKANA SHINKAI DEEP 120gr Y 150gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-deep-120gr-y-150gr/
+SAKANA SHINKAI DEEP 60gr, y 80g | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-deep-60gr-y-80g/
+SAKANA SHINKAI SLOW 120gr y 100gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-120gr-y-100gr/
+SAKANA SHINKAI SLOW 250gr y 150gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-250gr-y-150gr/
+SAKANA SHINKAI SLOW 80gr y 60gr | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-80gr-y-60gr/
+SAKANA Vinilo SHIRIKON 29grs | $4.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-16g/
+SAKANA Vinilo SHIRIKON 34grs | $5.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-20g/
+SAKANA Vinilo SHIRIKON 43grs | $5.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-30/
+SAKANA VINILO YUKIMURA 21 Y 27 gr | $9.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-vinilo-yukimura-21-y-27-gr/
+SAKANA VINILO YUKIMURA 35 gr | $10.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-vinilo-yukimura-35-gr/
+SAKANA Vinilos CANDY TAIL 30gr | $6.990 | Señuelos | https://bluefishing.cl/producto/sakana-vinilos-candy-tail/
+SAKANA Vinilos CANDY TAIL 35gr | $6.990 | Señuelos | https://bluefishing.cl/producto/sakana-vinilos-candy-tail-35gr/
+SAKANA Vinilos CANDY TAIL 40gr | $6.990 | Señuelos | https://bluefishing.cl/producto/sakana-vinilos-candy-tail-40gr/
+SAKANA Vinilos SOFT BAIT Bolsa x 6un | $5.990 | Señuelos | https://bluefishing.cl/producto/sakana-vinilos-soft-bait-bolsa-x-6un/
+SALVIMAR Arpón ARES 60 con Carrete | $259.990 | Buceo Deportivo > Arpón | https://bluefishing.cl/producto/salvimar-arpon-ares-60-con-carrete/
+SALVIMAR Arpón ARES 75 con Carrete | $259.990 | Buceo Deportivo > Arpón | https://bluefishing.cl/producto/salvimar-arpon-ares-75-con-carrete/
+SALVIMAR Arpón METAL con Carrete 75 – 85 – 95 | $207.992 | Buceo Deportivo > Arpón | https://bluefishing.cl/producto/salvimar-arpon-metal-con-carrete-75-85-95/
+SALVIMAR Arpón V-PRO con Carrete 60 – 75 – 85 | $235.990 | Buceo Deportivo > Arpón | https://bluefishing.cl/producto/salvimar-arpon-v-pro-con-carrete-60-75-85/
+SASAME Anzuelo AKITAKITSUNE F-985 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-akitakitsune-f-985/
+SASAME Anzuelo FALLING FOX F-819 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-falling-fox-f-819/
+SASAME Anzuelo OCTO BEAK #5/0 | $6.990 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-octo-beak-5-0/
+SASAME Anzuelo SEIGO F-704 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-seigo-f-704/
+SASAME Anzuelo SEIGO RINGED F-709 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-seigo-ringed-f-709/
+SASAME Anzuelo SEIGO SLICED F-706 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-seigo-sliced-f-706/
+SASAME Anzuelo SODE F-730 | $2.290 | Anzuelos > Anzuelo | https://bluefishing.cl/producto/sasame-anzuelo-sode-f-730/
+SASAME Anzuelo SPINNER X  F-678 | $2.990 | Anzuelos | https://bluefishing.cl/producto/sasame-anzuelo-spinner-x-f-678/
+SASAME CURVE POINT TREBLE 11 | $11.990 | Anzuelos | https://bluefishing.cl/producto/sasame-curve-point-treble-11/
+SASAME CURVE POINT TREBLE 21 | $12.990 | Anzuelos | https://bluefishing.cl/producto/sasame-curve-point-treble-21/
+SASAME CURVE POINT TREBLE 31 | $20.990 | Anzuelos | https://bluefishing.cl/producto/sasame-curve-point-treble-31/
+SEA FALCON Jig TG SPOON 30 grs | $11.990 | Señuelos > Jig | https://bluefishing.cl/producto/sea-falcon-jig-tg-spoon-30-grs/
+SUNLINE Fluorocarbono SIGLON FC | $7.990 | Lineas > Fluorocarbono | https://bluefishing.cl/producto/sunline-fluorocarbono-siglon-fc/
+SUNLINE Multi  SIGLON X4 - 150m - multicolor | $12.990 | Lineas | https://bluefishing.cl/producto/sunline-multi-siglon-x4-150m-multicolor/
+SUNLINE Multi  SIGLON X8 - 150m - VERDE | $19.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-x8-300m-multicolor/
+SUNLINE Multifilamento SIGLON ADV X8 - 300m - Blue | $41.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-adv-x8-300m-blue/
+SUNLINE Multifilamento SIGLON Orange X8 300m | $27.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-orange-x8-300mts/
+SUNLINE Multifilamento SIGLON X8 - 300m - Multicolor | $27.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-adv-x8-300m-multicolor/
+SUNLINE Multifilamento SIGLON X8 - 300m VERDE | $32.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-x8-300m-naranja/
+TOKIO HOOKS TRIPLE MUSASHI X4 | $6.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-musashi-x4/
+TOKIO HOOKS TRIPLE OSAKA X4 Pack 20 Un | $15.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-osaka-pack-20-un/
+TOKIO HOOKS TRIPLE OSAKA X4 Pack 50 Un | $15.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-osaka-x4-pack-50-un/
+TORAY Fluoro POWERGAME 30m | $20.990 | Lineas > Fluorocarbono | https://bluefishing.cl/producto/toray-fluoro-powergame-30m/
+TSURINOYA Bolso FISHING REEL BAG | $49.990 | Accesorios de Pesca | https://bluefishing.cl/producto/tsurinoya-bolso-fishing-reel-bag/
+TSURINOYA caballito Pied falconet 3,5gr | $4.990 | Señuelos > Señuelos Mar > METAL VIB | https://bluefishing.cl/producto/tsurinoya-caballito-pied-falconet-35gr/
+TSURINOYA Caña ELF AJING S752UL | $149.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-elf-ajing-s752ul/
+TSURINOYA Caña MYSTERY 902MHS | $89.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-mystery-902mhs/
+TSURINOYA Caña MYSTERY 962MHS | $99.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-mystery-962mhs/
+TSURINOYA Caña Seriola Jigging, 250 gr | $99.990 | Cañas | https://bluefishing.cl/producto/tsurinoya-cana-seriola-jigging-250-gr/
+TSURINOYA Carrete de pesca DARK WOLF DF-50L | $99.990 | Carretes > Baitcasting | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-dark-wolf-df-50l/
+TSURINOYA Carrete de pesca NA 2000 | $49.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-na-2000/
 TSURINOYA Carrete METIS 2000 | $44.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-metis-2000/
+TSURINOYA Carrete METIS 4000 | $44.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-metis-4000/
+TSURINOYA Carrete NANO 4000-5000 | $59.990 | Carretes | https://bluefishing.cl/producto/tsurinoya-carrete-nano-4000-5000/
+TSURINOYA Metal Vib CILUS 35g | $8.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-metal-vib-cilus-35g/
+TSURINOYA Metal Vib VECTOR 35gr | $8.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-metal-vib-vector-35gr/
+TSURINOYA Señuelo AIRAZOR  – DW208 | $7.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-dw208/
+TSURINOYA Señuelo Chilean Assassin 110F-20,5g | $8.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-chilean-assassin-110f/
+TSURINOYA Señuelo Chilean Assassin 110S | $8.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-chilean-assassin-110s/
+TSURINOYA Señuelo DW125 – WIZARD 110S | $7.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-dw125-wizard-110s/
+TSURINOYA señuelo DW131, 20 gr, sinking | $9.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-tail-spin-24gr/
+TSURINOYA Señuelo DW75  8.9g | $5.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-dw75-8-9g/
+TSURINOYA Señuelo Intruder 60s 6.5g DW107 | $5.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-intruder-60s-6-5g-dw107/
+TSURINOYA Señuelo LANCE 125HS – DW152 | $8.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-lance-125hs-dw152/
+TSURINOYA Señuelo LENGUADO 140S | $12.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-lenguado-140s/
+TSURINOYA Señuelo Popper DW136 – 60g | $11.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-dw137-150s/
+TSURINOYA Señuelo Popper DW153-68g | $11.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-senuelo-popper-dw153-68g/
+TSURINOYA Stinger 120F  Floating 19g DW202 | $10.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-stinger-120f-floating-19g-dw202/
+TSURINOYA STINGER 125S Sinking  28g. DW203 | $10.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-stinger-125s-sinking-28g-dw203/
+TSURINOYA Stinger DW92  Sinking 26g | $12.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-stinger-dw92-sinking-26g/
+TSURINOYA Vinilo Actor 100m 8g | $5.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-actor-100m-8g/
+TSURINOYA Vinilo LURKER  12pcs | $2.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-lurker-12pcs/
+TSURINOYA Vinilo Soft Lure-35gr | $5.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-soft-lure-35gr/
+TSURINOYA Vinilo WORM BN63-0,7g | $2.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-worm-bn63-07g/
+TSURINOYA Vinilo WORM FX38-0,4g | $2.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-worm-fx38-04g/
+TSURINOYA Vinilo WORM PULSE 3,1 gr | $3.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-worm-pulse-31-gr/
+TSURINOYA Vinilo WORM T65-3,6g | $2.990 | Señuelos | https://bluefishing.cl/producto/tsurinoya-vinilo-worm-t65-36g/
+VARIVAS  VEP Shock Leader NYLON, 50mts | $9.990 | Lineas | https://bluefishing.cl/producto/varivas-vep-shock-leader-nylon-50mts/
+VARIVAS Ajing Master – Shock Leader | $11.990 | Lineas | https://bluefishing.cl/producto/varivas-ajing-master-shock-leader/
+VARIVAS AVANI CASTING PE SMP Hiramasa Tune X8 | $119.990 | Lineas | https://bluefishing.cl/producto/varivas-avani-casting-pe-smp-hiramasa-tune-x8/
+VARIVAS Ester AJING MASTER RED EYE | $13.990 | Lineas | https://bluefishing.cl/producto/varivas-ester-ajing-master-red-eye/
+VARIVAS Fluorocarbono Shock Leader 30m | $24.990 | Lineas > Fluorocarbono | https://bluefishing.cl/producto/varivas-fluorocarbono-shock-leader-30m/
+VARIVAS light Game SHOCK Leader | $13.990 | Lineas | https://bluefishing.cl/producto/varivas-light-game-shock-leader/
+VARIVAS Multi AVANI Casting PE X8 Max Power 300mts | $69.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-avani-casting-pe-x8-max-power/
+VARIVAS Multi AVANI Casting PE X8 Max Power 400mts | $69.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-avani-casting-pe-x8-max-power-400mts/
+VARIVAS Multi Avani Jigging PE X8 300mts | $79.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-avani-jigging-pe-x8/
+VARIVAS Multi AVANI Shore MasterX8 200m | $49.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-avani-shore-masterx8-200m/
+VARIVAS Multi PE X4 Marking 150 m | $19.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x4-marking-150-m/
+VARIVAS Multi PE X4 OCblue 150 m | $19.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x4-ocblue-150-m/
+VARIVAS Multi PE X8 Marking 150 m | $26.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x8-marking-150-m/
+VARIVAS Multi PE X8 Marking 300 m | $45.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x8-marking-300-m/
+VARIVAS Multi PE X8 OCblue 150 m | $26.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x8-ocblue-150-m/
+VARIVAS Multi PE X8 OCblue 200 m | $32.990 | Lineas | https://bluefishing.cl/producto/varivas-multi-pe-x8-ocblue-200-m/
+VARIVAS Ocean Record – Shock Leader | $12.990 | Lineas | https://bluefishing.cl/producto/varivas-ocean-record-shock-leader/
+VARIVAS Seabass Shock Leader 30m | $24.990 | Lineas | https://bluefishing.cl/producto/varivas-seabass-shock-leader-30m/
+VARIVAS SeaBass VEP-F Nylon – Shock Leader | $8.990 | Lineas | https://bluefishing.cl/producto/varivas-seabass-vep-f-nylon-shock-leader/
+VARIVAS shock leader BIG TROUT , 30m | $17.990 | Lineas | https://bluefishing.cl/producto/varivas-shock-leader-big-trout-30m/
+XESTA BLACK STAR EXTRA TUNED S69ULX-S | $399.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-extra-tuned-s69ulx-s/
+XESTA Caña BLACK STAR EXTRA TUNED S58LX-S | $399.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-black-star-extra-tuned-s58lx-s/
+XESTA Caña POWER PITCH STYLE S54-PPJ | $409.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-power-pitch-style-s54-ppj/
+XESTA Caña RUNWAY SRF 10.3M | $359.990 | Cañas | https://bluefishing.cl/producto/xesta-cana-runway-srf-10-3m/
+XESTA Jighead BLACK STAR HEAD Diver Down EX | $5.990 | Anzuelos | https://bluefishing.cl/producto/xesta-jighead-black-star-head-diver-down-ex/
+XESTA Jighead BLACK STAR Touch Down | $4.193 | Anzuelos | https://bluefishing.cl/producto/xesta-jighead-black-star-touch-down/
+XESTA vinilo de pesca CREEPY HOG 2.5 | $7.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilo-de-pesca-creepy-hog-2-5/
+XESTA Vinilo IKURA MUSHI 1.2″ | $6.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilo-ikura-mushi-1-2/
+XESTA Vinilo SHAD STAR SLIM 3.5 | $6.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilo-shad-star-slim-3-5/
+XESTA vinilos Aji Crawler 2.0 | $5.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-aji-crawler-2-0/
+XESTA vinilos Aji Crawler 3.0 | $5.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-aji-crawler-3-0/
+XESTA vinilos AJING NEEDLE 2.2g | $4.193 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-ajing-needle-2-2g/
+XESTA vinilos AJING NEEDLE 3.2 | $4.193 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-ajing-needle-3-2/
+XESTA vinilos VELVETSTAR 2.5g | $5.990 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-velvetstar-2-5g/
+XESTA vinilos VELVETSTAR 3.25g | $4.193 | Señuelos | https://bluefishing.cl/producto/xesta-vinilos-velvetstar-3-25g/
+YAMAGA BLANKS Ballistick 102MH TZ NANO | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-102mh-tz-nano/
+YAMAGA BLANKS Ballistick 106MMH | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-ballistick-106mmh/
+YAMAGA BLANKS Blue Sniper 100M | $499.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-blue-sniper-100m/
+YAMAGA BLANKS Blue Sniper 100MH NANO | $549.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-blue-sniper-100mh-nano/
+YAMAGA BLANKS Caña BLUE SNIPER 100M-MH | $599.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-blue-sniper-100m-mh/
+YAMAGA BLANKS Caña EARLY for SeaBass 93M | $369.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-seabass-93m/
+YAMAGA BLANKS Caña Early for Surf 103M | $379.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-103m/
+YAMAGA BLANKS Caña Early SeaWalk Taijigging 63M, Jigging | $489.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-seawalk-taijigging-63m-jigging/
+Yamaga Blanks Early For Surf 109MMH | $469.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-109mmh/
+ZENAQ Caña MUTHOS ACCURA 100HHH | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-100hhh/
+ZENAQ Caña SINPAA SC81-80G Hiramasa | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-sinpaa-sc81-80g-hiramasa/
