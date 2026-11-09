@@ -4,8 +4,10 @@ const { fetchProductPage } = require("../lib/productPage");
 const { TECHNICAL_TYPES, extractAIKnowledge, heuristicKnowledge } = require("../lib/knowledgeExtractor");
 const { detectProductType, detectBrand } = require("../lib/product-taxonomy");
 
-const CATALOG_PATH = path.join(__dirname, "..", "catalogo", "catalogo_para_bot.txt");
-const KNOWLEDGE_PATH = path.join(__dirname, "..", "catalogo", "product_knowledge.json");
+const { readPath, writePath } = require("../lib/catalogPaths");
+const CATALOG_PATH = readPath("catalogo_para_bot.txt");
+const KNOWLEDGE_PATH = readPath("product_knowledge.json");
+const KNOWLEDGE_OUT = writePath("product_knowledge.json");
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const ENRICH_LIMIT = Number(process.env.ENRICH_LIMIT || 0);
@@ -50,7 +52,7 @@ function persistKnowledge(knowledge) {
   const sorted = Object.fromEntries(
     Object.entries(knowledge).sort(([a], [b]) => a.localeCompare(b))
   );
-  fs.writeFileSync(KNOWLEDGE_PATH, JSON.stringify(sorted, null, 2) + "\n", "utf8");
+  fs.writeFileSync(KNOWLEDGE_OUT, JSON.stringify(sorted, null, 2) + "\n", "utf8");
 }
 
 async function syncToSupabase(records) {

@@ -1,0 +1,30 @@
+# Override para PROXY_MODE=tunnel (Cloudflare Tunnel). Se usa JUNTO con docker-compose.nginx.yml:
+#   docker compose -f docker-compose.yml -f docker-compose.nginx.yml -f docker-compose.tunnel.yml --env-file .env.production ...
+# Los scripts de deploy/hostinger lo agregan solos cuando PROXY_MODE=tunnel.
+#
+# cloudflared abre una conexión SALIENTE a Cloudflare y entrega el tráfico de BOT_DOMAIN y
+# CHATWOOT_DOMAIN a los contenedores por la red interna. No usa el Nginx del host, no abre
+# puertos y no necesita certbot (Cloudflare pone el HTTPS). Si el VPS lo comparten otros
+# sitios, el bot queda independiente de su proxy.
+#
+# Rutas (se configuran en Cloudflare → Zero Trust → Networks → Tunnels → Public hostnames):
+#   BOT_DOMAIN       -> http://app:3000
+#   CHATWOOT_DOMAIN  -> http://chatwoot-rails:3000
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2026.7.1
+    restart: unless-stopped
+    command: ["tunnel", "--no-autoupdate", "run"]
+    environment:
+      # El token va por variable de entorno (no en la línea de comandos ni en `ps`).
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN:?CLOUDFLARE_TUNNEL_TOKEN requerido en PROXY_MODE=tunnel}
+    read_only: true
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    depends_on:
+      app:
+        condition: service_healthy
+    networks:
+      - chatwoot   # alcanza app:3000 y chatwoot-rails:3000; sale a internet hacia Cloudflare
