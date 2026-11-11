@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-10T15:38:53.475Z
+# Actualizado: 2026-11-11T15:20:30.729Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -88,7 +88,6 @@ DAIWA Carrete Revros lt 4000 | $99.990 | Carretes | https://bluefishing.cl/produ
 DAIWA Carrete REVROS LT 6000 | $104.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/
 DAIWA Carrete SALTIST MQ 6000D | $481.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-6000d/
 DAIWA Carrete SALTIST MQ 8000H | $525.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-8000d/
-DAIWA FUEGO LT4000D-C | $149.990 | Carretes | https://bluefishing.cl/producto/daiwa-carrete-fuego-lt-4000d-c/
 DAIWA Señuelo OVER DRIVE 120S | $23.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-over-drive-120s/
 DAIWA Señuelo SLZ-VERTICE R 125S SINKING | $24.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-slz-vertice-r-125s-sinking/
 Daiwa Señuelo VERTICE R125S , 23g | $21.990 | Marcas > DAIWA | https://bluefishing.cl/producto/daiwa-senuelo-vertice-r125s-23g/
