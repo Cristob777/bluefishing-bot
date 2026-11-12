@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-11T15:20:30.729Z
+# Actualizado: 2026-11-12T16:00:52.019Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -200,6 +200,7 @@ SAKANA SHINKAI DEEP 60gr, y 80g | $7.990 | Señuelos > Jig | https://bluefishing
 SAKANA SHINKAI SLOW 120gr y 100gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-120gr-y-100gr/
 SAKANA SHINKAI SLOW 250gr y 150gr | $9.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-250gr-y-150gr/
 SAKANA SHINKAI SLOW 80gr y 60gr | $7.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-shinkai-slow-80gr-y-60gr/
+SAKANA VINILO SAMURAI 27, 35gr | $9.990 | Señuelos | https://bluefishing.cl/producto/sakana-vinilo-samurai-27-35gr/
 SAKANA Vinilo SHIRIKON 29grs | $4.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-16g/
 SAKANA Vinilo SHIRIKON 34grs | $5.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-20g/
 SAKANA Vinilo SHIRIKON 43grs | $5.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-shirikon-vinilo-con-anzuelo-oculto-30/
@@ -232,6 +233,9 @@ SUNLINE Multifilamento SIGLON ADV X8 - 300m - Blue | $41.990 | Lineas | https://
 SUNLINE Multifilamento SIGLON Orange X8 300m | $27.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-orange-x8-300mts/
 SUNLINE Multifilamento SIGLON X8 - 300m - Multicolor | $27.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-adv-x8-300m-multicolor/
 SUNLINE Multifilamento SIGLON X8 - 300m VERDE | $32.990 | Lineas | https://bluefishing.cl/producto/sunline-multifilamento-siglon-x8-300m-naranja/
+TOKIO HOOKS ASSIST IRAMASA PINK | $3.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-assist-iramasa-pink/
+TOKIO HOOKS ASSIST IRAMASA verde | $3.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-assist-iramasa-verde/
+TOKIO HOOKS TRIPLE MUSASHI X3 | $6.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-musashi-x3/
 TOKIO HOOKS TRIPLE MUSASHI X4 | $6.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-musashi-x4/
 TOKIO HOOKS TRIPLE OSAKA X4 Pack 20 Un | $15.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-osaka-pack-20-un/
 TOKIO HOOKS TRIPLE OSAKA X4 Pack 50 Un | $15.990 | Anzuelos | https://bluefishing.cl/producto/tokio-hooks-triple-osaka-x4-pack-50-un/
