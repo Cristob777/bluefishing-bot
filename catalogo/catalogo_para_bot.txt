@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-13T15:27:34.762Z
+# Actualizado: 2026-11-14T14:14:36.470Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
