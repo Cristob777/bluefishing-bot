@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-15T14:49:55.915Z
+# Actualizado: 2026-11-16T17:07:23.424Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -180,10 +180,10 @@ SAKANA JIGU SLOW   80g | $7.990 | Señuelos > Jig | https://bluefishing.cl/produ
 SAKANA JIGU Tournament 30 y 40 gr | $4.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-tournament-30by-40/
 SAKANA JIGU Tournament 50 y 60g | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-tournament-50-y-60g/
 SAKANA MetalVib GUNBA 30g -74mm | $8.990 | Señuelos > Señuelos Mar > METAL VIB | https://bluefishing.cl/producto/sakana-metalvib-gunba-30g-74mm/
-SAKANA Multi YUKIMURA X12 multicolor | $27.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x12-multicolor/
-SAKANA Multi YUKIMURA X8 | $22.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8/
+SAKANA Multi YUKIMURA X12 multicolor | $28.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x12-multicolor/
 SAKANA Multi YUKIMURA X8 150m | $15.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-150m/
-SAKANA Multi YUKIMURA X8 PINK | $22.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-pink/
+SAKANA Multi YUKIMURA X8 300mts | $24.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8/
+SAKANA Multi YUKIMURA X8 PINK | $24.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-pink/
 SAKANA Porta Cañas para Auto | $139.990 | Herramientas > Portacañas | https://bluefishing.cl/producto/sakana-porta-canas-para-auto/
 SAKANA Señuelo KOSEN 125S | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-kosen-125s/
 SAKANA Señuelo Namba Sinking 140mm 26g | $13.990 | Marcas > SAKANA | https://bluefishing.cl/producto/sakana-senuelo-namba-sinking-140mm-26g/
