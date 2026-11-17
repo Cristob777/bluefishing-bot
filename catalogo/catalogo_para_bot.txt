@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-16T17:07:23.424Z
+# Actualizado: 2026-11-17T16:56:41.223Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -30,7 +30,6 @@ BADFISH Caña SHORE CAST 2,4m 15-50gr | $39.990 | Marcas > BADFISH | https://blu
 BADFISH Caña SHORE CAST 2,7m, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-20-80gr/
 BADFISH Caña SHORE CAST 2.1m 15-50gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-70mh-15-50gr/
 BADFISH Caña SHORE CAST 3mts,  10-42gr | $49.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100m-10-42gr/
-BADFISH Caña SHORE CAST 3mts, 20-80gr | $39.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100mh-20-80gr/
 BADFISH caña Shore MASTER 20-80 g | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-shore-master-20-80-g/
 BADFISH Chucao ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-chucao-assassin-5-9-gr/
 BADFISH Crank Assassin 3.5gr, Floating | $5.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-crank-assassin-3-5gr-floating/
@@ -181,6 +180,7 @@ SAKANA JIGU Tournament 30 y 40 gr | $4.990 | Señuelos > Jig | https://bluefishi
 SAKANA JIGU Tournament 50 y 60g | $6.990 | Señuelos > Jig | https://bluefishing.cl/producto/sakana-jigu-tournament-50-y-60g/
 SAKANA MetalVib GUNBA 30g -74mm | $8.990 | Señuelos > Señuelos Mar > METAL VIB | https://bluefishing.cl/producto/sakana-metalvib-gunba-30g-74mm/
 SAKANA Multi YUKIMURA X12 multicolor | $28.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x12-multicolor/
+SAKANA Multi YUKIMURA X12 Pink 300mts | $28.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x12-pink-300mts/
 SAKANA Multi YUKIMURA X8 150m | $15.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-150m/
 SAKANA Multi YUKIMURA X8 300mts | $24.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8/
 SAKANA Multi YUKIMURA X8 PINK | $24.990 | Lineas | https://bluefishing.cl/producto/sakana-multi-yukimura-x8-pink/
@@ -317,5 +317,9 @@ YAMAGA BLANKS Caña EARLY for SeaBass 93M | $369.990 | Cañas | https://bluefish
 YAMAGA BLANKS Caña Early for Surf 103M | $379.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-103m/
 YAMAGA BLANKS Caña Early SeaWalk Taijigging 63M, Jigging | $489.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-seawalk-taijigging-63m-jigging/
 Yamaga Blanks Early For Surf 109MMH | $469.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-109mmh/
+ZENAQ Caña INQLUDE IS89-M5 – MASTER HAND | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-inqlude-is89-m5-master-hand/
+ZENAQ Caña INQLUDE IS90-M7 – JAW BREAKER | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-inqlude-is90-m7-jaw-breaker/
 ZENAQ Caña MUTHOS ACCURA 100HHH | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-100hhh/
 ZENAQ Caña SINPAA SC81-80G Hiramasa | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-sinpaa-sc81-80g-hiramasa/
+ZENAQ Caña SINPAA SC83-95G HIRAMASA | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-sinpaa-sc83-95g-hiramasa/
+ZENAQ Caña TOBIZO TC84 | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-tobizo-tc84/
