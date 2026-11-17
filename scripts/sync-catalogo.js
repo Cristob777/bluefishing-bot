@@ -2,6 +2,7 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { detectBrand, detectProductType } = require("../lib/product-taxonomy");
 const { fetchProductPage } = require("../lib/productPage");
+const { buildProductSource } = require("../lib/productSource");
 
 const { resolveFromRuntime } = require("../lib/catalogCredentials");
 
@@ -10,6 +11,7 @@ const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const { readPath, writePath } = require("../lib/catalogPaths");
 const OUT_PATH = writePath("catalogo_para_bot.txt");
+const SOURCE_OUT_PATH = writePath("product_source.json");
 const LAST_GOOD_PATH = readPath("catalogo_para_bot.txt");
 const PER_PAGE = 100;
 const ALLOWED_TYPES = new Set(["caña", "carrete", "línea", "señuelo", "anzuelo", "combo"]);
@@ -98,7 +100,8 @@ async function fetchWooCatalog(creds) {
       category,
       product_type: productType,
       brand: detectBrand(name),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      source: buildProductSource(product, { resolveCategoryPath })
     });
   }
   return rows;
@@ -152,7 +155,11 @@ async function fetchStoreApiCatalog({ baseUrl = WC_URL, fetchImpl = fetch } = {}
     const price = storeApiPrice(product.prices);
     const url = product.permalink || "";
     if (!price || !url) continue;
-    rows.push({ url, name, price, category, product_type: productType, brand: detectBrand(name), updated_at: new Date().toISOString() });
+    rows.push({
+      url, name, price, category, product_type: productType, brand: detectBrand(name),
+      updated_at: new Date().toISOString(),
+      source: buildProductSource(product, { resolveCategoryPath })
+    });
   }
   if (products.length && !rows.length) throw new Error("Store API devolvió productos pero ninguno utilizable");
   return rows;
@@ -268,7 +275,9 @@ async function syncToSupabase(rows) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
-  const { error } = await supabase.from("products").upsert(rows, { onConflict: "url" });
+  // `source` es solo para el enriquecimiento local; la tabla products no tiene esa columna.
+  const clean = rows.map(({ source, ...row }) => row);
+  const { error } = await supabase.from("products").upsert(clean, { onConflict: "url" });
   if (error) throw new Error("Supabase products upsert: " + error.message);
 }
 
@@ -313,6 +322,14 @@ async function main() {
 
   const lines = unique.map((row) => row.name + " | " + row.price + " | " + row.category + " | " + row.url);
   fs.writeFileSync(OUT_PATH, header + lines.join("\n") + "\n", "utf8");
+
+  // Ficha limpia por producto (solo datos del producto, sin menú del sitio) para enrich-catalogo.
+  const sources = Object.fromEntries(
+    unique.filter((row) => row.source).map((row) => [row.url, row.source])
+  );
+  if (Object.keys(sources).length) {
+    fs.writeFileSync(SOURCE_OUT_PATH, JSON.stringify(sources, null, 2) + "\n", "utf8");
+  }
 
   try {
     await syncToSupabase(unique);

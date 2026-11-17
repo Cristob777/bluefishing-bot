@@ -3,11 +3,15 @@ const path = require("node:path");
 const { fetchProductPage } = require("../lib/productPage");
 const { TECHNICAL_TYPES, extractAIKnowledge, heuristicKnowledge } = require("../lib/knowledgeExtractor");
 const { detectProductType, detectBrand } = require("../lib/product-taxonomy");
+const { sourceTextFromRecord, hashSourceText } = require("../lib/productSource");
+const { qualityReport, KNOWLEDGE_VERSION } = require("../lib/catalogQuality");
 
 const { readPath, writePath } = require("../lib/catalogPaths");
 const CATALOG_PATH = readPath("catalogo_para_bot.txt");
 const KNOWLEDGE_PATH = readPath("product_knowledge.json");
 const KNOWLEDGE_OUT = writePath("product_knowledge.json");
+const SOURCE_PATH = readPath("product_source.json");
+
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const ENRICH_LIMIT = Number(process.env.ENRICH_LIMIT || 0);
@@ -46,6 +50,34 @@ function loadKnowledge() {
   } catch {
     return {};
   }
+}
+
+function loadSources() {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(SOURCE_PATH, "utf8"));
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch {
+    return {};
+  }
+}
+
+// Ficha del producto: primero la de la API de WooCommerce (limpia, sin menú del sitio);
+// si no existe, la página del producto leyendo solo sus zonas propias.
+async function loadProductSource(product, sources) {
+  const record = sources[product.url];
+  if (record) {
+    const sourceText = sourceTextFromRecord(record);
+    return {
+      name: record.name || product.name,
+      category: (record.categories || []).join(" ; ") || product.category,
+      brand: "",
+      sourceText,
+      sourceHash: hashSourceText(sourceText),
+      origin: "woocommerce_api",
+    };
+  }
+  const page = await fetchProductPage(product.url);
+  return { ...page, origin: "product_page" };
 }
 
 function persistKnowledge(knowledge) {
@@ -90,6 +122,8 @@ async function syncToSupabase(records) {
 async function main() {
   const catalog = loadCatalog();
   const knowledge = loadKnowledge();
+  const sources = loadSources();
+  const catalogUrls = new Set(catalog.map((p) => p.url));
   let processed = 0;
   let changed = 0;
   let failed = 0;
@@ -102,9 +136,10 @@ async function main() {
 
     processed += 1;
     try {
-      const page = await fetchProductPage(product.url);
+      const page = await loadProductSource(product, sources);
       const existing = knowledge[product.url];
-      if (!ENRICH_FORCE && existing?.source_hash === page.sourceHash) {
+      if (!ENRICH_FORCE && existing?.source_hash === page.sourceHash &&
+          existing?.knowledge_version === KNOWLEDGE_VERSION) {
         continue;
       }
 
@@ -137,6 +172,10 @@ async function main() {
         evidence: extracted.evidence || [],
         extraction_confidence: Number(extracted.confidence || 0),
         extraction_method: extracted.extraction_method || "heuristic",
+        needs_review: Boolean(extracted.needs_review),
+        review_reasons: extracted.review_reasons || [],
+        source_origin: page.origin,
+        knowledge_version: KNOWLEDGE_VERSION,
         source_url: product.url,
         source_hash: page.sourceHash,
         updated_at: new Date().toISOString(),
@@ -152,6 +191,20 @@ async function main() {
       failed += 1;
       console.warn(`[Enrich] ${product.name}: ${error.message}`);
     }
+  }
+
+  // Registros de una versión vieja que no se pudieron re-enriquecer (falla de red, producto
+  // fuera del catálogo) se descartan: mejor sin ficha técnica que con una contaminada.
+  for (const [url, record] of Object.entries(knowledge)) {
+    if (!catalogUrls.has(url) || record.knowledge_version !== KNOWLEDGE_VERSION) delete knowledge[url];
+  }
+
+  const quality = qualityReport(knowledge, { urls: catalogUrls });
+  console.log("[Enrich] Calidad:", JSON.stringify(quality));
+  if (!quality.ok && !ENRICH_LIMIT) {
+    // No se publica: el bot sigue con el último conocimiento válido y el workflow queda en rojo.
+    console.error("[Enrich] Conocimiento NO publicado por compuerta de calidad: " + quality.failures.join("; "));
+    process.exit(1);
   }
 
   persistKnowledge(knowledge);
