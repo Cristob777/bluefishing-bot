@@ -3,6 +3,18 @@ name: Refresh BlueFishing Catalog
 on:
   pull_request:
     branches: [main]
+  # Si cambia la lógica de extracción, se regenera el conocimiento de inmediato
+  # (los commits del bot con GITHUB_TOKEN no disparan workflows: no hay bucle).
+  push:
+    branches: [main]
+    paths:
+      - lib/productPage.js
+      - lib/productSource.js
+      - lib/knowledgeExtractor.js
+      - lib/catalogQuality.js
+      - scripts/enrich-catalogo.js
+      - scripts/sync-catalogo.js
+      - .github/workflows/sync-catalogo.yml
   schedule:
     - cron: "17 7 * * *"
   workflow_dispatch: {}
