@@ -33,3 +33,22 @@ test("AI cost uses measured token buckets and configured rates", () => {
   const value = admin.cost({ input_tokens: 1000000, cached_input_tokens: 200000, output_tokens: 500000 });
   assert.equal(value, 1.9);
 });
+
+test("la vista Entrenar escapa el contenido y protege los formularios con CSRF", () => {
+  const html = admin.trainingHtml({
+    fb: { pending: [{ id: "f1", session_id: "wa:56911112222", user_message: "<b>hola</b>", bot_response: "resp", created_at: new Date() }], learned: [] },
+    docs: [{ url: "https://bluefishing.cl/producto/x/", name: "Caña <X>", price: "$1", category: "Cañas", waterType: [], needsReview: true, verification: "parcial", fishingPosition: [], technique: [], targetSpecies: [], verifiedNotes: "" }],
+    q: { p: "https://bluefishing.cl/producto/x/" },
+  }, "tok123");
+  assert.ok(!html.includes("<b>hola</b>"));
+  assert.ok(html.includes("Caña &lt;X&gt;"));
+  assert.equal((html.match(/name='csrf' value='tok123'/g) || []).length, 3, "resolver, descartar y guardar ficha");
+  assert.ok(html.includes("Guardar ficha verificada"));
+});
+
+test("cada respuesta del bot ofrece corregirse una sola vez", () => {
+  const x = { csrf: "t", flagged: new Map([["2", "flagged"], ["3", "resolved"]]) };
+  assert.match(admin.fixControl(x, { id: 1 }), /Corregir esta respuesta/);
+  assert.match(admin.fixControl(x, { id: 2 }), /Corrección pendiente/);
+  assert.match(admin.fixControl(x, { id: 3 }), /Corrección aprobada/);
+});

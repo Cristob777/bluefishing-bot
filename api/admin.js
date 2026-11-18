@@ -73,6 +73,7 @@ function date(v){try{return new Intl.DateTimeFormat("es-CL",{timeZone:process.en
 function masked(id){const s=String(id||"");const ch=s.startsWith("web:")?"Web ":s.startsWith("cw:")?"Chatwoot ":"";const x=s.replace(/^(wa|web|cw):([0-9a-f-]{36}:)?/,"");return ch+(x.length>7?x.slice(0,3)+" •••• "+x.slice(-4):"•••"+x.slice(-3));}
 function days(v){const n=Number(v);return [1,7,30,90].includes(n)?n:7;}
 function form(body){return Object.fromEntries(new URLSearchParams(Buffer.from(body||"").toString("utf8")).entries());}
+function formAll(body,key){return new URLSearchParams(Buffer.from(body||"").toString("utf8")).getAll(key);}
 function cost(s){
   const i=Number(process.env.OPENAI_INPUT_COST_PER_1M||0), c=Number(process.env.OPENAI_CACHED_INPUT_COST_PER_1M||0), o=Number(process.env.OPENAI_OUTPUT_COST_PER_1M||0);
   if(!(i>0)||!(o>0)) return null;
@@ -80,9 +81,9 @@ function cost(s){
   return ((input-cached)*i+cached*(c>0?c:i)+Number(s.output_tokens||0)*o)/1000000;
 }
 
-const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["contactos","Contactos","users"],["embudo","Embudo","board"],["conversaciones","Conversaciones","chat"]];
+const NAV=[["","Inicio","home"],["resultados","Resultados","chart"],["contactos","Contactos","users"],["embudo","Embudo","board"],["conversaciones","Conversaciones","chat"],["entrenar","Entrenar","bolt"]];
 const crm=require("../lib/crm");
-const NOTE={stage_ok:["ok","Etapa actualizada."],stage_err:["err","No pudimos mover el contacto."],sync_ok:["ok","Pedidos sincronizados."],sync_err:["err","No pudimos sincronizar pedidos (revisa WC_* o las tiendas conectadas)."],csrf:["err","Sesión expirada, vuelve a intentarlo."]};
+const NOTE={stage_ok:["ok","Etapa actualizada."],stage_err:["err","No pudimos mover el contacto."],sync_ok:["ok","Pedidos sincronizados."],sync_err:["err","No pudimos sincronizar pedidos (revisa WC_* o las tiendas conectadas)."],csrf:["err","Sesión expirada, vuelve a intentarlo."],flag_ok:["ok","Respuesta marcada. Escribe la corrección en Entrenar."],fix_ok:["ok","Corrección aprobada: Matías la usa desde ahora."],fix_empty:["err","Escribe cómo debió responder antes de aprobar."],fix_gone:["ok","Corrección retirada."],sheet_ok:["ok","Ficha verificada: Matías ya la usa al recomendar."],sheet_gone:["ok","Verificación quitada."],train_err:["err","No pudimos guardar. Inténtalo de nuevo."]};
 let NOTICE=null;
 function shell(view,d,title,body){
   return ui.shell({title,product:"Blue Fishing",nav:NAV.map(([v,l,i])=>({href:"/admin?days="+d+(v?"&view="+v:""),label:l,icon:i,on:v===view})),
@@ -135,18 +136,19 @@ function funnelHtml(rows,d){
 async function conversation(id){
   const q=await Promise.all([
     query("select known_context,updated_at from bot_sessions where session_id=$1 limit 1",[id]),
-    query("select user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id]),
+    query("select id,user_message,bot_response,intent,products,latency_ms,route,llm_usage,created_at from bot_events where session_id=$1 order by created_at asc limit 100",[id]),
     query("select status,created_at from handoff_requests where session_id=$1 order by created_at desc limit 5",[id]).catch(()=>({rows:[]})),
     query("select id,stage,name,channel,phone,email from contacts where session_id=$1 limit 1",[id]).catch(()=>({rows:[]}))
   ]);
-  return {session:q[0].rows[0]||{},events:q[1].rows,handoffs:q[2].rows,contact:q[3].rows[0]||null};
+  const flagged=await training.flaggedEventIds(query,id).catch(()=>new Map());
+  return {session:q[0].rows[0]||{},events:q[1].rows,handoffs:q[2].rows,contact:q[3].rows[0]||null,flagged};
 }
 
 function conversationHtml(id,x,d){
   const c=x.session.known_context||{}, ct=x.contact||{};
   const L={product_type:"Producto",target_species:"Especie",water_type:"Tipo de agua",fishing_position:"Desde",technique:"Técnica",weight_range:"Rango de peso",weight_grams:"Peso (g)",budget_range:"Presupuesto",brand_preference:"Marca",purchase_intent_level:"Intención de compra"};
   const props=[["Cliente",ct.name||masked(id)],["Canal",ct.channel==="web"||id.startsWith("web:")?"Chat web":id.startsWith("cw:")?"Chatwoot":"WhatsApp"],["Mensajes",fmt(x.events.length)],["Última actividad",x.events.length?date(x.events[x.events.length-1].created_at):"—"]].concat(Object.keys(L).filter(k=>c[k]&&c[k]!=="unknown").map(k=>[L[k],c[k]]));
-  const tl=x.events.length?x.events.map(e=>"<div class='ev'><div class='muted small'>"+esc(date(e.created_at))+" · "+esc(ui.intentLabel(e.intent))+" · "+fmt(e.latency_ms)+" ms</div><div class='bub u'>"+esc(e.user_message)+"</div>"+(e.bot_response?"<div class='bub a'>"+esc(e.bot_response)+"</div>":"")+"</div>").join(""):ui.empty("chat","Sin mensajes","No hay eventos para este cliente.");
+  const tl=x.events.length?x.events.map(e=>"<div class='ev'><div class='muted small'>"+esc(date(e.created_at))+" · "+esc(ui.intentLabel(e.intent))+" · "+fmt(e.latency_ms)+" ms</div><div class='bub u'>"+esc(e.user_message)+"</div>"+(e.bot_response?"<div class='bub a'>"+esc(e.bot_response)+"</div>"+fixControl(x,e,id,d):"")+"</div>").join(""):ui.empty("chat","Sin mensajes","No hay eventos para este cliente.");
   const stage=(STAGES.find(s=>s[0]===ct.stage)||[null,"Sin etapa"])[1];
   const prods=[...new Set(x.events.flatMap(e=>(Array.isArray(e.products)?e.products:[]).map(p=>p&&p.name).filter(Boolean)))].slice(0,6);
   return shell("conversaciones",d,"Contacto","<div class='head'><div><a class='small' href='/admin?days="+d+"&view=conversaciones'>← Conversaciones</a><h1 style='margin-top:6px'>"+esc(ct.name||masked(id))+"</h1></div><span class='badge b-brand'>"+esc(stage)+"</span></div>"+
@@ -155,6 +157,95 @@ function conversationHtml(id,x,d){
   "<div class='grid' style='gap:16px'><div class='card'><h3>Etapa del embudo</h3><div class='list'>"+STAGES.map(s=>"<div class='it'><span>"+s[1]+"</span>"+(s[0]===ct.stage?"<span class='badge b-ok'>Actual</span>":"")+"</div>").join("")+"</div>"+(ct.id?crm.CRM_CSS+crm.moveForm({action:"/admin/crm/stage",csrf:x.csrf,contactId:ct.id,stage:ct.stage,back:"/admin?days="+d+"&session="+encodeURIComponent(id)}):"")+"</div>"+
   "<div class='card'><h3>Productos recomendados</h3>"+(prods.length?"<div class='list'>"+prods.map(p=>"<div class='it'><span>"+esc(p)+"</span></div>").join("")+"</div>":"<div class='muted small'>Aún ninguno.</div>")+"</div>"+
   "<div class='card'><h3>Derivaciones</h3>"+(x.handoffs.length?"<div class='list'>"+x.handoffs.map(h=>"<div class='it'><span class='badge "+(h.status==="open"?"b-err":"b-off")+"'>"+(h.status==="open"?"Abierta":h.status==="contacted"?"Contactado":"Cerrada")+"</span><span class='muted small'>"+esc(date(h.created_at))+"</span></div>").join("")+"</div>":"<div class='muted small'>No pidió hablar con una persona.</div>")+"</div></div></div>");
+}
+
+// ---------- Entrenar: correcciones + fichas verificadas (lib/training.js) ----------
+const training=require("../lib/training");
+function fixControl(x,e,id,d){
+  const st=x.flagged&&x.flagged.get(String(e.id));
+  if(st==="resolved")return "<div style='margin-top:6px'><span class='badge b-ok'>Corrección aprobada</span></div>";
+  if(st==="flagged")return "<div style='margin-top:6px'><a class='badge b-pend' href='/admin?view=entrenar'>Corrección pendiente →</a></div>";
+  if(st)return "";
+  return "<form method='post' action='/admin/train/flag' style='margin-top:6px'><input type='hidden' name='csrf' value='"+esc(x.csrf)+"'><input type='hidden' name='event_id' value='"+esc(e.id)+"'><button class='btn ghost' style='padding:4px 10px;font-size:12.5px'>Corregir esta respuesta</button></form>";
+}
+const hidden=(k,v)=>"<input type='hidden' name='"+k+"' value='"+esc(v)+"'>";
+const checks=(name,all,on)=>"<div style='display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 10px'>"+all.map(v=>"<label style='display:inline-flex;gap:6px;align-items:center;padding:4px 10px;border:1px solid var(--line,#dde3e9);border-radius:999px;font-size:13px'><input type='checkbox' name='"+name+"' value='"+esc(v)+"'"+(on.includes(v)?" checked":"")+" style='width:auto;margin:0'>"+esc(v)+"</label>").join("")+"</div>";
+async function trainingData(q){
+  const fb=await training.listFeedback(query).catch(()=>({pending:[],learned:[]}));
+  const docs=await require("../lib/catalog").getCatalogDocuments().catch(()=>[]);
+  return {fb,docs,q};
+}
+function trainingHtml(t,csrf){
+  const {fb,docs,q}=t;
+  const pend=fb.pending.length?fb.pending.map(r=>"<div class='ev'><div class='muted small'>"+esc(masked(r.session_id))+" · "+esc(date(r.created_at))+" · <a href='/admin?session="+encodeURIComponent(r.session_id)+"'>ver conversación</a></div><div class='bub u'>"+esc(r.user_message)+"</div><div class='bub a'>"+esc(r.bot_response)+"</div>"+
+    "<form method='post' action='/admin/train/resolve' style='margin-top:8px'>"+hidden("csrf",csrf)+hidden("id",r.id)+"<label class='small muted' for='c"+esc(r.id)+"'>¿Cómo debió responder Matías?</label><textarea id='c"+esc(r.id)+"' name='correction' rows='3' maxlength='"+training.MAX_CORRECTION+"' required placeholder='Escríbelo como se lo dirías al cliente.'></textarea><div style='display:flex;gap:8px;margin-top:8px'><button class='btn'>Aprobar y enseñar</button></div></form>"+
+    "<form method='post' action='/admin/train/archive' style='margin-top:6px'>"+hidden("csrf",csrf)+hidden("id",r.id)+"<button class='btn ghost' style='padding:4px 10px;font-size:12.5px'>Descartar</button></form></div>").join(""):ui.empty("check","Sin correcciones pendientes","Marca una respuesta mala desde Conversaciones con «Corregir esta respuesta».");
+  const learned=fb.learned.length?"<div class='list'>"+fb.learned.map(r=>"<div class='it'><span><span class='muted small'>Cliente: "+esc(r.user_message)+"</span><div>"+esc(r.correction)+"</div></span><form method='post' action='/admin/train/archive'>"+hidden("csrf",csrf)+hidden("id",r.id)+"<button class='btn ghost' style='padding:4px 10px;font-size:12.5px'>Olvidar</button></form></div>").join("")+"</div><p class='muted small' style='margin-top:8px'>En cada respuesta Matías usa las correcciones más parecidas a lo que pregunta el cliente.</p>":"<div class='muted small'>Todavía nada. Cada corrección aprobada aparece aquí.</div>";
+
+  const verified=docs.filter(p=>p.verification==="verificada");
+  const review=docs.filter(training.needsReview);
+  const f=q.f==="verificadas"?"verificadas":q.f==="todas"?"todas":"revisar";
+  let pool=f==="verificadas"?verified:f==="todas"?docs:review;
+  const term=String(q.q||"").trim().toLowerCase().slice(0,80);
+  if(term)pool=pool.filter(p=>p.name.toLowerCase().includes(term));
+  const open=String(q.p||"");
+  const base="/admin?view=entrenar&f="+f+(term?"&q="+encodeURIComponent(term):"");
+  const item=p=>{
+    const isOpen=open===p.url;
+    const tag=p.verification==="verificada"?"<span class='badge b-ok'>verificada</span>":(p.needsReview&&p.waterType.length>1)?"<span class='badge b-pend'>mar y río</span>":!p.waterType.length?"<span class='badge b-pend'>sin agua</span>":"<span class='badge b-off'>automática</span>";
+    const head="<div class='it'><span><b style='font-weight:500'>"+esc(p.name)+"</b><div class='muted small'>"+esc(p.price)+" · "+esc(p.category)+" · agua: "+esc(p.waterType.join("/")||"—")+"</div></span><span style='display:flex;gap:8px;align-items:center'>"+tag+"<a class='btn ghost' style='padding:4px 10px;font-size:12.5px' href='"+(isOpen?base:base+"&p="+encodeURIComponent(p.url))+"'>"+(isOpen?"Cerrar":"Revisar")+"</a></span></div>";
+    if(!isOpen)return head;
+    return head+"<form method='post' action='/admin/train/product' class='card' style='margin:8px 0 12px'>"+hidden("csrf",csrf)+hidden("url",p.url)+hidden("back",base)+
+      "<div class='small muted'>Tipo de agua</div>"+checks("water",training.WATER,p.waterType)+
+      "<div class='small muted'>Desde dónde se pesca</div>"+checks("position",training.POSITION,p.fishingPosition)+
+      "<div class='small muted'>Técnica</div>"+checks("technique",training.TECHNIQUE,p.technique)+
+      "<label class='small muted' for='sp'>Especies (separadas por coma)</label><input id='sp' name='species' value='"+esc(p.targetSpecies.join(", "))+"' placeholder='corvina, lenguado'>"+
+      "<label class='small muted' for='nt'>Nota del vendedor (Matías la usa al recomendar)</label><input id='nt' name='notes' maxlength='300' value='"+esc(p.verifiedNotes||"")+"' placeholder='Ej.: ideal para corvina en roquerío con mar movido'>"+
+      "<div style='display:flex;gap:8px;margin-top:12px'><button class='btn'>Guardar ficha verificada</button></div></form>"+
+      (p.verification==="verificada"?"<form method='post' action='/admin/train/product/remove' style='margin:-4px 0 12px'>"+hidden("csrf",csrf)+hidden("url",p.url)+hidden("back",base)+"<button class='btn ghost' style='padding:4px 10px;font-size:12.5px'>Quitar verificación</button></form>":"");
+  };
+  const shown=pool.slice(0,40);
+  const sheets="<form method='get' action='/admin' style='display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px'><input type='hidden' name='view' value='entrenar'><select name='f' style='width:auto'>"+[["revisar","Por revisar ("+review.length+")"],["verificadas","Verificadas ("+verified.length+")"],["todas","Todas ("+docs.length+")"]].map(([k,l])=>"<option value='"+k+"'"+(k===f?" selected":"")+">"+l+"</option>").join("")+"</select><input name='q' value='"+esc(term)+"' placeholder='Buscar producto' style='flex:1;min-width:160px'><button class='btn ghost'>Filtrar</button></form>"+
+    (shown.length?"<div class='list'>"+shown.map(item).join("")+"</div>":"<div class='muted small'>Nada en esta lista.</div>")+(pool.length>shown.length?"<p class='muted small'>Mostrando 40 de "+pool.length+". Usa el buscador.</p>":"");
+
+  return shell("entrenar",7,"Entrenar","<div class='head'><div><h1>Entrenar a Matías</h1><div class='muted'>Corrige respuestas y confirma fichas: Matías lo usa desde el siguiente mensaje.</div></div></div>"+
+    "<div class='grid' style='gap:16px'><div class='card'><h3>Correcciones pendientes <span class='badge "+(fb.pending.length?"b-err":"b-off")+"'>"+fb.pending.length+"</span></h3>"+(fb.pending.length?"<div class='tl'>"+pend+"</div>":pend)+"</div>"+
+    "<div class='card'><h3>Lo que Matías aprendió ("+fb.learned.length+")</h3>"+learned+"</div>"+
+    "<div class='card'><h3>Fichas de productos</h3><p class='muted small' style='margin-top:0'>"+review.length+" productos donde la tienda no dice para qué agua son, o los lista en mar y en río. Cuando confirmas una ficha, Matías puede afirmar esa compatibilidad al vender.</p>"+sheets+"</div></div>");
+}
+async function trainingPost(path,req,res,actor){
+  const f=form(req.rawBody);
+  const back=(fallback)=>{const b=crm.safeBack(f.back,fallback);return b+(b.includes("?")?"&":"?");};
+  try{
+    if(path==="/admin/train/flag"){
+      const id=Number(f.event_id);if(!Number.isInteger(id)||id<1)return redirect(res,"/admin?view=entrenar&n=train_err");
+      await training.flagEvent(query,{eventId:id,actor});
+      return redirect(res,"/admin?view=entrenar&n=flag_ok");
+    }
+    if(path==="/admin/train/resolve"){
+      const ok=await training.resolveFeedback(query,{id:f.id,correction:f.correction,actor});
+      require("../lib/learnedExamples").invalidateLearnedExamples();
+      return redirect(res,"/admin?view=entrenar&n="+(ok?"fix_ok":"fix_empty"));
+    }
+    if(path==="/admin/train/archive"){
+      await training.archiveFeedback(query,{id:f.id,actor});
+      require("../lib/learnedExamples").invalidateLearnedExamples();
+      return redirect(res,"/admin?view=entrenar&n=fix_gone");
+    }
+    const docs=await require("../lib/catalog").getCatalogDocuments();
+    if(!docs.some(p=>p.url===f.url))return redirect(res,back("/admin?view=entrenar")+"n=train_err");
+    if(path==="/admin/train/product"){
+      await training.saveProductSheet(query,{url:f.url,water:formAll(req.rawBody,"water"),position:formAll(req.rawBody,"position"),technique:formAll(req.rawBody,"technique"),species:f.species,notes:f.notes,actor});
+      require("../lib/enrichment").invalidateEnrichmentCache();
+      return redirect(res,back("/admin?view=entrenar")+"n=sheet_ok");
+    }
+    await training.removeProductSheet(query,{url:f.url});
+    require("../lib/enrichment").invalidateEnrichmentCache();
+    return redirect(res,back("/admin?view=entrenar")+"n=sheet_gone");
+  }catch(error){
+    console.error("[Admin] Training error:",safeError(error));
+    return redirect(res,"/admin?view=entrenar&n=train_err");
+  }
 }
 
 module.exports = async function(req,res){
@@ -175,6 +266,11 @@ module.exports = async function(req,res){
   if(!ok)return send(res,200,login());
   NOTICE=NOTE[String(req.query?.n||"")]||null;
   const csrf=crypto.createHmac("sha256",process.env.ADMIN_SESSION_SECRET).update("csrf:"+String(ck[COOKIE])).digest("base64url");
+  if(req.method==="POST"&&path.startsWith("/admin/train/")){
+    if(!["/admin/train/flag","/admin/train/resolve","/admin/train/archive","/admin/train/product","/admin/train/product/remove"].includes(path))return send(res,404,ui.errorPage("Página no encontrada","El enlace no existe o cambió.","/admin","Volver al panel de ventas"));
+    if(!eq(form(req.rawBody).csrf,csrf))return redirect(res,"/admin?view=entrenar&n=csrf");
+    return trainingPost(path,req,res,"admin:"+process.env.ADMIN_DASHBOARD_USER);
+  }
   if(req.method==="POST"&&(path==="/admin/crm/stage"||path==="/admin/woo/sync")){
     const f=form(req.rawBody);
     if(!eq(f.csrf,csrf))return redirect(res,"/admin?n=csrf");
@@ -202,6 +298,7 @@ module.exports = async function(req,res){
       return send(res,200,shell("contactos",d,"Contactos","<div class='head'><div><h1>Contactos</h1><div class='muted'>Todas las empresas.</div></div><a class='btn ghost' href='/admin?view=embudo'>Ver embudo</a></div>"+crm.contactsTable(rows,{base:"/admin?view=contactos",sep:"&",detail,filters,showTenant:true,csrf,action:"/admin/crm/stage"})));
     }
     if(view==="conversaciones")return send(res,200,conversationsHtml((await dashboard(d)).recent,d));
+    if(view==="entrenar")return send(res,200,trainingHtml(await trainingData(req.query||{}),csrf));
     return send(res,200,dashboardHtml(await dashboard(d),d));
   }catch(error){
     console.error("[Admin] Dashboard error:",safeError(error));
@@ -209,4 +306,4 @@ module.exports = async function(req,res){
   }
 };
 
-module.exports._test={esc,sign,verify,days,masked,cost};
+module.exports._test={esc,sign,verify,days,masked,cost,trainingHtml,fixControl};
