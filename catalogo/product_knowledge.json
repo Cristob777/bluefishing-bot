@@ -145,46 +145,6 @@
     "source_hash": "2a79cd0df43461b119891f21697a52bcca71224f45f7960b77ac786e662257af",
     "updated_at": "2026-11-17T17:26:50.188Z"
   },
-  "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-2-10g/": {
-    "product_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-2-10g/",
-    "product_name": "BADFISH Caña BAD AJING BAJS 18UL 2-10g",
-    "product_type": "caña",
-    "brand": "BADFISH",
-    "price": "$29.990",
-    "target_species": [],
-    "water_type": [
-      "mar",
-      "río"
-    ],
-    "fishing_position": [],
-    "technique": [
-      "ajing/light game"
-    ],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_range": "2-10g",
-      "length": "1.8m",
-      "power": "UL"
-    },
-    "evidence": [
-      "Agua (categoría/nombre): mar, río",
-      "Técnica (categoría/nombre + descripción): ajing/light game",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.4,
-    "extraction_method": "heuristic",
-    "needs_review": true,
-    "review_reasons": [
-      "producto marcado mar y río a la vez"
-    ],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-2-10g/",
-    "source_hash": "bb7bad1465e5d6c0566a08c3205213bc28ee3c26201d4b3a8bfcb61fceaadec0",
-    "updated_at": "2026-11-17T17:26:50.289Z"
-  },
   "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-3-12/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-3-12/",
     "product_name": "BADFISH Caña BAD AJING BAJS 18UL 3-12",

@@ -1,12 +1,11 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-17T17:26:49.763Z
+# Actualizado: 2026-11-18T16:30:38.431Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
 BADFISH BIG COMBAT 40, 50gr | $2.690 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-40-50gr/
-BADFISH Caña BAD AJING BAJS 18UL 2-10g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-2-10g/
 BADFISH Caña BAD AJING BAJS 18UL 3-12 | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-3-12/
 BADFISH Caña BAD AJING BAJS 19UL 3-12 g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-3-12-g/
 BADFISH Caña BAD AJING BAJS 19UL 5-15 g | $29.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-5-15-g/
