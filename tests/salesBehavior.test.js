@@ -41,3 +41,8 @@ test("el prompt no presenta fichas heurísticas como verificadas", () => {
   assert.match(text, /agua=por_confirmar/);
   assert.doesNotMatch(text, /verificado=sí/);
 });
+
+test("la nota del vendedor llega al prompt de ventas", () => {
+  const text = formatProductsCompactForPrompt([product({ verifiedNotes: "El más vendido para lenguado en playa", verification: "verificada", needsReview: false, waterType: ["mar"] })], {});
+  assert.match(text, /nota_vendedor=El más vendido para lenguado en playa/);
+});
