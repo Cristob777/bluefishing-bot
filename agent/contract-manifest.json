@@ -1,0 +1,13 @@
+{
+  "name": "BlueFishing Sales Agent Skill",
+  "version": "1.0.0",
+  "agent": "Matías",
+  "contracts": [
+    "sales-contract.json",
+    "recommendation-contract.json",
+    "tool-policy.json",
+    "security-contract.json",
+    "response-contract.json",
+    "cybersecurity-baseline.json"
+  ]
+}

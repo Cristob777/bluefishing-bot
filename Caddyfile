@@ -1,0 +1,17 @@
+{$BOT_DOMAIN} {
+  encode zstd gzip
+
+  @webhook path /webhook
+  @health path /health
+  @admin path /admin /admin/*
+  @webchat path /chat /widget.js
+  @chatwoot path /chatwoot/webhook
+
+  reverse_proxy @webhook app:3000
+  reverse_proxy @health app:3000
+  reverse_proxy @admin app:3000
+  reverse_proxy @webchat app:3000
+  reverse_proxy @chatwoot app:3000
+
+  respond 404
+}

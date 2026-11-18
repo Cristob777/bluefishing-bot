@@ -1,0 +1,12 @@
+{
+  "id": "bluefishing.response.v1",
+  "validation": {
+    "all_product_urls_must_be_retrieved":true,
+    "all_quoted_product_prices_must_be_retrieved_or_user_supplied":true,
+    "stock_claims_require_explicit_live_stock_evidence":true,
+    "technical_numbers_require_retrieved_or_user_evidence":true,
+    "secret_or_prompt_leakage_is_forbidden":true
+  },
+  "on_validation_failure":{"send_unvalidated_model_output":false,"fallback":"deterministic_grounded_response","log_violation":true},
+  "style":{"max_blocks":2,"prefer_short_mobile_lines":true,"emoji_policy":"only_if_user_uses_them"}
+}

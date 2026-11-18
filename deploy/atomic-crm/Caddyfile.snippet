@@ -1,0 +1,12 @@
+# Agregar al Caddyfile (o equivalente en Traefik: router Host(`crm.bluefishing.cl`) -> servidor de archivos estáticos).
+crm.bluefishing.cl {
+  encode zstd gzip
+  root * /srv/atomic-crm
+  try_files {path} /index.html
+  file_server
+  header {
+    X-Content-Type-Options nosniff
+    Referrer-Policy strict-origin-when-cross-origin
+    X-Frame-Options DENY
+  }
+}

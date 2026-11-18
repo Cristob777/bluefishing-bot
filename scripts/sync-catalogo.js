@@ -2,13 +2,17 @@ const fs = require("node:fs");
 const path = require("node:path");
 const { detectBrand, detectProductType } = require("../lib/product-taxonomy");
 const { fetchProductPage } = require("../lib/productPage");
+const { buildProductSource } = require("../lib/productSource");
+
+const { resolveFromRuntime } = require("../lib/catalogCredentials");
 
 const WC_URL = (process.env.WC_URL || "https://bluefishing.cl").replace(/\/+$/, "");
-const WC_CONSUMER_KEY = process.env.WC_CONSUMER_KEY || "";
-const WC_CONSUMER_SECRET = process.env.WC_CONSUMER_SECRET || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
-const OUT_PATH = path.join(__dirname, "..", "catalogo", "catalogo_para_bot.txt");
+const { readPath, writePath } = require("../lib/catalogPaths");
+const OUT_PATH = writePath("catalogo_para_bot.txt");
+const SOURCE_OUT_PATH = writePath("product_source.json");
+const LAST_GOOD_PATH = readPath("catalogo_para_bot.txt");
 const PER_PAGE = 100;
 const ALLOWED_TYPES = new Set(["caña", "carrete", "línea", "señuelo", "anzuelo", "combo"]);
 
@@ -21,22 +25,22 @@ const PUBLIC_CATEGORIES = [
   ["Combos de Pesca", "/categoria-producto/todos-los-productos/combos-de-pesca/"]
 ];
 
-function authHeader() {
-  return "Basic " + Buffer.from(WC_CONSUMER_KEY + ":" + WC_CONSUMER_SECRET).toString("base64");
+function authHeader(creds) {
+  return "Basic " + Buffer.from(creds.consumerKey + ":" + creds.consumerSecret).toString("base64");
 }
 
-async function wcFetch(endpoint, params) {
-  const url = new URL(WC_URL + "/wp-json/wc/v3/" + endpoint);
+async function wcFetch(creds, endpoint, params) {
+  const url = new URL(creds.storeUrl + "/wp-json/wc/v3/" + endpoint);
   for (const [key, value] of Object.entries(params || {})) url.searchParams.set(key, value);
-  const response = await fetch(url, { headers: { Authorization: authHeader() } });
+  const response = await fetch(url, { headers: { Authorization: authHeader(creds) } });
   if (!response.ok) throw new Error("WooCommerce API " + endpoint + ": HTTP " + response.status);
   return response.json();
 }
 
-async function fetchAllPages(endpoint, params) {
+async function fetchAllPages(creds, endpoint, params) {
   const results = [];
   for (let page = 1; page <= 100; page += 1) {
-    const batch = await wcFetch(endpoint, { ...(params || {}), per_page: PER_PAGE, page });
+    const batch = await wcFetch(creds, endpoint, { ...(params || {}), per_page: PER_PAGE, page });
     if (!Array.isArray(batch) || !batch.length) break;
     results.push(...batch);
     if (batch.length < PER_PAGE) break;
@@ -72,11 +76,11 @@ function chooseRelevantCategory(product, resolveCategoryPath) {
   return paths[0] || "";
 }
 
-async function fetchWooCatalog() {
-  if (!WC_CONSUMER_KEY || !WC_CONSUMER_SECRET) throw new Error("credenciales WooCommerce no configuradas");
+async function fetchWooCatalog(creds) {
+  if (!creds) throw new Error("credenciales WooCommerce no configuradas (ni .env ni tienda conectada en /panel)");
   const [categories, products] = await Promise.all([
-    fetchAllPages("products/categories"),
-    fetchAllPages("products", { status: "publish" })
+    fetchAllPages(creds, "products/categories"),
+    fetchAllPages(creds, "products", { status: "publish" })
   ]);
   const resolveCategoryPath = buildCategoryPathResolver(categories);
   const rows = [];
@@ -96,10 +100,78 @@ async function fetchWooCatalog() {
       category,
       product_type: productType,
       brand: detectBrand(name),
-      updated_at: new Date().toISOString()
+      updated_at: new Date().toISOString(),
+      source: buildProductSource(product, { resolveCategoryPath })
     });
   }
   return rows;
+}
+
+// Store API pública de WooCommerce (/wp-json/wc/store/v1): la misma que usa el carrito/bloques
+// del sitio. No requiere claves; trae 100 productos por request con precio, stock y categorías.
+// Si la tienda no la expone (WooCommerce antiguo o bloqueada), se cae al scraping.
+async function storeApiFetchAllPages(baseUrl, endpoint, params, fetchImpl) {
+  const results = [];
+  for (let page = 1; page <= 100; page += 1) {
+    const url = new URL(baseUrl + "/wp-json/wc/store/v1/" + endpoint);
+    for (const [key, value] of Object.entries(params || {})) url.searchParams.set(key, value);
+    url.searchParams.set("per_page", String(PER_PAGE));
+    url.searchParams.set("page", String(page));
+    const response = await fetchImpl(url, {
+      headers: { Accept: "application/json", "User-Agent": "BlueFishingCatalogBot/1.0 (+https://bluefishing.cl)" }
+    });
+    if (!response.ok) throw new Error("Store API " + endpoint + ": HTTP " + response.status);
+    const batch = await response.json();
+    if (!Array.isArray(batch)) throw new Error("Store API " + endpoint + ": respuesta no es una lista");
+    if (!batch.length) break;
+    results.push(...batch);
+    const totalPages = Number(response.headers?.get?.("x-wp-totalpages") || 0);
+    if (batch.length < PER_PAGE || (totalPages && page >= totalPages)) break;
+  }
+  return results;
+}
+
+// Precios de la Store API vienen en unidades menores (CLP suele tener minor_unit 0).
+function storeApiPrice(prices) {
+  if (!prices) return "";
+  const raw = Number(prices.price || prices.regular_price || 0);
+  const minor = Number.isInteger(prices.currency_minor_unit) ? prices.currency_minor_unit : 0;
+  return formatPrice(raw / Math.pow(10, minor));
+}
+
+async function fetchStoreApiCatalog({ baseUrl = WC_URL, fetchImpl = fetch } = {}) {
+  const [categories, products] = await Promise.all([
+    storeApiFetchAllPages(baseUrl, "products/categories", {}, fetchImpl),
+    storeApiFetchAllPages(baseUrl, "products", {}, fetchImpl)
+  ]);
+  const resolveCategoryPath = buildCategoryPathResolver(categories);
+  const rows = [];
+  for (const product of products) {
+    if (product.is_in_stock === false) continue;
+    const name = decodeEntities(String(product.name || "")).trim().replace(/\|/g, "-");
+    const category = chooseRelevantCategory(product, resolveCategoryPath);
+    const productType = detectProductType(name, category);
+    if (!name || !ALLOWED_TYPES.has(productType)) continue;
+    const price = storeApiPrice(product.prices);
+    const url = product.permalink || "";
+    if (!price || !url) continue;
+    rows.push({
+      url, name, price, category, product_type: productType, brand: detectBrand(name),
+      updated_at: new Date().toISOString(),
+      source: buildProductSource(product, { resolveCategoryPath })
+    });
+  }
+  if (products.length && !rows.length) throw new Error("Store API devolvió productos pero ninguno utilizable");
+  return rows;
+}
+
+// La Store API devuelve nombres con entidades HTML (&#8211;, &amp;...).
+function decodeEntities(text) {
+  return text
+    .replace(/&#(\d+);/g, (_, n) => String.fromCodePoint(Number(n)))
+    .replace(/&#x([0-9a-f]+);/gi, (_, n) => String.fromCodePoint(parseInt(n, 16)))
+    .replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&nbsp;/g, " ");
 }
 
 function extractProductLinks(html) {
@@ -203,7 +275,9 @@ async function syncToSupabase(rows) {
   const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false, autoRefreshToken: false }
   });
-  const { error } = await supabase.from("products").upsert(rows, { onConflict: "url" });
+  // `source` es solo para el enriquecimiento local; la tabla products no tiene esa columna.
+  const clean = rows.map(({ source, ...row }) => row);
+  const { error } = await supabase.from("products").upsert(clean, { onConflict: "url" });
   if (error) throw new Error("Supabase products upsert: " + error.message);
 }
 
@@ -211,19 +285,26 @@ async function main() {
   let rows;
   let source;
   try {
-    rows = await fetchWooCatalog();
-    source = "woocommerce_api";
+    const creds = await resolveFromRuntime();
+    rows = await fetchWooCatalog(creds);
+    source = creds.source === "panel" ? "woocommerce_api_panel" : "woocommerce_api";
   } catch (error) {
     console.warn("[Catalog] WooCommerce API no disponible: " + error.message);
-    rows = await fetchPublicCatalog();
-    source = "public_store";
+    try {
+      rows = await fetchStoreApiCatalog();
+      source = "woocommerce_store_api";
+    } catch (storeError) {
+      console.warn("[Catalog] Store API pública no disponible: " + storeError.message);
+      rows = await fetchPublicCatalog();
+      source = "public_store";
+    }
   }
 
   const unique = [...new Map(rows.map((row) => [row.url, row])).values()]
     .sort((a, b) => a.name.localeCompare(b.name, "es"));
 
   if (!unique.length) {
-    if (fs.existsSync(OUT_PATH) && fs.readFileSync(OUT_PATH, "utf8").trim()) {
+    if (fs.existsSync(LAST_GOOD_PATH) && fs.readFileSync(LAST_GOOD_PATH, "utf8").trim()) {
       console.warn("[Catalog] El refresh remoto produjo 0 productos. Se conserva el último catálogo válido.");
       console.log(JSON.stringify({ source: "preserved_last_known_good", products: 0, output: OUT_PATH }));
       return;
@@ -242,6 +323,14 @@ async function main() {
   const lines = unique.map((row) => row.name + " | " + row.price + " | " + row.category + " | " + row.url);
   fs.writeFileSync(OUT_PATH, header + lines.join("\n") + "\n", "utf8");
 
+  // Ficha limpia por producto (solo datos del producto, sin menú del sitio) para enrich-catalogo.
+  const sources = Object.fromEntries(
+    unique.filter((row) => row.source).map((row) => [row.url, row.source])
+  );
+  if (Object.keys(sources).length) {
+    fs.writeFileSync(SOURCE_OUT_PATH, JSON.stringify(sources, null, 2) + "\n", "utf8");
+  }
+
   try {
     await syncToSupabase(unique);
   } catch (error) {
@@ -252,10 +341,11 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch((error) => {
+  // exit explícito: el pool de Postgres (si se usó para credenciales) mantendría vivo el proceso.
+  main().then(() => process.exit(0)).catch((error) => {
     console.error("[Catalog] Fatal:", error.message);
     process.exit(1);
   });
 }
 
-module.exports = { formatPrice, extractProductLinks, fetchWooCatalog, fetchPublicCatalog };
+module.exports = { formatPrice, extractProductLinks, fetchWooCatalog, fetchPublicCatalog, fetchStoreApiCatalog, storeApiPrice, decodeEntities };

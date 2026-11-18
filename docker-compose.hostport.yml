@@ -1,0 +1,9 @@
+# Alternativa (opcional) si Traefik corre en el host o con network_mode: host.
+# Publica la app solo en loopback del host. Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.hostport.yml --env-file .env.production up -d
+# Si Traefik corre en un contenedor SIN network_mode: host, esta opción NO sirve
+# (127.0.0.1 del contenedor no es el host): usa la red externa (opción por defecto).
+services:
+  app:
+    ports:
+      - "127.0.0.1:${AGENT_HOST_PORT:-18080}:3000"
