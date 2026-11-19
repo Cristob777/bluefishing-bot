@@ -3049,43 +3049,6 @@
     "source_hash": "8fe69de5ed30a521c637cdf45e195fb6a93d01fe88c662284e5a549cdc63f032",
     "updated_at": "2026-11-17T17:26:58.263Z"
   },
-  "https://bluefishing.cl/producto/daiwa-senuelo-over-drive-120s/": {
-    "product_url": "https://bluefishing.cl/producto/daiwa-senuelo-over-drive-120s/",
-    "product_name": "DAIWA Señuelo OVER DRIVE 120S",
-    "product_type": "señuelo",
-    "brand": "DAIWA",
-    "price": "$23.990",
-    "target_species": [
-      "atún",
-      "dorado"
-    ],
-    "water_type": [
-      "mar"
-    ],
-    "fishing_position": [],
-    "technique": [],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_grams": "45g",
-      "action_type": "sinking"
-    },
-    "evidence": [
-      "Agua (categoría/nombre): mar",
-      "Especie (descripción): atún, dorado",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.6,
-    "extraction_method": "heuristic",
-    "needs_review": false,
-    "review_reasons": [],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/daiwa-senuelo-over-drive-120s/",
-    "source_hash": "dc1daccbd4ff058b6b32757893b61ac688e6b324f412934cf14e22bda76ccc8f",
-    "updated_at": "2026-11-17T17:26:58.364Z"
-  },
   "https://bluefishing.cl/producto/daiwa-senuelo-slz-vertice-r-125s-sinking/": {
     "product_url": "https://bluefishing.cl/producto/daiwa-senuelo-slz-vertice-r-125s-sinking/",
     "product_name": "DAIWA Señuelo SLZ-VERTICE R 125S SINKING",
@@ -8198,42 +8161,6 @@
     "source_url": "https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-dark-wolf-df-50l/",
     "source_hash": "6f11bc5485a08e22f8f363124c400f330bc44dfc306d066d28fedf27f70d1026",
     "updated_at": "2026-11-17T17:27:14.394Z"
-  },
-  "https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-na-2000/": {
-    "product_url": "https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-na-2000/",
-    "product_name": "TSURINOYA Carrete de pesca NA 2000",
-    "product_type": "carrete",
-    "brand": "TSURINOYA",
-    "price": "$49.990",
-    "target_species": [],
-    "water_type": [],
-    "fishing_position": [],
-    "technique": [
-      "spinning"
-    ],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_grams": "230g",
-      "size": "2000",
-      "gear_ratio": "5.2:1"
-    },
-    "evidence": [
-      "Técnica (categoría/nombre): spinning",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.4,
-    "extraction_method": "heuristic",
-    "needs_review": true,
-    "review_reasons": [
-      "sin tipo de agua en la ficha"
-    ],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/tsurinoya-carrete-de-pesca-na-2000/",
-    "source_hash": "98f01d9c0393a352960cdf35dd3cda54df18f61b718b080e2d0a19d7f4920022",
-    "updated_at": "2026-11-17T17:27:14.494Z"
   },
   "https://bluefishing.cl/producto/tsurinoya-carrete-metis-2000/": {
     "product_url": "https://bluefishing.cl/producto/tsurinoya-carrete-metis-2000/",
