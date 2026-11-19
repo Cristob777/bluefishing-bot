@@ -280,6 +280,7 @@ module.exports = async function(req,res){
     }
     const W=require("../lib/wooOrders");
     const rs=await W.syncAllStores(query,{store:require("../lib/tenantStore").createStore(),resolveOperator:()=>require("../lib/catalogCredentials").resolveFromRuntime()}).catch(()=>[]);
+    const B=require("../lib/bsaleSales");if(B.salesConfig().enabled)rs.push(await B.syncBsaleSales(query).catch(()=>({ok:false})));
     return redirect(res,"/admin?view=resultados&n="+(rs.length&&rs.every(r=>r.ok!==false)?"sync_ok":"sync_err"));
   }
   if(path==="/admin/logout"&&req.method==="POST")return redirect(res,"/admin",COOKIE+"=; Max-Age=0; Path=/admin; HttpOnly; Secure; SameSite=Strict");
@@ -289,7 +290,7 @@ module.exports = async function(req,res){
     const d=days(req.query?.days), id=String(req.query?.session||"").slice(0,160);
     if(id){const x=await conversation(id);x.csrf=csrf;return send(res,200,conversationHtml(id,x,d));}
     const view=String(req.query?.view||"");
-    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const W=require("../lib/wooOrders");const conn=Boolean(W.operatorCreds())||Boolean((await query("select 1 from tenant_credentials where woo_connected_at is not null limit 1").catch(()=>({rows:[]}))).rows.length);const r=await R.results(query,{days:rd,salesConnected:conn});const sync=conn?"<form method='post' action='/admin/woo/sync' style='margin-top:12px'><input type='hidden' name='csrf' value='"+esc(csrf)+"'><button class='btn ghost full'>Sincronizar pedidos ahora</button></form>":"";return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados",sync)));}
+    if(view==="resultados"){const R=require("../lib/results");const rd=[7,30,90].includes(Number(req.query?.days))?Number(req.query.days):30;const W=require("../lib/wooOrders");const conn=require("../lib/bsaleSales").salesConfig().enabled||Boolean(W.operatorCreds())||Boolean((await query("select 1 from tenant_credentials where woo_connected_at is not null limit 1").catch(()=>({rows:[]}))).rows.length);const r=await R.results(query,{days:rd,salesConnected:conn});const sync=conn?"<form method='post' action='/admin/woo/sync' style='margin-top:12px'><input type='hidden' name='csrf' value='"+esc(csrf)+"'><button class='btn ghost full'>Sincronizar pedidos ahora</button></form>":"";return send(res,200,shell("resultados",d,"Resultados",R.resultsBody(ui,require("../lib/charts"),r,"/admin?view=resultados",sync)));}
     if(view==="embudo"||view==="contactos"){
       const q=req.query||{},filters={q:q.q||"",stage:q.stage||"",channel:q.channel||"",sort:q.sort||"",dir:q.dir||""};
       const rows=await crm.listContacts(query,{tenantId:undefined,...filters}).catch(()=>[]);

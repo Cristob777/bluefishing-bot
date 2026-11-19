@@ -1,5 +1,7 @@
 # SETUP — Blue Fishing bot en Hostinger KVM4 (checklist)
 
+> **Primer deploy: sigue [RUNBOOK-PRODUCCION.md](RUNBOOK-PRODUCCION.md)** (Cloudflare Tunnel + Bsale + Chatwoot). Este archivo es la referencia completa.
+
 Quién hace qué:
 - **Tú (operador):** deploy, `.env.production`, Traefik, webhook de Meta y, si se usan, Chatwoot y Atomic CRM.
 - **Dueño de la empresa:** entra a `https://TU-DOMINIO/panel`, crea su cuenta y conecta su tienda y su WhatsApp. No te entrega claves.
@@ -73,6 +75,7 @@ nano .env.production
 - `ALLOWED_ORIGIN`: chat web, ver el paso 7.
 - `CHATWOOT_*`: paso 8.
 - `ATOMIC_CRM_*`: paso 9.
+- `BSALE_ACCESS_TOKEN` (**recomendado**): stock en vivo por SKU y ventas web + tienda física para la atribución. Verificar con `docker exec crm-bot-app-1 node scripts/bsale-check.js`. `BSALE_OFFICE_IDS` limita qué sucursales cuentan para el stock.
 
 ## 3. Instalar / actualizar
 ```bash

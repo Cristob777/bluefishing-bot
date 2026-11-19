@@ -1,6 +1,6 @@
 # BlueFishing AI Sales Agent
 
-> **Deploy en Hostinger: ver [deploy/hostinger/SETUP.md](deploy/hostinger/SETUP.md).**
+> **Puesta en producción paso a paso: [deploy/hostinger/RUNBOOK-PRODUCCION.md](deploy/hostinger/RUNBOOK-PRODUCCION.md).** Referencia completa: [deploy/hostinger/SETUP.md](deploy/hostinger/SETUP.md).
 
 BlueFishing is building **Matías**, an AI sales agent designed to help customers choose fishing products through WhatsApp using the real BlueFishing catalog.
 
