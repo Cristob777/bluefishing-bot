@@ -8,3 +8,5 @@ deploy/atomic-crm/.env
 
 # Catálogo generado en runtime (sync/enrich con CATALOG_RUNTIME_DIR)
 /data/
+
+e2e/.mock-log.jsonl

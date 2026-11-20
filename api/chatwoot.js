@@ -12,10 +12,12 @@ const { createHandoffRequest } = require("../lib/telemetry");
 const { pseudonymize, safeError } = require("../lib/logSanitizer");
 const { allowMessage } = require("../lib/rateLimiter");
 const { trackContact } = require("../lib/contactStore");
+const { refreshStage } = require("../lib/crmStages");
+const { query: pgQuery, isConfigured: hasPostgres } = require("../lib/postgres");
 
 const MAX_SKEW_SECONDS = 300;
 const HANDOFF_LABEL = "humano";
-const HUMAN_REQUEST_RE = /\b(humano|una persona|persona real|vendedor(a)?|ejecutiv[oa]|asesor(a)?|hablar con alguien)\b/i;
+const { HUMAN_REQUEST_RE } = require("../lib/humanRequest");
 
 const SOURCE_CHANNEL = {
   "Channel::Whatsapp": "whatsapp",
@@ -130,6 +132,8 @@ async function handOff(client, ev, intent, alreadyQueued) {
   await client.setLabels(ev.accountId, ev.conversationId, labels).catch((e) =>
     console.warn("[Chatwoot] No se pudo etiquetar:", safeError(e)));
   await client.setStatus(ev.accountId, ev.conversationId, "open");
+  // CRM: pedir una persona = "Interesado" (si no estaba más adelante en el embudo).
+  if (hasPostgres) await refreshStage(pgQuery, `cw:${ev.conversationId}`);
 }
 
 async function processEvent(ev, client, deps = {}) {
