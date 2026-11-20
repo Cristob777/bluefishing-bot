@@ -1,7 +1,7 @@
 {
   "name": "bluefishing-bot",
   "version": "1.0.0",
-  "description": "Chatbot Mat\u00edas - Bluefishing.cl",
+  "description": "Chatbot Matías - Bluefishing.cl",
   "main": "api/webhook.js",
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
@@ -20,7 +20,8 @@
     "db:init": "psql \"$DATABASE_URL\" -f db/schema.sql",
     "security:retention": "node scripts/security-retention.js",
     "db:migrate": "for f in db/schema.sql db/migrations/*.sql; do psql \"$DATABASE_URL\" -v ON_ERROR_STOP=1 -f \"$f\" || exit 1; done",
-    "crm:sync": "node scripts/atomic-crm-sync.js --once"
+    "crm:sync": "node scripts/atomic-crm-sync.js --once",
+    "e2e:staging": "bash e2e/run-staging.sh"
   },
   "engines": {
     "node": ">=22"
