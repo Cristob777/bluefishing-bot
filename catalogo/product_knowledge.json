@@ -3119,39 +3119,6 @@
     "source_hash": "77f70076f906762532fc174288909053de15a820d385824ea92e47ce5ce60058",
     "updated_at": "2026-11-17T17:26:58.565Z"
   },
-  "https://bluefishing.cl/producto/daiwa-vertice-r-140s-sinking-28-5g/": {
-    "product_url": "https://bluefishing.cl/producto/daiwa-vertice-r-140s-sinking-28-5g/",
-    "product_name": "Daiwa Vertice R 140S Sinking 28.5g",
-    "product_type": "señuelo",
-    "brand": "DAIWA",
-    "price": "$24.990",
-    "target_species": [],
-    "water_type": [
-      "mar"
-    ],
-    "fishing_position": [],
-    "technique": [],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_grams": "5g",
-      "action_type": "sinking"
-    },
-    "evidence": [
-      "Agua (categoría/nombre): mar",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.6,
-    "extraction_method": "heuristic",
-    "needs_review": false,
-    "review_reasons": [],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/daiwa-vertice-r-140s-sinking-28-5g/",
-    "source_hash": "e5dfc1dd4147bd622b8cd783aafa4ab0039d4678cc8d7a16ad254cab5f936d70",
-    "updated_at": "2026-11-17T17:26:58.666Z"
-  },
   "https://bluefishing.cl/producto/decoy-jighead-sv-51-delta-magic-heavy/": {
     "product_url": "https://bluefishing.cl/producto/decoy-jighead-sv-51-delta-magic-heavy/",
     "product_name": "DECOY Jighead SV-51 DELTA MAGIC HEAVY",
