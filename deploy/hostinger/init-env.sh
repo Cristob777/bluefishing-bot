@@ -38,12 +38,12 @@ hex() { openssl rand -hex "$1"; }
 b64() { openssl rand -base64 "$1" | tr -d '\n'; }
 ask() { # ask KEY "pregunta" [default] — texto visible
   missing "$1" || { echo "  ya estaba $1"; return 0; }
-  local ans; read -r -p "$2${3:+ [$3]}: " ans; ans="${ans:-${3:-}}"
+  local ans=""; read -r -p "$2${3:+ [$3]}: " ans || true; ans="${ans:-${3:-}}"
   [[ -n "$ans" ]] && set_kv "$1" "$ans" || echo "  (vacío) $1 — complétalo antes de install.sh"
 }
 ask_secret() { # ask_secret KEY "pregunta" — sin eco
   missing "$1" || { echo "  ya estaba $1"; return 0; }
-  local ans; read -r -s -p "$2 (no se muestra; Enter para dejar pendiente): " ans; echo
+  local ans=""; read -r -s -p "$2 (no se muestra; Enter para dejar pendiente): " ans || true; echo
   [[ -n "$ans" ]] && set_kv "$1" "$ans" || echo "  (pendiente) $1 — complétalo antes de install.sh"
 }
 bcrypt() { # bcrypt USER PASS -> user:hash (formato htpasswd)
@@ -72,6 +72,9 @@ ask_secret OPENAI_API_KEY "OPENAI_API_KEY"
 ask_secret META_APP_SECRET "META_APP_SECRET (Meta → app → Configuración → Básica)"
 ask_secret WHATSAPP_TOKEN "WHATSAPP_TOKEN (token permanente del usuario del sistema)"
 ask PHONE_NUMBER_ID "PHONE_NUMBER_ID (WhatsApp → Configuración de la API)"
+# Recomendado: stock en vivo y ventas (web + tienda) desde Bsale. Opcional: sin él el bot funciona,
+# pero no afirma stock en vivo ni atribuye ventas de la tienda física.
+ask_secret BSALE_ACCESS_TOKEN "BSALE_ACCESS_TOKEN (recomendado: stock en vivo y ventas de tienda)"
 
 echo "== Secretos internos =="
 gen POSTGRES_PASSWORD "$(hex 24)"
@@ -109,6 +112,7 @@ needed=(BOT_DOMAIN CHATWOOT_DOMAIN CHATWOOT_ADMIN_EMAIL OPENAI_API_KEY META_APP_
 for k in "${needed[@]}"; do
   missing "$k" && { echo "  falta $k"; pending=1; }
 done
+missing BSALE_ACCESS_TOKEN && echo "  (recomendado) BSALE_ACCESS_TOKEN vacío: sin stock en vivo ni ventas de tienda"
 echo
 echo "VERIFY_TOKEN para Meta (webhook):  grep ^VERIFY_TOKEN= $ENV_FILE | cut -d= -f2"
 echo "Accesos iniciales (/admin, /panel): sudo cat $CREDS_FILE"
