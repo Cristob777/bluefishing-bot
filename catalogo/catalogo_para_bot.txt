@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-22T15:26:07.074Z
+# Actualizado: 2026-11-23T19:18:11.217Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -313,7 +313,6 @@ YAMAGA BLANKS Caña EARLY for SeaBass 93M | $369.990 | Cañas | https://bluefish
 YAMAGA BLANKS Caña Early for Surf 103M | $379.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-for-surf-103m/
 YAMAGA BLANKS Caña Early SeaWalk Taijigging 63M, Jigging | $489.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-cana-early-seawalk-taijigging-63m-jigging/
 Yamaga Blanks Early For Surf 109MMH | $469.990 | Cañas | https://bluefishing.cl/producto/yamaga-blanks-early-for-surf-109mmh/
-ZENAQ Caña INQLUDE IS89-M5 – MASTER HAND | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-inqlude-is89-m5-master-hand/
 ZENAQ Caña INQLUDE IS90-M7 – JAW BREAKER | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-inqlude-is90-m7-jaw-breaker/
 ZENAQ Caña MUTHOS ACCURA 100HHH | $999.999 | Cañas | https://bluefishing.cl/producto/zenaq-cana-muthos-accura-100hhh/
 ZENAQ Caña SINPAA SC81-80G Hiramasa | $899.990 | Cañas | https://bluefishing.cl/producto/zenaq-cana-sinpaa-sc81-80g-hiramasa/

@@ -10504,43 +10504,6 @@
     "source_hash": "ef8a10d65c75b6d1c157183976b7413da844f8be8d9f8fcf48e130cea0a3aac8",
     "updated_at": "2026-11-17T17:27:21.552Z"
   },
-  "https://bluefishing.cl/producto/zenaq-cana-inqlude-is89-m5-master-hand/": {
-    "product_url": "https://bluefishing.cl/producto/zenaq-cana-inqlude-is89-m5-master-hand/",
-    "product_name": "ZENAQ Caña INQLUDE IS89-M5 – MASTER HAND",
-    "product_type": "caña",
-    "brand": "ZENAQ",
-    "price": "$899.990",
-    "target_species": [],
-    "water_type": [
-      "mar"
-    ],
-    "fishing_position": [
-      "orilla",
-      "playa"
-    ],
-    "technique": [],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_range": "5-35g",
-      "length": "2.71m",
-      "power": "M"
-    },
-    "evidence": [
-      "Agua (categoría/nombre): mar",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.6,
-    "extraction_method": "heuristic",
-    "needs_review": false,
-    "review_reasons": [],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/zenaq-cana-inqlude-is89-m5-master-hand/",
-    "source_hash": "dd00f33a9b4db68452969cf471983cd9a1b9669b0fc2549171700ded875e12f1",
-    "updated_at": "2026-11-17T17:27:21.652Z"
-  },
   "https://bluefishing.cl/producto/zenaq-cana-inqlude-is90-m7-jaw-breaker/": {
     "product_url": "https://bluefishing.cl/producto/zenaq-cana-inqlude-is90-m7-jaw-breaker/",
     "product_name": "ZENAQ Caña INQLUDE IS90-M7 – JAW BREAKER",
