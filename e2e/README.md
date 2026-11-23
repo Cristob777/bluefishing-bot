@@ -9,12 +9,13 @@ npm ci
 E2E_PG_ADMIN_URL=postgresql://postgres@localhost:5432/postgres bash e2e/run-staging.sh
 ```
 
-## Qué cubre (33 verificaciones)
+## Qué cubre (35 verificaciones)
 | Área | Verifica |
 |---|---|
 | Meta | Verificación del webhook, rechazo sin firma, respuesta al mismo número con el token del `.env` |
 | Venta | Recomendación con producto real del catálogo, stock en vivo por SKU, producto agotado no se ofrece, confirmación de stock |
 | Memoria | Guarda desde dónde pesca, técnica, presupuesto ("80 mil") y marca |
+| Tienda | Responde dirección y horario desde `STORE_*` del `.env`; no inventa lo que no está configurado |
 | CRM | Contacto creado, etapa automática (Cotizado), traspaso no retrocede la etapa, venta Bsale → Compró |
 | Seguridad | Prompt injection bloqueado, chat web solo desde bluefishing.cl, `/admin` sin login no expone datos |
 | Chatwoot | Matías responde, pedir persona → etiqueta `humano` + Abierta, Matías se pausa, "asesoría" no traspasa |

@@ -36,7 +36,7 @@ y la tienda: cambiar los nameservers afecta a todo el dominio.
 ## 2. Instalar en el VPS
 ```bash
 tmux new -s crm
-git clone -b prod/hostinger-kvm4 https://github.com/Cristob777/bluefishing-bot.git /opt/crm-bot
+git clone -b main https://github.com/Cristob777/bluefishing-bot.git /opt/crm-bot
 cd /opt/crm-bot
 bash deploy/hostinger/init-env.sh      # en "Cómo se publica": Enter (1 = tunnel) y pega el token
 bash deploy/hostinger/install.sh

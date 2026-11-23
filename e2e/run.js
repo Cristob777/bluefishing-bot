@@ -73,6 +73,11 @@ async function chatwootEvent(convId, text, { status = "pending" } = {}) {
   m = await sendWhatsApp("¿tienen stock de la BADFISH caña GRAPHITE JIGGING 200g?");
   check("Producto agotado en Bsale no se ofrece", m.reply && !/GRAPHITE JIGGING - 200g/i.test(m.reply), (m.reply || "").slice(0, 90));
 
+  m = await sendWhatsApp("¿dónde están y a qué hora abren?");
+  check("Info de la tienda desde el .env (dirección + horario), sin LLM", /Av\. Ejemplo 123/.test(m.reply || "") && /Lunes a sábado/.test(m.reply || ""), (m.reply || "").slice(0, 90));
+  m = await sendWhatsApp("¿cuál es la política de cambios?");
+  check("Dato de tienda no configurado: no lo inventa", m.reply && !/30 d[ií]as|devoluci[oó]n gratis/i.test(m.reply), (m.reply || "").slice(0, 90));
+
   // 3. CRM
   let row = psql(`select stage, phone, message_count from contacts where external_id='${PHONE}'`);
   check("CRM: contacto creado con su teléfono", row.includes(PHONE), row);

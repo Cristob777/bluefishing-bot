@@ -57,5 +57,23 @@ test("init-env.sh defaults to Cloudflare tunnel and asks for its token without e
   assert.equal(e.CLOUDFLARE_TUNNEL_TOKEN, "cf-tunnel-token-x");
   assert.equal(e.OPENAI_API_KEY, "sk-x");
   assert.equal(e.BSALE_ACCESS_TOKEN, "bsale-tok-x", "Bsale se pide sin eco");
+  assert.ok("STORE_ADDRESS" in e && "STORE_SHIPPING" in e, "deja listas las líneas de información de la tienda");
   assert.match(out, /Listo\. Siguiente/);
+});
+
+test("init-env.sh agrega las líneas nuevas a un .env.production de una instalación anterior", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "initenv-old-"));
+  const bin = path.join(dir, "bin");
+  fs.mkdirSync(bin);
+  fs.writeFileSync(path.join(bin, "htpasswd"), '#!/bin/sh\necho "$2:\\$2y\\$05\\$testhashtesthashtesthashtesthashtesthashtesthashtes"\n', { mode: 0o755 });
+  const envFile = path.join(dir, ".env");
+  // .env viejo: sin BSALE_OFFICE_IDS ni STORE_*, con un valor propio que no se debe pisar.
+  fs.writeFileSync(envFile, "BOT_DOMAIN=bot.bluefishing.cl\nOPENAI_API_KEY=sk-ya-estaba\n", { mode: 0o600 });
+  const env = { ...process.env, PATH: `${bin}:${process.env.PATH}`, ENV_FILE: envFile, SECRETS_DIR: path.join(dir, "secrets") };
+  execFileSync("bash", [path.join(ROOT, "deploy/hostinger/init-env.sh")], { cwd: ROOT, env, input: "", stdio: ["pipe", "pipe", "pipe"] });
+  const e = readEnv(envFile);
+  assert.equal(e.OPENAI_API_KEY, "sk-ya-estaba");
+  for (const k of ["BSALE_OFFICE_IDS", "STORE_ADDRESS", "STORE_HOURS", "STORE_SHIPPING", "STORE_PAYMENTS", "STORE_PICKUP", "STORE_RETURNS"]) {
+    assert.ok(k in e, k);
+  }
 });

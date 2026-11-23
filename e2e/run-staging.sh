@@ -23,6 +23,7 @@ export VERIFY_TOKEN=vt-staging WHATSAPP_TOKEN=wa-staging-token PHONE_NUMBER_ID=1
 export CHATWOOT_ENABLED=true CHATWOOT_BASE_URL="$M/chatwoot" CHATWOOT_BOT_TOKEN=cw-bot CHATWOOT_LABELS_TOKEN=cw-labels CHATWOOT_WEBHOOK_SECRET=cw-secret
 export ADMIN_DASHBOARD_USER=admin ADMIN_DASHBOARD_PASSWORD=staging-pass-123456 ADMIN_SESSION_SECRET=e2e-session-secret-0123456789abcdef
 export ALLOWED_ORIGIN=https://bluefishing.cl LOG_HASH_KEY=e2e-log-hash-key
+export STORE_ADDRESS="Av. Ejemplo 123, Santiago" STORE_HOURS="Lunes a sábado de 10:00 a 19:00" STORE_SHIPPING='Bluexpress a todo Chile desde $4.990'
 export E2E_MOCK_LOG="$PWD/e2e/.mock-log.jsonl"
 
 LOGDIR="$(mktemp -d)"
