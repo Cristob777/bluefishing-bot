@@ -1,6 +1,6 @@
 ## Runbook: Puesta en producción de Matías (Blue Fishing)
 **Owner:** Cristóbal (operador) | **Frecuencia:** una vez + actualizaciones a demanda
-**Last Updated:** 2026-11-19 | **Last Run:** pendiente
+**Last Updated:** 2026-11-23 | **Last Run:** pendiente
 
 ### Purpose
 Dejar a Matías respondiendo por WhatsApp en `bot.bluefishing.cl`, con:
@@ -11,6 +11,21 @@ Dejar a Matías respondiendo por WhatsApp en `bot.bluefishing.cl`, con:
 
 Todo corre en el VPS Hostinger como proyecto Docker `crm-bot`, publicado por **Cloudflare Tunnel**
 (no toca el Nginx ni los puertos de las tiendas). Referencia detallada: [SETUP.md](SETUP.md).
+
+### Lo único que se llena a mano
+`init-env.sh` genera todos los secretos internos (base de datos, sesiones, tokens de Chatwoot, `/admin`). Tú solo pones esto:
+
+| Variable | De dónde sale | ¿Obligatoria? |
+|---|---|---|
+| `CLOUDFLARE_TUNNEL_TOKEN` | Cloudflare → Zero Trust → Tunnels (Step 2) | Sí |
+| `OPENAI_API_KEY` | platform.openai.com → API keys (con límite de gasto) | Sí |
+| `WHATSAPP_TOKEN` | Meta Business → Usuarios del sistema → token **permanente** | Sí |
+| `PHONE_NUMBER_ID` | developers.facebook.com → WhatsApp → Configuración de la API | Sí |
+| `META_APP_SECRET` | developers.facebook.com → tu app → Configuración → Básica | Sí |
+| `BSALE_ACCESS_TOKEN` | Cuenta Bsale → API / integraciones | Recomendada: sin ella no hay stock en vivo ni ventas de tienda |
+| `STORE_ADDRESS`, `STORE_HOURS`, `STORE_SHIPPING`, `STORE_PAYMENTS`, `STORE_PICKUP`, `STORE_RETURNS` | Texto que entrega Blue Fishing (una línea cada una) | Recomendadas: sin ellas Matías no responde dirección, horario, despacho ni pagos |
+
+Las 6 primeras las pide `init-env.sh` (sin mostrarlas en pantalla). Las `STORE_*` se escriben con `nano .env.production` (Step 4).
 
 ### Prerequisites
 Junta esto ANTES de entrar al VPS. Nunca lo pegues en chats ni en el repo.
@@ -28,7 +43,7 @@ Junta esto ANTES de entrar al VPS. Nunca lo pegues en chats ni en el repo.
 ### Procedure
 
 #### Step 1: Dejar el código listo (GitHub, 5 min)
-1. Mergear el PR `feat/bsale-produccion` en `main`.
+1. `main` ya trae todo (Bsale, CRM automático, información de la tienda). No hay PR pendiente.
 2. Repo a **privado**: GitHub → Settings → General → Danger Zone → Change visibility. (Hoy es público: cualquiera lee el prompt de ventas y las reglas anti-inyección.)
 3. Como el repo queda privado, el VPS necesita una **deploy key de solo lectura**:
 ```bash
@@ -70,6 +85,11 @@ cd /opt/crm-bot
 bash deploy/hostinger/init-env.sh
 ```
 Responde: dominios (Enter = `bot.bluefishing.cl` / `chat.bluefishing.cl`), tu email, usuario `/admin` (Enter), modo **1 (tunnel)**, y pega sin eco: token del túnel, OpenAI, App secret, WhatsApp token, Phone number ID y **token Bsale**. El script genera todos los secretos internos.
+
+Después escribe la información de la tienda (texto libre, una línea cada una, sin comillas):
+```bash
+nano .env.production     # buscar STORE_ (Ctrl+W) y completar STORE_ADDRESS, STORE_HOURS, STORE_SHIPPING, ...
+```
 
 **Expected result:** termina con `Listo. Siguiente: bash deploy/hostinger/install.sh`.
 **If it fails:** si lista "falta X", vuelve a correrlo (es idempotente; no pisa lo ya puesto).
@@ -133,6 +153,7 @@ crontab -e
 Respalda **fuera del VPS** (gestor de contraseñas): `.env.production` y `/root/.crm-bot/credenciales-iniciales`.
 
 ### Verification
+- [ ] Pregunta "¿dónde están y a qué hora abren?" → responde con `STORE_ADDRESS` y `STORE_HOURS` tal cual.
 - [ ] `https://bot.bluefishing.cl/health` responde.
 - [ ] Desde tu celular: "Hola, busco caña para corvina desde roca, señuelos de 30-50 g" → Matías recomienda productos reales con precio y link de bluefishing.cl.
 - [ ] Pregunta "¿tienen stock?" de un producto con SKU → responde con stock confirmado; de uno sin SKU → no lo afirma.
@@ -167,7 +188,7 @@ Para desactivar solo Bsale sin redeploy de código: deja `BSALE_ACCESS_TOKEN=` v
 
 ### Updates (después del primer deploy)
 ```bash
-cd /opt/crm-bot && BLUEFISHING_BRANCH=main bash deploy/hostinger/deploy.sh
+cd /opt/crm-bot && bash deploy/hostinger/deploy.sh     # actualiza desde main y reinstala
 ```
 
 ### Escalation

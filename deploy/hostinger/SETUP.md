@@ -25,7 +25,7 @@ Quién hace qué:
 
 ## 1. Clonar (proyecto aislado `crm-bot` en `/opt/crm-bot`)
 ```bash
-sudo git clone -b prod/hostinger-kvm4 https://github.com/Cristob777/bluefishing-bot.git /opt/crm-bot
+sudo git clone -b main https://github.com/Cristob777/bluefishing-bot.git /opt/crm-bot
 cd /opt/crm-bot
 ```
 Todo vive en el proyecto Compose `crm-bot` (`name:` en `docker-compose.yml`): contenedores `crm-bot-*`, volúmenes `crm-bot_*` propios (`postgres_data`, `chatwoot_postgres_data`, `chatwoot_redis_data`, `chatwoot_storage`). No reutiliza ni modifica contenedores de otros proyectos y **no publica puertos al host**.

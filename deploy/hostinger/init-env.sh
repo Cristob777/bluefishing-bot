@@ -61,7 +61,7 @@ if [[ "$(current PROXY_MODE)" != "tunnel" && "$(current PROXY_MODE)" != "nginx" 
   echo "Cómo se publica el bot en internet:"
   echo "  1) tunnel — Cloudflare Tunnel: independiente del Nginx de otros sitios del VPS (recomendado)"
   echo "  2) nginx  — usa el Nginx del host + certbot"
-  read -r -p "Elige 1 o 2 [1]: " pm
+  pm=""; read -r -p "Elige 1 o 2 [1]: " pm || true
   case "${pm:-1}" in 2) set_kv PROXY_MODE nginx ;; *) set_kv PROXY_MODE tunnel ;; esac
   echo "  PROXY_MODE=$(current PROXY_MODE)"
 fi
@@ -107,6 +107,13 @@ else echo "  ya estaba TRAEFIK_ADMIN_BASICAUTH_USERS"; fi
 echo
 echo "== Pendientes =="
 pending=0
+# Un .env.production de una instalación anterior puede no traer las líneas nuevas: se agregan vacías
+# para que solo haya que completarlas (nano .env.production).
+for k in BSALE_OFFICE_IDS STORE_ADDRESS STORE_HOURS STORE_SHIPPING STORE_PAYMENTS STORE_PICKUP STORE_RETURNS; do
+  grep -qE "^$k=" "$ENV_FILE" || printf '%s=\n' "$k" >> "$ENV_FILE"
+done
+missing STORE_ADDRESS && echo "  (recomendado) completa STORE_* en $ENV_FILE: dirección, horario, despacho, pagos, retiro, cambios"
+
 needed=(BOT_DOMAIN CHATWOOT_DOMAIN CHATWOOT_ADMIN_EMAIL OPENAI_API_KEY META_APP_SECRET WHATSAPP_TOKEN PHONE_NUMBER_ID)
 [[ "$(current PROXY_MODE)" == "tunnel" ]] && needed+=(CLOUDFLARE_TUNNEL_TOKEN)
 for k in "${needed[@]}"; do
