@@ -2940,43 +2940,6 @@
     "source_hash": "0e0f71bbdda9d7ffec9ed0f9f5e54dd313df5be87f4605eae4245943e5108bda",
     "updated_at": "2026-11-17T17:26:57.961Z"
   },
-  "https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/": {
-    "product_url": "https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/",
-    "product_name": "DAIWA Carrete REVROS LT 6000",
-    "product_type": "carrete",
-    "brand": "DAIWA",
-    "price": "$104.990",
-    "target_species": [],
-    "water_type": [],
-    "fishing_position": [],
-    "technique": [
-      "spinning"
-    ],
-    "experience_level": "unknown",
-    "use_case": "",
-    "verified_notes": "",
-    "extra": {
-      "weight_grams": "370g",
-      "size": "6000",
-      "gear_ratio": "5.7:1",
-      "max_drag_kg": "12"
-    },
-    "evidence": [
-      "Técnica (categoría/nombre): spinning",
-      "Especificaciones técnicas extraídas de la ficha/nombre."
-    ],
-    "extraction_confidence": 0.4,
-    "extraction_method": "heuristic",
-    "needs_review": true,
-    "review_reasons": [
-      "sin tipo de agua en la ficha"
-    ],
-    "source_origin": "woocommerce_api",
-    "knowledge_version": 2,
-    "source_url": "https://bluefishing.cl/producto/daiwa-carrete-revros-lt-6000/",
-    "source_hash": "56f6233360bc1d2fac2f391dd2122b211baf78ea7349654dda41175e31a2faa0",
-    "updated_at": "2026-11-17T17:26:58.062Z"
-  },
   "https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-6000d/": {
     "product_url": "https://bluefishing.cl/producto/daiwa-carrete-saltist-mq-6000d/",
     "product_name": "DAIWA Carrete SALTIST MQ 6000D",
