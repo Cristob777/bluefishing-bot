@@ -182,8 +182,8 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-18ul-3-12/",
-    "source_hash": "0f09514346ea0edbce55ff7269a7e105fff553f53719a3cdb3ea3c7b2bc9c550",
-    "updated_at": "2026-11-17T17:26:50.390Z"
+    "source_hash": "691322f1d637a84363e2a5cffd766a997d7ed28fa0816eb3babefffd6e28e1d3",
+    "updated_at": "2026-11-28T16:14:18.566Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-3-12-g/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-3-12-g/",
@@ -222,8 +222,8 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-3-12-g/",
-    "source_hash": "0013a5dea92a92a09ee7fd80e3a118b38e909e593e4955842b78824c168ee532",
-    "updated_at": "2026-11-17T17:26:50.491Z"
+    "source_hash": "4bdd9fe7d4ddfafb1f25fd52c69a32946c483bc087910db0242c297e5b901078",
+    "updated_at": "2026-11-28T16:14:18.667Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-5-15-g/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-5-15-g/",
@@ -266,8 +266,8 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-bad-ajing-bajs-19ul-5-15-g/",
-    "source_hash": "fdc0f7b807404b1ede3c4338c97f4f297117ebc03ef9f0f4b20c1fbb636de1f2",
-    "updated_at": "2026-11-17T17:26:50.591Z"
+    "source_hash": "eb24cd78f74e8337a5af39b602a4a67a03017283067a79097c8049cd434d6ab8",
+    "updated_at": "2026-11-28T16:14:18.767Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-chacao-popping-rods-30-80g/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-chacao-popping-rods-30-80g/",
@@ -463,7 +463,7 @@
   },
   "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/",
-    "product_name": "BADFISH Caña NIMBUS PROFESSIONAL SERIES 3,06 mt, 8-40gr",
+    "product_name": "BADFISH Caña NIMBUS 2000nss-110MH 3,06 m |8-40g",
     "product_type": "caña",
     "brand": "BADFISH",
     "price": "$129.990",
@@ -471,21 +471,22 @@
     "water_type": [
       "mar"
     ],
-    "fishing_position": [
-      "orilla",
-      "roca"
+    "fishing_position": [],
+    "technique": [
+      "spinning"
     ],
-    "technique": [],
     "experience_level": "unknown",
     "use_case": "",
     "verified_notes": "",
     "extra": {
       "weight_range": "8-40g",
       "length": "3.06m",
-      "power": "M"
+      "power": "MH",
+      "rod_setup": "spinning"
     },
     "evidence": [
       "Agua (categoría/nombre): mar",
+      "Técnica (descripción): spinning",
       "Especificaciones técnicas extraídas de la ficha/nombre."
     ],
     "extraction_confidence": 0.6,
@@ -495,12 +496,12 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/",
-    "source_hash": "85b607f0013e24140df750752ab7be56361e1fa54a023bc01869bdc8194ad405",
-    "updated_at": "2026-11-17T17:26:51.304Z"
+    "source_hash": "e994a1cf4442a83c57d9545342112f7828ccc2b832c80db2142298dae59bb17a",
+    "updated_at": "2026-11-28T16:14:18.868Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/",
-    "product_name": "BADFISH Caña NIMBUS PROFESSIONAL SERIES 3,06mt, 15-50",
+    "product_name": "BADFISH Caña NIMBUS NSS-110MH 3,06m, 15-50",
     "product_type": "caña",
     "brand": "BADFISH",
     "price": "$129.990",
@@ -508,21 +509,22 @@
     "water_type": [
       "mar"
     ],
-    "fishing_position": [
-      "orilla",
-      "roca"
+    "fishing_position": [],
+    "technique": [
+      "spinning"
     ],
-    "technique": [],
     "experience_level": "unknown",
     "use_case": "",
     "verified_notes": "",
     "extra": {
       "weight_range": "15-50g",
       "length": "3.06m",
-      "power": "MH"
+      "power": "MH",
+      "rod_setup": "spinning"
     },
     "evidence": [
       "Agua (categoría/nombre): mar",
+      "Técnica (descripción): spinning",
       "Especificaciones técnicas extraídas de la ficha/nombre."
     ],
     "extraction_confidence": 0.6,
@@ -532,8 +534,8 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/",
-    "source_hash": "d876951b12e5ed9dec173d526cf8c91c367fa58c3a9e2324c625280f5a716fa9",
-    "updated_at": "2026-11-17T17:26:51.607Z"
+    "source_hash": "87911ff9cd7df7e7d14ec59fd12d08dc4c1d2154ee08bf632bb0c4d5b0d0b9e2",
+    "updated_at": "2026-11-28T16:14:18.968Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-110mh-330mt-40-100gr/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-110mh-330mt-40-100gr/",
@@ -915,8 +917,8 @@
     "source_origin": "woocommerce_api",
     "knowledge_version": 2,
     "source_url": "https://bluefishing.cl/producto/badfish-cana-shore-cast-27m-20-80gr/",
-    "source_hash": "0e2c76b9d9467cf4c26c453ca15f64b1a9d6c9c90ef6f76062c46ab22fbd10b0",
-    "updated_at": "2026-11-17T17:26:52.414Z"
+    "source_hash": "f29d855553793fee6f4898757b1b6d7644c1a4a95378dfc9ba24240fe60272f3",
+    "updated_at": "2026-11-28T16:14:19.069Z"
   },
   "https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100m-10-42gr/": {
     "product_url": "https://bluefishing.cl/producto/badfish-cana-shore-cast-scs-100m-10-42gr/",

@@ -1,7 +1,7 @@
 # Catálogo Bluefishing.cl
 # Formato: Nombre | Precio | Categoría | URL
 # Fuente automática: woocommerce_store_api
-# Actualizado: 2026-11-27T17:30:11.654Z
+# Actualizado: 2026-11-28T16:14:18.449Z
 APIA Metal vib Uprizing 59  12 g | $18.990 | Señuelos | https://bluefishing.cl/producto/apia-metal-vib-uprizing-59-12-g/
 BADFISH Bagre ASSASSIN 5.9 gr | $5.990 | Señuelos | https://bluefishing.cl/producto/badfish-bagre-assassin-5-9-gr/
 BADFISH BIG COMBAT 20, 30gr | $2.190 | Señuelos > Jig | https://bluefishing.cl/producto/badfish-big-combat-20-30gr/
@@ -14,11 +14,11 @@ BADFISH caña Graphite ELITE 10-32 g | $109.990 | Marcas > BADFISH | https://blu
 BADFISH caña GRAPHITE JIGGING - 200g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-200g/
 BADFISH caña GRAPHITE JIGGING LITE - 150 g | $69.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-jigging-lite-150-g/
 BADFISH caña Graphite Slow S562 30-300g | $79.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-graphite-slow-s562-30-300g/
+BADFISH Caña NIMBUS 2000nss-110MH 3,06 m -8-40g | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/
+BADFISH Caña NIMBUS NSS-110MH 3,06m, 15-50 | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/
 BADFISH Caña NIMBUS profesional series 3.30 - 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-3-30-50-120g/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,06 mt,  8-40gr | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100m-315mt-8-40gr/
 BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,30mt,  40-100gr | $139.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-110mh-330mt-40-100gr/
 BADFISH Caña NIMBUS PROFESSIONAL SERIES  3,60mt, 40-120gr | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-120mh-360mt-40-120gr/
-BADFISH Caña NIMBUS PROFESSIONAL SERIES 3,06mt,  15-50 | $129.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-series-nss-100mh-315mt-15-50/
 BADFISH Caña NIMBUS PROFESSIONAL SINGATURE 3.60 - 50-120g | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-professional-singature-3-60-50-120g/
 BADFISH Caña NIMBUS SHORE JIGGING 3.30 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-3-30-50-120/
 BADFISH Caña NIMBUS SHORE JIGGING 3.60 50-120 | $149.990 | Marcas > BADFISH | https://bluefishing.cl/producto/badfish-cana-nimbus-shore-jigging-3-60-50-120/
